@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"E:\\\\SEM - 8\\\\Builder_ai\")",
+      "Bash(npm install *)",
+      "Bash(npx vite *)",
+      "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"real estate investment marketplace premium professional dealmaking two-sided platform\" --design-system -p \"Builder AI Market\" -f markdown)",
+      "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/**)",
+      "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max\" 2>/dev/**)",
+      "Bash(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment marketplace premium professional fintech trust\" --design-system -f markdown)"
+    ]
+  }
+}

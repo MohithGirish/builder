@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+
+  # ── Frontend (React + Vite / Nginx) ──────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: builder_ai_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - builder_net
+    restart: unless-stopped
+
+  # ── AI Matchmaking Microservice (Python / FastAPI) ────────────────────────────
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    container_name: builder_ai_engine
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ai_service/.env
+    networks:
+      - builder_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Backend API ───────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: builder_ai_backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - builder_net
+    restart: unless-stopped
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: builder_ai_postgres
+    environment:
+      POSTGRES_USER:     builder_admin
+      POSTGRES_PASSWORD: builder_secret_dev
+      POSTGRES_DB:       builder_ai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - builder_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U builder_admin -d builder_ai_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Redis ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: builder_ai_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - builder_net
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  builder_net:
+    driver: bridge
