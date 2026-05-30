@@ -17,7 +17,9 @@ const dbConfig = require('../config/database');
 const env  = process.env.NODE_ENV || 'development';
 const conf = dbConfig[env];
 
-const sequelize = new Sequelize(conf.database, conf.username, conf.password, conf);
+const sequelize = process.env.DATABASE_URL
+  ? new Sequelize(process.env.DATABASE_URL, conf)
+  : new Sequelize(conf.database, conf.username, conf.password, conf);
 
 // Import model initialisers
 const { User,        init: initUser }        = require('./User');
