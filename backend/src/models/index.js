@@ -17,6 +17,9 @@ const dbConfig = require('../config/database');
 const env  = process.env.NODE_ENV || 'development';
 const conf = dbConfig[env];
 
+console.log('[DB] DATABASE_URL:', process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:\/\/.*@/, '://***@') : 'NOT SET');
+console.log('[DB] DB_HOST:', process.env.DB_HOST || 'NOT SET');
+
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, conf)
   : new Sequelize(conf.database, conf.username, conf.password, conf);
