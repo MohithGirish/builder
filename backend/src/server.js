@@ -34,7 +34,8 @@ async function startServer() {
       console.log(`[SOCKET] Socket.io listening on port ${PORT}`);
     });
   } catch (err) {
-    console.error('[SERVER] Failed to start:', err.message);
+    console.error('[SERVER] Failed to start:', err.message || err);
+    console.error('[SERVER] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
     process.exit(1);
   }
 }
