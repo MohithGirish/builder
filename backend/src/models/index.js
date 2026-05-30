@@ -17,8 +17,12 @@ const dbConfig = require('../config/database');
 const env  = process.env.NODE_ENV || 'development';
 const conf = dbConfig[env];
 
-console.log('[DB] DATABASE_URL:', process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:\/\/.*@/, '://***@') : 'NOT SET');
-console.log('[DB] DB_HOST:', process.env.DB_HOST || 'NOT SET');
+if (process.env.DATABASE_URL) {
+  try {
+    const u = new URL(process.env.DATABASE_URL);
+    console.log('[DB] Connecting to:', u.hostname, 'port:', u.port || '5432');
+  } catch(e) { console.log('[DB] Bad DATABASE_URL:', e.message); }
+}
 
 const sequelize = process.env.DATABASE_URL
   ? new Sequelize(process.env.DATABASE_URL, conf)
