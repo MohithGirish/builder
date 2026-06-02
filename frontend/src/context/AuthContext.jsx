@@ -10,6 +10,8 @@
  */
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 
+const API = import.meta.env.VITE_BACKEND_URL || '';
+
 const AuthContext = createContext(null);
 
 function getUserId() {
@@ -42,7 +44,7 @@ export function AuthProvider({ children }) {
     const rt = localStorage.getItem('builderai_rt');
     if (!rt) { setIsLoading(false); return; }
 
-    fetch('/api/v1/auth/refresh', {
+    fetch(`${API}/api/v1/auth/refresh`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ refresh_token: rt }),
@@ -77,7 +79,7 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const res  = await fetch('/api/v1/auth/login', {
+    const res  = await fetch(`${API}/api/v1/auth/login`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ email, password }),
@@ -89,7 +91,7 @@ export function AuthProvider({ children }) {
   }
 
   async function register(userData) {
-    const res  = await fetch('/api/v1/auth/register', {
+    const res  = await fetch(`${API}/api/v1/auth/register`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(userData),
@@ -104,7 +106,7 @@ export function AuthProvider({ children }) {
     const rt = localStorage.getItem('builderai_rt');
     const at = accessTokenRef.current;
     try {
-      await fetch('/api/v1/auth/logout', {
+      await fetch(`${API}/api/v1/auth/logout`, {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
