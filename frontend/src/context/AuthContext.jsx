@@ -137,6 +137,21 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function updatePreference(key, value) {
+    const merged = { ...(preferences || {}), [key]: value };
+    savePreferences(merged);
+  }
+
+  function switchRole(newRole) {
+    if (!user) return;
+    const updated = { ...user, role: newRole };
+    setUser(updated);
+    localStorage.setItem('builderai_u', JSON.stringify(updated));
+    // Clear old preferences so onboarding collects fresh ones for the new role
+    setPreferences(null);
+    if (user?.id) localStorage.removeItem(`builderai_prefs_${user.id}`);
+  }
+
   function _applySession({ user: u, tokens }) {
     accessTokenRef.current = tokens.access_token;
     localStorage.setItem('builderai_rt', tokens.refresh_token);
@@ -171,6 +186,8 @@ export function AuthProvider({ children }) {
       completeOnboarding,
       savePreferences,
       getAccessToken: () => accessTokenRef.current,
+      updatePreference,
+      switchRole,
     }}>
       {children}
     </AuthContext.Provider>

@@ -7,8 +7,15 @@
  * Also conditionally renders the Footer, hiding it on dashboard, dealroom,
  * auth, and onboarding pages.
  */
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider }    from './context/AuthContext';
+import { useLayoutEffect } from 'react';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 // Layout
 import Navbar          from './components/layout/Navbar';
@@ -49,6 +56,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-1">

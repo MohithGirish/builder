@@ -1,36 +1,36 @@
 /*
  * ProjectDetail.jsx — Full detail page for a real estate project.
  *
- * Looks up a project from the REAL_PROJECTS dataset by URL param id and
- * renders a rich multi-tab detail view: Overview, Unit Types, Floor Plan,
- * Amenities, Specifications, and Location (embedded OpenStreetMap iframe).
- * A sticky sidebar shows pricing, developer contact, and site-visit booking.
- * A lightbox overlay is available for image previews. Redirects to home if
- * the project is not found.
+ * Looks up a project from REAL_PROJECTS by URL param id and renders a rich
+ * multi-tab detail view: Overview (with inline location map), Unit Types,
+ * Floor Plan, Amenities, Specifications, and Location (Google Maps + nearby).
+ * A sticky sidebar shows pricing, developer contact, site-visit booking, and
+ * an Invest button visible only to investors. Includes a lightbox for gallery.
+ * Scrolls to the top of the page on every project load.
  */
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Shield, ArrowLeft, CheckCircle2,
   Building2, Layers, Clock, ChevronRight, X, ExternalLink,
+  TrendingUp,
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
-
-const NEARBY_COLORS = {
-  Transport: 'bg-blue-50 text-blue-700',
-  Commercial: 'bg-amber-50 text-amber-700',
-  Education: 'bg-violet-50 text-violet-700',
-  Healthcare: 'bg-red-50 text-red-700',
-  Leisure: 'bg-green-50 text-green-700',
-  Landmark: 'bg-orange-50 text-orange-700',
-  Area: 'bg-slate-100 text-slate-600',
-};
+import { useAuth } from '../context/AuthContext';
+import NearbyGoogleMap from '../components/map/NearbyGoogleMap';
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [lightbox, setLightbox] = useState(null);
+  const [investConfirm, setInvestConfirm] = useState(false);
+
+  /* Scroll to top whenever the project id changes — runs before paint */
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const project = REAL_PROJECTS.find(p => p.id === id);
 
@@ -142,7 +142,7 @@ export default function ProjectDetail() {
             ))}
           </div>
 
-          {/* Tab content — crossfades when the active tab changes */}
+          {/* Tab content */}
           <div key={activeTab} className="animate-fade-in">
 
           {/* ── Overview tab ────────────────────────────────────── */}
@@ -166,7 +166,7 @@ export default function ProjectDetail() {
                 </div>
               </div>
 
-              {/* Key quick facts */}
+              {/* Quick facts */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 mb-4">Quick Facts</h2>
                 <div className="space-y-3">
@@ -189,6 +189,31 @@ export default function ProjectDetail() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* ── Location map (inline on Overview) ──────────── */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 className="text-lg font-bold text-slate-800 mb-2">Property Location</h2>
+                <p className="text-slate-500 text-sm mb-4">{project.fullAddress}</p>
+                <div className="rounded-xl overflow-hidden border border-slate-100 h-56 mb-4">
+                  <iframe
+                    title={`${project.name} location overview`}
+                    width="100%"
+                    height="100%"
+                    loading="lazy"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${project.coordinates[1] - 0.02},${project.coordinates[0] - 0.015},${project.coordinates[1] + 0.02},${project.coordinates[0] + 0.015}&layer=mapnik&marker=${project.coordinates[0]},${project.coordinates[1]}`}
+                    style={{ border: 0 }}
+                  />
+                </div>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${project.coordinates[0]},${project.coordinates[1]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                  style={{ color: project.color }}
+                >
+                  Open in Google Maps <ExternalLink size={12} />
+                </a>
               </div>
             </div>
           )}
@@ -234,7 +259,6 @@ export default function ProjectDetail() {
                     className="rounded-xl border border-slate-100 p-5 hover:border-slate-200 transition-colors"
                     style={{ background: 'linear-gradient(135deg, #f8fafc, #ffffff)' }}
                   >
-                    {/* Header row */}
                     <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                       <span
                         className="text-xs font-bold px-3 py-1 rounded-full text-white"
@@ -248,8 +272,6 @@ export default function ProjectDetail() {
                         {u.block && <p className="text-[10px] text-slate-400 mt-0.5">{u.block}</p>}
                       </div>
                     </div>
-
-                    {/* Size row */}
                     <div className="flex gap-6 flex-wrap mb-3">
                       <div>
                         <p className="text-[10px] text-slate-400 uppercase tracking-wide">Size</p>
@@ -262,8 +284,6 @@ export default function ProjectDetail() {
                         </div>
                       )}
                     </div>
-
-                    {/* Spec chips — bedrooms / bathrooms / maid / parking */}
                     {(u.bedrooms || u.bathrooms || u.maidRooms || u.parking) && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {[u.bedrooms, u.bathrooms, u.maidRooms, u.parking].filter(Boolean).map(spec => (
@@ -277,8 +297,6 @@ export default function ProjectDetail() {
                         ))}
                       </div>
                     )}
-
-                    {/* Feature line */}
                     {u.features && (
                       <p className="text-[11px] text-slate-500 leading-relaxed">{u.features}</p>
                     )}
@@ -369,53 +387,11 @@ export default function ProjectDetail() {
           {activeTab === 'location' && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800 mb-2">Location</h2>
-                <p className="text-slate-500 text-sm mb-5">{project.fullAddress}</p>
-
-                {/* Static OSM embed */}
-                <div className="rounded-xl overflow-hidden border border-slate-100 h-56 mb-5">
-                  <iframe
-                    title={`${project.name} location`}
-                    width="100%"
-                    height="100%"
-                    loading="lazy"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${project.coordinates[1] - 0.02},${project.coordinates[0] - 0.015},${project.coordinates[1] + 0.02},${project.coordinates[0] + 0.015}&layer=mapnik&marker=${project.coordinates[0]},${project.coordinates[1]}`}
-                    style={{ border: 0 }}
-                  />
-                </div>
-
-                <a
-                  href={`https://www.openstreetmap.org/?mlat=${project.coordinates[0]}&mlon=${project.coordinates[1]}#map=15/${project.coordinates[0]}/${project.coordinates[1]}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
-                  style={{ color: project.color }}
-                >
-                  Open in Maps <ExternalLink size={12} />
-                </a>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800 mb-4">What's Nearby?</h2>
-                <div className="space-y-2.5">
-                  {project.sections.nearby.map((n, i) => (
-                    <div key={i} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: project.color }} />
-                        <span className="text-sm text-slate-700">{n.place}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${NEARBY_COLORS[n.category] || 'bg-slate-100 text-slate-600'}`}>
-                          {n.category}
-                        </span>
-                        <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
-                          <Clock size={10} />
-                          {n.time}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-lg font-bold text-slate-800 mb-1">Nearby Places & Distances</h2>
+                <p className="text-slate-500 text-sm mb-5">
+                  Click any place to view the driving route from {project.name}.
+                </p>
+                <NearbyGoogleMap project={project} />
               </div>
             </div>
           )}
@@ -424,6 +400,54 @@ export default function ProjectDetail() {
 
         {/* ── Right: Sticky sidebar ─────────────────────────────── */}
         <div className="space-y-4">
+
+          {/* ── Invest Now (investors only) ───────────────────── */}
+          {role === 'investor' && (
+            <>
+              <button
+                onClick={() => setInvestConfirm(true)}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-white text-sm font-bold transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98] shadow-md"
+                style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
+              >
+                <TrendingUp size={16} />
+                Invest in This Project
+              </button>
+
+              {/* Invest confirmation modal */}
+              {investConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                  <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-scale-in">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 mx-auto"
+                      style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
+                    >
+                      <TrendingUp size={22} className="text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 text-center mb-2">Express Interest</h3>
+                    <p className="text-sm text-slate-500 text-center mb-5 leading-relaxed">
+                      You're expressing investment interest in <strong>{project.name}</strong>.
+                      The developer will be notified and reach out shortly via the Dealroom.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setInvestConfirm(false)}
+                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => { setInvestConfirm(false); navigate('/dealroom'); }}
+                        className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:opacity-90"
+                        style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           {/* Price card */}
           <div
@@ -540,7 +564,6 @@ export default function ProjectDetail() {
             <X size={28} />
           </button>
 
-          {/* Prev arrow */}
           {lightbox > 0 && (
             <button
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors text-3xl font-bold px-3 py-1"
@@ -568,7 +591,6 @@ export default function ProjectDetail() {
             <p className="text-white/40 text-xs">{lightbox + 1} / {project.images.length}</p>
           </div>
 
-          {/* Next arrow */}
           {lightbox < project.images.length - 1 && (
             <button
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors text-3xl font-bold px-3 py-1"

@@ -53,6 +53,9 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 
+# Graphify — local knowledge graph, never push
+graphify-out/
+
 # Misc
 *.tsbuildinfo
 .eslintcache

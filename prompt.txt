@@ -1,0 +1,6 @@
+ok when i click the veiw projects in the dicover page, why does it open at the bottom of the page, make it start at the top, also the location subsection, remove that property
+  location mape and add it to the overview page, and in the locations section the whats nearby part, i want a map which shows the distanct from the property location to those
+  points shown in the whats nearby part, distance, use google maps api, and point out the distance along with the shown time beside it, also in that same project details page,
+  add a invest button only for people logged in as investors they must be able to see that button, also in my profile section, give the option to swap from builder to investor on
+  which they get moved to that ai assistant page, where they get preference also allow them to be able to edit any one of their preferences right there in my profile section
+  without having to go through the complete ai assistant process if they only want to update one point.

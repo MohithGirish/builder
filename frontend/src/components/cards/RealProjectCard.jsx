@@ -49,19 +49,15 @@ export default function RealProjectCard({ project }) {
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)' }}
         />
 
-        {/* Category badge */}
-        <div className="absolute top-3 left-3">
+        {/* Category + Status badges — single flex row to prevent overlap */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
           <span
-            className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-white"
+            className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-white truncate min-w-0"
             style={{ background: project.color + 'dd', backdropFilter: 'blur(4px)' }}
           >
             {categoryLabel}
           </span>
-        </div>
-
-        {/* Status badge */}
-        <div className="absolute top-3 right-3">
-          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-slate-700">
+          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-slate-700 shrink-0">
             {project.status}
           </span>
         </div>
