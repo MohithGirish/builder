@@ -78,7 +78,7 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://builder-ai-backend.onrender.com/api/*
+        destination: https://builder-backend-i7ix.onrender.com/api/*
       - type: rewrite
         source: /*
         destination: /index.html
