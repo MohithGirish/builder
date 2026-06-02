@@ -30,4 +30,4 @@ COPY --chown=nodeuser:nodejs . .
 
 USER nodeuser
 EXPOSE 5000
-CMD ["node", "src/server.js"]
+CMD ["sh", "-c", "npm run db:migrate && node src/server.js"]
