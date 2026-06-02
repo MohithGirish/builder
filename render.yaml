@@ -43,11 +43,7 @@ services:
       - key: AUTH_RATE_LIMIT_MAX
         value: "10"
       - key: ALLOWED_ORIGINS
-        fromService:
-          name: builder-ai-frontend
-          type: web
-          property: host
-          envVarKey: ALLOWED_ORIGINS
+        value: https://builder-475m.onrender.com
 
   # ── AI Matchmaking Microservice (Python / FastAPI) ────────────────────────────
   - type: web
