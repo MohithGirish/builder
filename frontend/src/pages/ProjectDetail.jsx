@@ -13,7 +13,7 @@ import { useState, useLayoutEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Shield, ArrowLeft, CheckCircle2,
   Building2, Layers, Clock, ChevronRight, X, ExternalLink,
-  TrendingUp,
+  TrendingUp, FileText,
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
 import { useAuth } from '../context/AuthContext';
@@ -515,6 +515,14 @@ export default function ProjectDetail() {
               style={{ background: project.gradient }}
             >
               Schedule Site Visit
+            </button>
+
+            <button
+              className="w-full mt-3 py-3 rounded-xl text-sm font-bold border-2 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
+              style={{ borderColor: project.color, color: project.color }}
+            >
+              <FileText size={15} />
+              Request Quote
             </button>
           </div>
 

@@ -8,7 +8,7 @@
  * pages via route-conditional rendering in App.jsx.
  */
 import { Link } from 'react-router-dom';
-import { Building2, Mail, Phone, MapPin, Linkedin, Twitter, Instagram, Heart } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Instagram, Heart } from 'lucide-react';
 
 const COMPANY = ['About Us', 'Contact', 'Privacy Policy', 'Careers'];
 const BUILDER_LINKS = ['Join as Builder', 'List Projects', 'Get Verified', 'Success Stories'];
@@ -36,8 +36,9 @@ export default function Footer() {
             real-estate, infrastructure, and venture projects.
           </p>
           <div className="space-y-2 text-sm text-slate-400">
-            <div className="flex items-center gap-2"><Mail size={14} /><span>contact@builderai-market.com</span></div>
-            <div className="flex items-center gap-2"><Phone size={14} /><span>+91 22 1234 5678</span></div>
+            <div className="flex items-center gap-2"><Mail size={14} /><span>sales@e-infra.in</span></div>
+            <div className="flex items-center gap-2"><Phone size={14} /><span>+91 90 90 366 366</span></div>
+            <div className="flex items-center gap-2"><Globe size={14} /><span>www.e-infra.in</span></div>
             <div className="flex items-center gap-2"><MapPin size={14} /><span>Mumbai, India</span></div>
           </div>
         </div>

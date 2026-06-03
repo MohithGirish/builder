@@ -25,8 +25,8 @@ function validate(form) {
   const errors = {};
   if (!form.first_name.trim() || form.first_name.trim().length < 2)
     errors.first_name = 'First name must be at least 2 characters.';
-  if (!form.last_name.trim() || form.last_name.trim().length < 2)
-    errors.last_name = 'Last name must be at least 2 characters.';
+  if (!form.last_name.trim())
+    errors.last_name = 'Last name is required.';
   if (!form.email.trim())
     errors.email = 'Email is required.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
