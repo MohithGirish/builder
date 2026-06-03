@@ -13,7 +13,7 @@ const Joi = require('joi');
 
 const updateProfileSchema = Joi.object({
   first_name: Joi.string().trim().min(2).max(100),
-  last_name:  Joi.string().trim().min(2).max(100),
+  last_name:  Joi.string().trim().min(1).max(100),
   profile_image: Joi.string().uri().max(500).allow(null, ''),
 }).min(1).messages({
   'object.min': 'At least one field must be provided for update.',

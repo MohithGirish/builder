@@ -28,7 +28,7 @@ const registerSchema = Joi.object({
     }),
   first_name: Joi.string().trim().min(2).max(100).required()
     .messages({ 'any.required': 'First name is required.' }),
-  last_name: Joi.string().trim().min(2).max(100).required()
+  last_name: Joi.string().trim().min(1).max(100).required()
     .messages({ 'any.required': 'Last name is required.' }),
   role: Joi.string().valid('builder', 'investor').required()
     .messages({
