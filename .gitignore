@@ -1,5 +1,6 @@
 # Claude Code — never commit local AI assistant state
 .claude/
+CLAUDE.md
 
 # Dependencies
 node_modules/
