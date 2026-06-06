@@ -2,19 +2,93 @@
  * Footer.jsx — Global site footer component.
  *
  * Renders a four-column dark footer with the Builder.AI brand (logo, tagline,
- * contact info), Company links, Builders links, and Investors links. The
- * bottom bar shows the copyright notice and social media icon links. Displayed
- * on all public pages; hidden on dashboard, dealroom, auth, and onboarding
- * pages via route-conditional rendering in App.jsx.
+ * contact info), Company links, Builders links, and Investors links. Every link
+ * is wired to a real destination: actions requiring auth send logged-out users
+ * to /login (preserving the intended path so login forwards them on), and the
+ * "Join as Builder/Investor" links prompt a role switch when the signed-in user
+ * holds the opposite role. The bottom bar shows the copyright and social links.
+ * Displayed on all public pages; hidden on dashboard, dealroom, auth, and
+ * onboarding pages via route-conditional rendering in App.jsx.
  */
-import { Link } from 'react-router-dom';
-import { Building2, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Instagram, Heart } from 'lucide-react';
-
-const COMPANY = ['About Us', 'Contact', 'Privacy Policy', 'Careers'];
-const BUILDER_LINKS = ['Join as Builder', 'List Projects', 'Get Verified', 'Success Stories'];
-const INV_LINKS     = ['Join as Investor', 'Browse Projects', 'Analytics Dashboard', 'FAQ'];
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import {
+  Building2, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Instagram, Heart,
+  ArrowRightLeft, X,
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Footer() {
+  const navigate = useNavigate();
+  const { isAuthenticated, role, switchRole, setOnboardingRole } = useAuth();
+
+  // Pending role-switch target shown in the confirmation modal (null = closed)
+  const [switchTo, setSwitchTo] = useState(null);
+
+  const dashHome = () => (role === 'investor' ? '/investor-dashboard' : '/dashboard');
+
+  /**
+   * Navigate to `dest`. If `requireAuth` and the user is logged out, route them
+   * to /login first while remembering `dest` so login forwards them afterward.
+   */
+  function go(dest, { requireAuth = true } = {}) {
+    if (requireAuth && !isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: dest } } });
+      return;
+    }
+    navigate(dest);
+  }
+
+  /**
+   * Handle a "Join as <role>" link. Logged-out users are sent through login and
+   * onboarding for that role. A signed-in user already in that role goes to
+   * their dashboard; one in the opposite role is asked to confirm a switch.
+   */
+  function joinAs(targetRole) {
+    if (!isAuthenticated) {
+      // After login, ProtectedRoute funnels new users into onboarding for their role
+      navigate('/login', { state: { from: { pathname: dashHome() } } });
+      return;
+    }
+    if (role === targetRole) {
+      navigate(dashHome());
+      return;
+    }
+    setSwitchTo(targetRole);
+  }
+
+  function confirmSwitch() {
+    const target = switchTo;
+    setSwitchTo(null);
+    switchRole(target);
+    setOnboardingRole(target);
+    navigate('/onboarding/chat');
+  }
+
+  // Link descriptors: [label, handler]. Plain public links use a string href.
+  const COMPANY = [
+    { label: 'About Us',      to: '/' },
+    { label: 'Contact',       to: '/' },
+    { label: 'Privacy Policy', to: '/' },
+    { label: 'Careers',       to: '/' },
+  ];
+
+  const BUILDER_LINKS = [
+    { label: 'Join as Builder',  onClick: () => joinAs('builder') },
+    { label: 'List Projects',    onClick: () => go('/dashboard/projects') },
+    { label: 'Get Verified',     onClick: () => go('/profile') },
+    { label: 'Success Stories',  onClick: () => go('/projects', { requireAuth: false }) },
+  ];
+
+  const INV_LINKS = [
+    { label: 'Join as Investor',   onClick: () => joinAs('investor') },
+    { label: 'Browse Projects',    onClick: () => go('/projects', { requireAuth: false }) },
+    { label: 'Analytics Dashboard', onClick: () => go(`${dashHome()}/analytics`) },
+    { label: 'FAQ',                onClick: () => go('/', { requireAuth: false }) },
+  ];
+
+  const linkClass = 'text-sm text-slate-400 hover:text-brand-400 transition-colors text-left';
+
   return (
     <footer className="relative bg-slate-900 text-slate-300">
       {/* Top accent line */}
@@ -48,7 +122,9 @@ export default function Footer() {
           <h4 className="text-white font-semibold text-sm mb-4">Company</h4>
           <ul className="space-y-2">
             {COMPANY.map((l) => (
-              <li key={l}><a href="#" className="text-sm text-slate-400 hover:text-brand-400 transition-colors">{l}</a></li>
+              <li key={l.label}>
+                <Link to={l.to} className={linkClass}>{l.label}</Link>
+              </li>
             ))}
           </ul>
         </div>
@@ -58,7 +134,9 @@ export default function Footer() {
           <h4 className="text-white font-semibold text-sm mb-4">Builders</h4>
           <ul className="space-y-2">
             {BUILDER_LINKS.map((l) => (
-              <li key={l}><a href="#" className="text-sm text-slate-400 hover:text-brand-400 transition-colors">{l}</a></li>
+              <li key={l.label}>
+                <button type="button" onClick={l.onClick} className={linkClass}>{l.label}</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -68,7 +146,9 @@ export default function Footer() {
           <h4 className="text-white font-semibold text-sm mb-4">Investors</h4>
           <ul className="space-y-2">
             {INV_LINKS.map((l) => (
-              <li key={l}><a href="#" className="text-sm text-slate-400 hover:text-brand-400 transition-colors">{l}</a></li>
+              <li key={l.label}>
+                <button type="button" onClick={l.onClick} className={linkClass}>{l.label}</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -95,6 +175,49 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Role-switch confirmation modal */}
+      {switchTo && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-lifted p-6 text-slate-800 animate-slide-down">
+            <button
+              type="button"
+              onClick={() => setSwitchTo(null)}
+              className="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+            <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+              <ArrowRightLeft size={20} className="text-amber-500" />
+            </div>
+            <h3 className="text-lg font-bold mb-1.5">
+              Switch to {switchTo === 'investor' ? 'Investor' : 'Builder'}?
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-5">
+              You're currently signed in as a {role === 'investor' ? 'n Investor' : ' Builder'}.
+              Switching will reset your preferences and walk you through a quick onboarding for
+              your new role.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setSwitchTo(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSwitch}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-cta-gradient hover:-translate-y-0.5 hover:shadow-glow-amber transition-all"
+              >
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }

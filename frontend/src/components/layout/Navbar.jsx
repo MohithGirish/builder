@@ -3,13 +3,12 @@
  *
  * Renders the Builder.AI logo, desktop navigation links (Discover, Builders,
  * Investors, Projects), and an auth-aware right section: unauthenticated users
- * see an "AI Assistant" CTA; authenticated users see a user pill with a
- * dropdown (Dashboard, My Profile, Update Preferences, Sign Out). Includes a
- * responsive mobile hamburger menu. Click-outside detection closes the user
- * dropdown.
+ * see a "Login" button; authenticated users see a user pill with a dropdown
+ * (Dashboard, My Profile, Update Preferences, Sign Out). Includes a responsive
+ * mobile hamburger menu. Click-outside detection closes the user dropdown.
  */
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Building2, Sparkles, Menu, X, LayoutDashboard, LogOut, ChevronDown, UserCircle, RefreshCw } from 'lucide-react';
+import { Building2, LogIn, Menu, X, LayoutDashboard, LogOut, ChevronDown, UserCircle, RefreshCw } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -26,7 +25,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
   const navigate    = useNavigate();
-  const { isAuthenticated, role, onboardingComplete, user, logout } = useAuth();
+  const { isAuthenticated, role, user, logout } = useAuth();
 
   const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
   const dashDest  = role === 'investor' ? '/investor-dashboard' : '/dashboard';
@@ -50,14 +49,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  function handleAIAssistant() {
-    if (isAuthenticated && onboardingComplete) {
-      navigate(dashDest);
-    } else if (isAuthenticated) {
-      navigate('/onboarding');
-    } else {
-      navigate('/login');
-    }
+  function handleLogin() {
+    navigate('/login');
   }
 
   async function handleLogout() {
@@ -169,11 +162,11 @@ export default function Navbar() {
             </div>
           ) : (
             <button
-              onClick={handleAIAssistant}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-white bg-cta-gradient transition-all hover:-translate-y-0.5 hover:shadow-glow-amber active:translate-y-0 active:scale-95"
+              onClick={handleLogin}
+              className="flex items-center gap-2 px-5 py-1.5 rounded-full text-sm font-semibold text-white bg-brand-gradient transition-all hover:-translate-y-0.5 hover:shadow-glow active:translate-y-0 active:scale-95"
             >
-              <Sparkles size={14} />
-              AI Assistant
+              <LogIn size={14} />
+              Login
             </button>
           )}
         </div>
@@ -221,10 +214,10 @@ export default function Navbar() {
             </>
           ) : (
             <button
-              onClick={() => { setOpen(false); handleAIAssistant(); }}
-              className="mt-2 btn-cta w-full"
+              onClick={() => { setOpen(false); handleLogin(); }}
+              className="mt-2 flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-gradient"
             >
-              <Sparkles size={14} /> AI Assistant
+              <LogIn size={14} /> Login
             </button>
           )}
         </div>
