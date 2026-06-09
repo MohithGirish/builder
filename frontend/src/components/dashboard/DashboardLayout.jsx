@@ -8,13 +8,25 @@
  * Router's <Outlet> to render the matched child route. Used by both builder
  * (/dashboard) and investor (/investor-dashboard) route groups.
  */
-import { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { PanelLeft } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close this drawer when the navbar mobile menu signals it is opening
+  useEffect(() => {
+    const handler = () => setSidebarOpen(false);
+    window.addEventListener('builderai:close-sidebar', handler);
+    return () => window.removeEventListener('builderai:close-sidebar', handler);
+  }, []);
+
+  function openSidebar() {
+    window.dispatchEvent(new CustomEvent('builderai:close-navbar'));
+    setSidebarOpen(true);
+  }
 
   return (
     <div
@@ -52,11 +64,11 @@ export default function DashboardLayout() {
 
       {/* Mobile hamburger FAB — only visible on mobile, behind drawer backdrop */}
       <button
-        onClick={() => setSidebarOpen(true)}
+        onClick={openSidebar}
         className="md:hidden fixed bottom-5 left-4 z-20 p-3 rounded-2xl bg-white shadow-lg border border-slate-200 text-slate-600 active:scale-95 transition-transform"
         aria-label="Open navigation"
       >
-        <Menu size={20} />
+        <PanelLeft size={20} />
       </button>
     </div>
   );

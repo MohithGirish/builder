@@ -57,7 +57,7 @@ import DashboardAnalytics from './pages/dashboard/DashboardAnalytics';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <div className="min-h-screen flex flex-col">
           {/* Hide navbar on full-screen auth pages */}

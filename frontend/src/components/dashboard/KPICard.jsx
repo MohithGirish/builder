@@ -1,11 +1,11 @@
 /*
  * KPICard.jsx — Key Performance Indicator metric card for dashboards.
  *
- * Renders a single KPI metric with a labeled icon, a large primary value, an
- * optional sub-text, and an optional period-over-period change badge (green
- * for positive, red for negative). The icon is resolved from a string name
- * (e.g. "Briefcase") via an internal ICON_MAP. Used in builder, investor,
- * and analytics dashboard pages.
+ * Renders a single KPI metric with a colored icon, label, large primary value,
+ * optional sub-text, and an optional period-over-period change badge. Uses a
+ * vertical (stacked) layout so long labels like "Active Projects" never wrap
+ * to two lines in a 2-column mobile grid. The icon is resolved from a string
+ * name via an internal ICON_MAP. Used in builder, investor, and analytics pages.
  */
 import {
   Briefcase, TrendingUp, Users, Eye, Wallet,
@@ -20,16 +20,16 @@ export default function KPICard({ label, value, subtext, change, positive, icon,
   const Icon = ICON_MAP[icon] || Briefcase;
 
   return (
-    <div className="group bg-white rounded-2xl shadow-card p-5 flex items-start gap-4 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1">
+    <div className="group bg-white rounded-2xl shadow-card p-4 flex flex-col gap-3 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1">
       {/* Icon */}
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${color}`}>
-        <Icon size={20} />
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${color}`}>
+        <Icon size={18} />
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-slate-400 font-medium mb-1">{label}</p>
-        <div className="flex items-baseline gap-1.5">
+      <div className="min-w-0">
+        <p className="text-xs text-slate-400 font-medium mb-1 leading-snug">{label}</p>
+        <div className="flex items-baseline gap-1.5 flex-wrap">
           <span className="text-2xl font-extrabold text-slate-800 leading-none font-display tabular-nums">{value}</span>
           {subtext && <span className="text-xs text-slate-400 font-medium">{subtext}</span>}
         </div>

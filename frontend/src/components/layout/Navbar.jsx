@@ -1,23 +1,18 @@
 /*
  * Navbar.jsx — Sticky top navigation bar for the application.
  *
- * Renders the Builder.AI logo, desktop navigation links (Discover, Builders,
- * Investors, Projects), and an auth-aware right section: unauthenticated users
- * see a "Login" button; authenticated users see a user pill with a dropdown
- * (Dashboard, My Profile, Update Preferences, Sign Out). Includes a responsive
- * mobile hamburger menu. Click-outside detection closes the user dropdown.
+ * Renders the Builder.AI logo, desktop navigation links (Discover, Dashboard,
+ * Builders, Investors, Projects), and an auth-aware right section: unauthenticated
+ * users see a Login button; authenticated users see a user pill with a dropdown
+ * (My Profile, Update Preferences, Sign Out). Includes a responsive mobile
+ * hamburger menu. Click-outside detection closes the user dropdown. Dispatches
+ * a custom window event to close the dashboard drawer when this menu opens, and
+ * listens for the reciprocal event so the two menus are mutually exclusive.
  */
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Building2, LogIn, Menu, X, LayoutDashboard, LogOut, ChevronDown, UserCircle, RefreshCw } from 'lucide-react';
+import { Building2, LogIn, Menu, X, LogOut, ChevronDown, UserCircle, RefreshCw } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-
-const NAV = [
-  { label: 'Discover',  to: '/' },
-  { label: 'Builders',  to: '/builders' },
-  { label: 'Investors', to: '/investors' },
-  { label: 'Projects',  to: '/projects' },
-];
 
 export default function Navbar() {
   const [open,     setOpen]     = useState(false);
@@ -29,6 +24,13 @@ export default function Navbar() {
 
   const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
   const dashDest  = role === 'investor' ? '/investor-dashboard' : '/dashboard';
+
+  // Close this menu when the dashboard drawer signals it is opening
+  useEffect(() => {
+    const handler = () => setOpen(false);
+    window.addEventListener('builderai:close-navbar', handler);
+    return () => window.removeEventListener('builderai:close-navbar', handler);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -60,6 +62,23 @@ export default function Navbar() {
     navigate('/');
   }
 
+  function toggleMobileMenu() {
+    if (!open) {
+      // Signal the dashboard drawer to close before we open
+      window.dispatchEvent(new CustomEvent('builderai:close-sidebar'));
+    }
+    setOpen(v => !v);
+  }
+
+  // Full ordered nav list for both desktop and mobile
+  const navItems = [
+    { label: 'Discover',   to: '/' },
+    ...(isAuthenticated ? [{ label: 'Dashboard', to: dashDest }] : []),
+    { label: 'Builders',  to: '/builders' },
+    { label: 'Investors', to: '/investors' },
+    { label: 'Projects',  to: '/projects' },
+  ];
+
   return (
     <header className={`sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b transition-all duration-300
       ${scrolled ? 'border-slate-200 shadow-soft' : 'border-transparent shadow-none'}`}>
@@ -78,13 +97,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {[
-            { label: 'Discover',   to: '/' },
-            ...(isAuthenticated ? [{ label: 'Dashboard', to: dashDest }] : []),
-            { label: 'Builders',  to: '/builders' },
-            { label: 'Investors', to: '/investors' },
-            { label: 'Projects',  to: '/projects' },
-          ].map(({ label, to }) => (
+          {navItems.map(({ label, to }) => (
             <NavLink
               key={to}
               to={to}
@@ -106,7 +119,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right side: logged-out = AI Assistant btn | logged-in = user pill */}
+        {/* Right side: logged-out = Login btn | logged-in = user pill */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           {isAuthenticated ? (
             <div className="relative" ref={dropdownRef}>
@@ -173,7 +186,7 @@ export default function Navbar() {
         {/* Mobile toggle */}
         <button
           className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-50"
-          onClick={() => setOpen(!open)}
+          onClick={toggleMobileMenu}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -182,14 +195,14 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-1 origin-top animate-slide-down">
-          {NAV.map(({ label, to }) => (
+          {navItems.map(({ label, to }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/' || to === dashDest}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
+                `px-4 py-2.5 rounded-xl text-sm font-medium
                  ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'}`
               }
             >
@@ -197,24 +210,12 @@ export default function Navbar() {
             </NavLink>
           ))}
           {isAuthenticated ? (
-            <>
-              <NavLink
-                to={dashDest}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
-                   ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'}`
-                }
-              >
-                <LayoutDashboard size={14} /> Dashboard
-              </NavLink>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50"
-              >
-                <LogOut size={14} /> Sign Out
-              </button>
-            </>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50"
+            >
+              <LogOut size={14} /> Sign Out
+            </button>
           ) : (
             <button
               onClick={() => { setOpen(false); handleLogin(); }}
