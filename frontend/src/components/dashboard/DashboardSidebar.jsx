@@ -14,12 +14,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { MOCK_DEALROOMS } from '../../data/dealrooms';
+import { BUILDER_LEADS, INVESTOR_LEADS } from '../../data/dashboard';
 
 const BUILDER_NAV = [
   { label: 'Dashboard',        to: '/dashboard',           icon: LayoutDashboard },
   { label: 'My Projects',      to: '/dashboard/projects',  icon: FolderKanban },
   { label: 'Investor Matches', to: '/dashboard/matches',   icon: Star },
-  { label: 'Dealroom',         to: '/dealroom',            icon: MessageSquare, badge: true },
+  { label: 'Dealroom',         to: '/dashboard/dealroom',  icon: MessageSquare, badge: true },
   { label: 'Analytics',        to: '/dashboard/analytics', icon: BarChart3 },
 ];
 
@@ -28,7 +29,7 @@ const INVESTOR_NAV = [
   { label: 'My Investments',  to: '/investor-dashboard/investments', icon: Wallet },
   { label: 'Builder Matches', to: '/investor-dashboard/matches',     icon: Users, badge: true },
   { label: 'Builders Feed',   to: '/investor-dashboard/feed',        icon: List },
-  { label: 'Dealroom',        to: '/dealroom',                       icon: MessageSquare, badge: true },
+  { label: 'Dealroom',        to: '/investor-dashboard/dealroom',    icon: MessageSquare, badge: true },
   { label: 'Analytics',       to: '/investor-dashboard/analytics',   icon: BarChart3 },
 ];
 
@@ -37,8 +38,8 @@ export default function DashboardSidebar() {
   const navigate = useNavigate();
   const nav = role === 'builder' ? BUILDER_NAV : INVESTOR_NAV;
 
-  const totalUnread = MOCK_DEALROOMS.reduce((s, d) => s + d.unread_count, 0);
-  const matchCount  = role === 'investor' ? 7 : 0;
+  const totalUnread = MOCK_DEALROOMS.reduce((s, d) => s + (d.unread_count || 0), 0);
+  const matchCount  = role === 'investor' ? BUILDER_LEADS.length : INVESTOR_LEADS.length;
 
   const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
 

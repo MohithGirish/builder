@@ -87,7 +87,9 @@ function InvestmentCard({ inv }) {
 
 export default function MyInvestments() {
   const totalInvested = MY_INVESTMENTS.reduce((s, i) => s + i.invested, 0);
-  const avgROI = Math.round(MY_INVESTMENTS.reduce((s, i) => s + i.roi, 0) / MY_INVESTMENTS.length);
+  const avgROI = MY_INVESTMENTS.length
+    ? Math.round(MY_INVESTMENTS.reduce((s, i) => s + i.roi, 0) / MY_INVESTMENTS.length)
+    : 0;
   const active = MY_INVESTMENTS.filter((i) => i.status === 'active').length;
 
   return (
@@ -121,9 +123,22 @@ export default function MyInvestments() {
 
       {/* List */}
       <div className="flex flex-col gap-4">
-        {MY_INVESTMENTS.map((inv) => (
-          <InvestmentCard key={inv.id} inv={inv} />
-        ))}
+        {MY_INVESTMENTS.length > 0 ? (
+          MY_INVESTMENTS.map((inv) => (
+            <InvestmentCard key={inv.id} inv={inv} />
+          ))
+        ) : (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-card">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+              <ArrowLeft size={22} className="text-slate-400 rotate-180" />
+            </div>
+            <p className="font-semibold text-slate-600 mb-1">No Investments Yet</p>
+            <p className="text-slate-400 text-sm">Browse projects and express investment interest to get started.</p>
+            <Link to="/projects" className="inline-block mt-4 text-sm font-semibold text-brand-600 hover:text-brand-700">
+              Browse Projects →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

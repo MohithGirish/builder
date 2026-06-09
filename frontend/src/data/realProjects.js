@@ -316,7 +316,7 @@ export const REAL_PROJECTS = [
       ],
       unitTypes: [
         {
-          type: 'Type 1NE',
+          type: 'Type ONE',
           facing: 'East',
           builtUp: '5,896 Sq.Ft.',
           bedrooms: '4 Bedrooms',
@@ -326,7 +326,7 @@ export const REAL_PROJECTS = [
           features: 'Family Lounge · Home Theatre · 2 Large Sitouts · L-Shape Balcony',
         },
         {
-          type: 'Type 2WO',
+          type: 'Type TWO',
           facing: 'East',
           builtUp: '6,278 Sq.Ft.',
           bedrooms: '4 Bedrooms',
@@ -336,7 +336,7 @@ export const REAL_PROJECTS = [
           features: 'Family Lounge · Home Theatre · 1 Large Sitout · L-Shape Balcony',
         },
         {
-          type: 'Type 3HREE',
+          type: 'Type THREE',
           facing: 'West',
           builtUp: '5,662 Sq.Ft.',
           bedrooms: '4 Bedrooms',
@@ -346,7 +346,7 @@ export const REAL_PROJECTS = [
           features: 'Family Lounge · Home Theatre · 1 Large Sitout · L-Shape Balcony',
         },
         {
-          type: 'Type 4OUR',
+          type: 'Type FOUR',
           facing: 'West',
           builtUp: '5,962 Sq.Ft.',
           bedrooms: '4 Bedrooms',

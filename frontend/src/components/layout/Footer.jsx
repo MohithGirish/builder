@@ -110,9 +110,9 @@ export default function Footer() {
             real-estate, infrastructure, and venture projects.
           </p>
           <div className="space-y-2 text-sm text-slate-400">
-            <div className="flex items-center gap-2"><Mail size={14} /><span>sales@e-infra.in</span></div>
-            <div className="flex items-center gap-2"><Phone size={14} /><span>+91 90 90 366 366</span></div>
-            <div className="flex items-center gap-2"><Globe size={14} /><span>www.e-infra.in</span></div>
+            <div className="flex items-center gap-2"><Mail size={14} /><span>contact@layeredai.us</span></div>
+            <div className="flex items-center gap-2"><Phone size={14} /><span>+91 123456789</span></div>
+            <div className="flex items-center gap-2"><Globe size={14} /><a href="https://layeredai.us/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-400 transition-colors">layeredai.us</a></div>
             <div className="flex items-center gap-2"><MapPin size={14} /><span>Mumbai, India</span></div>
           </div>
         </div>

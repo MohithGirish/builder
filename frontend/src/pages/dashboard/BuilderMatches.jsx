@@ -20,10 +20,10 @@ const TABS = [
 ];
 
 const STAT_CHIPS = [
-  { label: 'Total Leads',      value: '6',              icon: '👥' },
-  { label: 'Avg Match Score',  value: '90%',            icon: '📊' },
-  { label: 'Verified',         value: '6',              icon: '✅' },
-  { label: 'Funding Range',    value: '₹50-1,000 Cr',  icon: '💰' },
+  { label: 'Total Leads',     value: BUILDER_LEADS.length || '—',                                                       icon: '👥' },
+  { label: 'Avg Match Score', value: BUILDER_LEADS.length ? Math.round(BUILDER_LEADS.reduce((a, b) => a + b.match_score, 0) / BUILDER_LEADS.length) + '%' : '—', icon: '📊' },
+  { label: 'Verified',        value: BUILDER_LEADS.filter(b => b.is_verified).length || '—',                            icon: '✅' },
+  { label: 'Funding Range',   value: BUILDER_LEADS.length ? `₹${Math.min(...BUILDER_LEADS.map(b => b.funding_req))} Cr+` : '—', icon: '💰' },
 ];
 
 function BuilderLeadCard({ builder }) {

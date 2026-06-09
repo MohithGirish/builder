@@ -22,10 +22,10 @@ const TABS = [
 ];
 
 const STAT_CHIPS = [
-  { label: 'Total Matches',      value: '6',           icon: '👥' },
-  { label: 'Avg Match Score',    value: '90%',          icon: '📊' },
-  { label: 'Verified',           value: '5',            icon: '✅' },
-  { label: 'Investment Range',   value: '₹10-500 Cr',  icon: '💰' },
+  { label: 'Total Matches',    value: INVESTOR_LEADS.length || '—',                                                        icon: '👥' },
+  { label: 'Avg Match Score',  value: INVESTOR_LEADS.length ? Math.round(INVESTOR_LEADS.reduce((a, i) => a + i.match_score, 0) / INVESTOR_LEADS.length) + '%' : '—', icon: '📊' },
+  { label: 'Verified',         value: INVESTOR_LEADS.filter(i => i.is_verified).length || '—',                             icon: '✅' },
+  { label: 'Investment Range', value: INVESTOR_LEADS.length ? `₹${Math.min(...INVESTOR_LEADS.map(i => parseInt(i.investment_range))) || '—'} Cr+` : '—', icon: '💰' },
 ];
 
 function InvestorLeadCard({ inv }) {

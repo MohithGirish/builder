@@ -43,7 +43,7 @@ export default function Builders() {
   }, [search, location, sector, verifiedOnly]);
 
   const totalProjects = BUILDERS.reduce((a, b) => a + b.projects, 0);
-  const totalValue    = '₹8,346 Cr+';
+  const totalValue    = BUILDERS.length > 0 ? '₹8,346 Cr+' : '';
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = visible.length < filtered.length;
@@ -70,12 +70,16 @@ export default function Builders() {
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white">
             <CheckCircle2 size={12} /> {BUILDERS.filter((b) => b.verified).length} Verified Builders
           </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-            <TrendingUp size={12} /> {totalValue} Portfolio Value
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
-            <Briefcase size={12} /> {totalProjects}+ Projects Completed
-          </span>
+          {totalValue && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
+              <TrendingUp size={12} /> {totalValue} Portfolio Value
+            </span>
+          )}
+          {totalProjects > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
+              <Briefcase size={12} /> {totalProjects}+ Projects Completed
+            </span>
+          )}
         </div>
       </div>
 
@@ -95,14 +99,22 @@ export default function Builders() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         {filtered.length === 0 ? (
           <div className="text-center py-24 text-slate-400">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="font-semibold text-slate-600">No builders match your filters.</p>
-            <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <Briefcase size={28} className="text-slate-400" />
+            </div>
+            <p className="font-semibold text-slate-600 mb-1">
+              {BUILDERS.length === 0 ? 'Builders Coming Soon' : 'No builders match your filters.'}
+            </p>
+            <p className="text-sm mt-1">
+              {BUILDERS.length === 0
+                ? 'The builder directory launches soon. Register now to be among the first.'
+                : 'Try adjusting your search or filters.'}
+            </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-slate-400 mb-4">{filtered.length} builders found</p>
-            <div className={view === 'grid' ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4'}>
+            <div className={view === 'grid' ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0' : 'flex flex-col gap-4'}>
               {visible.map((b) => <BuilderCard key={b.id} builder={b} />)}
             </div>
 

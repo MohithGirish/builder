@@ -121,9 +121,19 @@ export default function BuilderDashboard() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {INVESTOR_RECOMMENDATIONS.map((inv) => (
-            <InvestorRecommendCard key={inv.id} inv={inv} />
-          ))}
+          {INVESTOR_RECOMMENDATIONS.length > 0 ? (
+            INVESTOR_RECOMMENDATIONS.map((inv) => (
+              <InvestorRecommendCard key={inv.id} inv={inv} />
+            ))
+          ) : (
+            <div className="text-center py-10 text-slate-400">
+              <Sparkles size={28} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-semibold text-slate-500">AI Matches Coming Soon</p>
+              <p className="text-xs mt-1 max-w-xs mx-auto">
+                Once your project profile is complete the AI engine will surface investor matches here.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

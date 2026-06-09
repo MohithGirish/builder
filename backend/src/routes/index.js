@@ -13,6 +13,8 @@ const authRoutes     = require('./auth.routes');
 const userRoutes     = require('./user.routes');
 const dealroomRoutes = require('./dealroom.routes');
 const projectRoutes  = require('./project.routes');
+const quoteRoutes    = require('./quote.routes');
+const fxRoutes       = require('./fx.routes');
 
 const router = Router();
 
@@ -20,6 +22,8 @@ router.use('/auth',      authRoutes);
 router.use('/users',     userRoutes);
 router.use('/dealrooms', dealroomRoutes);
 router.use('/projects',  projectRoutes);
+router.use('/quotes',    quoteRoutes);
+router.use('/fx',        fxRoutes);
 
 router.get('/health', (req, res) => {
   res.json({

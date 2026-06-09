@@ -8,7 +8,12 @@
  * timeline, and feature tags. Consumed by the Projects page and the Home page
  * discover section.
  */
-export const PROJECTS = [
+/* Mock investment projects have been removed. Investment projects will be
+   fetched from the backend API once the builder project registration flow
+   is complete. Filter configuration arrays below are retained for the UI. */
+export const PROJECTS = [];
+
+const _REMOVED_PROJECTS = [
   {
     id: 'p1',
     title: 'Skyline Towers — Luxury Residential Complex',

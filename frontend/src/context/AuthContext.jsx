@@ -49,7 +49,10 @@ export function AuthProvider({ children }) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ refresh_token: rt }),
     })
-      .then(r => r.json())
+      .then(async r => {
+        if (!r.ok) throw new Error('Session expired');
+        try { return await r.json(); } catch { throw new Error('Session expired'); }
+      })
       .then(json => {
         if (!json.success) throw new Error('Session expired');
         accessTokenRef.current = json.data.tokens.access_token;
@@ -79,24 +82,40 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const res  = await fetch(`${API}/api/v1/auth/login`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, password }),
-    });
-    const json = await res.json();
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+    } catch {
+      throw new Error('Unable to connect to server. Please ensure the backend is running.');
+    }
+    let json;
+    try { json = await res.json(); } catch {
+      throw new Error('Server returned an unexpected response. Please try again.');
+    }
     if (!res.ok) throw new Error(json.error?.message || 'Invalid email or password.');
     _applySession(json.data);
     return json.data.user;
   }
 
   async function register(userData) {
-    const res  = await fetch(`${API}/api/v1/auth/register`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(userData),
-    });
-    const json = await res.json();
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/auth/register`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(userData),
+      });
+    } catch {
+      throw new Error('Unable to connect to server. Please ensure the backend is running.');
+    }
+    let json;
+    try { json = await res.json(); } catch {
+      throw new Error('Server returned an unexpected response. Please try again.');
+    }
     if (!res.ok) throw new Error(json.error?.message || 'Registration failed.');
     _applySession(json.data);
     return json.data.user;

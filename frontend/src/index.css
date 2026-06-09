@@ -13,7 +13,7 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
     font-family: 'Inter', system-ui, sans-serif;
     @apply text-slate-800 bg-white;
@@ -64,6 +64,22 @@
   /* ── Cards ────────────────────────────────────────────────────────────── */
   .card {
     @apply bg-white rounded-2xl shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
+    border-top: 2px solid transparent;
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  }
+  .card:hover {
+    border-top-color: rgba(13,148,136,0.25);
+  }
+
+  /* ── Dark stat card (used in stats section) ──────────────────────────── */
+  .card-dark {
+    @apply rounded-2xl transition-all duration-300;
+    background: rgba(15,23,42,0.7);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .card-dark:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.12);
   }
 
   /* ── Tags / pills ─────────────────────────────────────────────────────── */
@@ -129,30 +145,44 @@
 .leaflet-popup-tip-container { margin-top: -1px; }
 
 /* ── Aurora / mesh gradient backdrop ──────────────────────────────────────
-   Soft animated colour blobs for hero & showcase panels. Pair with a dark
-   base background. Children should sit in a relative/z-10 wrapper. */
+   Three animated colour blobs. Pair with a dark base. z-10 on children. */
 .aurora { position: relative; overflow: hidden; }
 .aurora::before,
 .aurora::after {
   content: ''; position: absolute; border-radius: 9999px;
-  filter: blur(70px); opacity: 0.55; z-index: 0; pointer-events: none;
+  filter: blur(90px); z-index: 0; pointer-events: none;
 }
 .aurora::before {
-  width: 460px; height: 460px; top: -140px; left: -120px;
-  background: radial-gradient(circle at 30% 30%, #2dd4bf, transparent 70%);
-  animation: float 9s ease-in-out infinite;
+  width: 640px; height: 640px; top: -220px; left: -180px;
+  background: radial-gradient(circle at 35% 35%, rgba(13,148,136,0.55), transparent 65%);
+  animation: float 11s ease-in-out infinite;
 }
 .aurora::after {
-  width: 420px; height: 420px; bottom: -160px; right: -100px;
-  background: radial-gradient(circle at 70% 70%, #f59e0b, transparent 70%);
-  animation: float 11s ease-in-out infinite reverse;
+  width: 560px; height: 560px; bottom: -220px; right: -140px;
+  background: radial-gradient(circle at 65% 65%, rgba(245,158,11,0.40), transparent 65%);
+  animation: float 14s ease-in-out infinite reverse;
+}
+
+/* Third aurora blob — positioned centrally, slow pulse */
+.aurora-mid {
+  position: absolute; border-radius: 9999px; pointer-events: none; z-index: 0;
+  width: 480px; height: 480px; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(45,212,191,0.12), transparent 65%);
+  filter: blur(80px);
+  animation: float 18s ease-in-out infinite;
+}
+
+/* ── Dot-grid pattern for dark sections ────────────────────────────────── */
+.hero-dot-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 /* ── Scroll-reveal: hidden until the Reveal component flips `data-show` ──── */
-[data-reveal] { opacity: 0; transform: translateY(24px); will-change: opacity, transform; }
+[data-reveal] { opacity: 0; transform: translateY(28px); will-change: opacity, transform; }
 [data-reveal][data-show='true'] {
   opacity: 1; transform: translateY(0);
-  transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Skeleton shimmer for loading states ──────────────────────────────── */

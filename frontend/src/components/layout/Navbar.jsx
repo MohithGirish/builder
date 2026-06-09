@@ -78,11 +78,17 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {NAV.map(({ label, to }) => (
+          {[
+            { label: 'Discover',   to: '/' },
+            ...(isAuthenticated ? [{ label: 'Dashboard', to: dashDest }] : []),
+            { label: 'Builders',  to: '/builders' },
+            { label: 'Investors', to: '/investors' },
+            { label: 'Projects',  to: '/projects' },
+          ].map(({ label, to }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/' || to === dashDest}
               className={({ isActive }) =>
                 `relative flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
                  ${isActive ? 'text-brand-700 bg-brand-50' : 'text-slate-600 hover:text-brand-700 hover:bg-slate-50'}`
@@ -128,13 +134,6 @@ export default function Navbar() {
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
                   </div>
-                  <button
-                    onClick={() => { setUserOpen(false); navigate(dashDest); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <LayoutDashboard size={13} className="text-brand-600" />
-                    Go to Dashboard
-                  </button>
                   <button
                     onClick={() => { setUserOpen(false); navigate('/profile'); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
@@ -199,12 +198,16 @@ export default function Navbar() {
           ))}
           {isAuthenticated ? (
             <>
-              <button
-                onClick={() => { setOpen(false); navigate(dashDest); }}
-                className="mt-2 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-brand-700 bg-brand-50"
+              <NavLink
+                to={dashDest}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
+                   ${isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-50'}`
+                }
               >
                 <LayoutDashboard size={14} /> Dashboard
-              </button>
+              </NavLink>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50"

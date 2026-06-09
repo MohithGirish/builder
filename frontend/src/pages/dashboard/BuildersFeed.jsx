@@ -9,8 +9,8 @@
  */
 import { useState } from 'react';
 import { CheckCircle2, MapPin, Star, Briefcase, TrendingUp, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { BUILDERS } from '../../data/builders';
+import { Link } from 'react-router-dom';
 
 function FeedBuilderCard({ builder }) {
   return (
@@ -101,11 +101,27 @@ export default function BuildersFeed() {
       </div>
 
       {/* Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.slice(0, 9).map((b) => (
-          <FeedBuilderCard key={b.id} builder={b} />
-        ))}
-      </div>
+      {filtered.length > 0 ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.slice(0, 9).map((b) => (
+            <FeedBuilderCard key={b.id} builder={b} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-white rounded-2xl shadow-card">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+            <Briefcase size={22} className="text-slate-400" />
+          </div>
+          <p className="font-semibold text-slate-600 mb-1">
+            {BUILDERS.length === 0 ? 'Builder Directory Coming Soon' : 'No builders match your search.'}
+          </p>
+          <p className="text-slate-400 text-sm">
+            {BUILDERS.length === 0
+              ? 'Verified builders will appear here once they register on the platform.'
+              : 'Try a different search term.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

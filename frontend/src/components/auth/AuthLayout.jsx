@@ -18,7 +18,7 @@ const STATS = [
 
 export default function AuthLayout({ children, headline, sub, highlights = [] }) {
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div className="h-screen overflow-hidden grid lg:grid-cols-2">
 
       {/* ── Branded showcase (desktop only) ───────────────────────────── */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 aurora bg-slate-950 overflow-hidden">
@@ -68,7 +68,7 @@ export default function AuthLayout({ children, headline, sub, highlights = [] })
 
       {/* ── Form column ───────────────────────────────────────────────── */}
       <div
-        className="flex items-center justify-center py-12 px-4 sm:px-8"
+        className="flex items-center justify-center py-12 px-4 sm:px-8 overflow-y-auto"
         style={{ background: 'linear-gradient(135deg,#f8fafb 0%,#fff8f3 50%,#f0fdfa 100%)' }}
       >
         <div className="w-full max-w-md animate-fade-up">{children}</div>

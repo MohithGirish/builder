@@ -35,12 +35,14 @@ import OnboardingChat from './pages/OnboardingChat';
 import Profile from './pages/Profile';
 
 // Public pages
-import Home          from './pages/Home';
-import Builders      from './pages/Builders';
-import Investors     from './pages/Investors';
-import Projects      from './pages/Projects';
-import Dealroom      from './pages/Dealroom';
-import ProjectDetail from './pages/ProjectDetail';
+import Home                from './pages/Home';
+import Builders            from './pages/Builders';
+import Investors           from './pages/Investors';
+import Projects            from './pages/Projects';
+import Dealroom            from './pages/Dealroom';
+import ProjectDetail       from './pages/ProjectDetail';
+import QuotePage           from './pages/QuotePage';
+import QuoteResponsePage   from './pages/QuoteResponsePage';
 
 // Dashboard pages
 import BuilderDashboard   from './pages/dashboard/BuilderDashboard';
@@ -58,7 +60,12 @@ export default function App() {
       <BrowserRouter>
         <ScrollToTop />
         <div className="min-h-screen flex flex-col">
-          <Navbar />
+          {/* Hide navbar on full-screen auth pages */}
+          <Routes>
+            <Route path="/login"    element={null} />
+            <Route path="/register" element={null} />
+            <Route path="*"         element={<Navbar />} />
+          </Routes>
           <main className="flex-1">
             <Routes>
               {/* ── Auth pages ─────────────────────────────────── */}
@@ -106,7 +113,7 @@ export default function App() {
               <Route path="/builders"  element={<Builders />} />
               <Route path="/investors" element={<Investors />} />
               <Route path="/projects"  element={<Projects />} />
-              <Route path="/dealroom"  element={<Dealroom />} />
+              <Route path="/dealroom"  element={<Navigate to="/dashboard/dealroom" replace />} />
 
               {/* ── Real project detail (protected — auth + onboarding) ── */}
               <Route
@@ -117,6 +124,10 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* ── Quote pages (public — accessible via email links) ── */}
+              <Route path="/quote/:id"                element={<QuotePage />} />
+              <Route path="/quote-response/:token"    element={<QuoteResponsePage />} />
 
               {/* ── Builder dashboard (protected + onboarding required) ── */}
               <Route
@@ -131,6 +142,7 @@ export default function App() {
                 <Route path="projects"   element={<MyProjects />} />
                 <Route path="matches"    element={<InvestorMatches />} />
                 <Route path="analytics"  element={<DashboardAnalytics />} />
+                <Route path="dealroom"   element={<Dealroom />} />
               </Route>
 
               {/* ── Investor dashboard (protected + onboarding required) ── */}
@@ -147,6 +159,7 @@ export default function App() {
                 <Route path="matches"         element={<BuilderMatches />} />
                 <Route path="feed"            element={<BuildersFeed />} />
                 <Route path="analytics"       element={<DashboardAnalytics />} />
+                <Route path="dealroom"        element={<Dealroom />} />
               </Route>
 
               {/* Catch-all */}
@@ -165,6 +178,7 @@ export default function App() {
             <Route path="/onboarding/chat"      element={null} />
             <Route path="/onboarding/retake"    element={null} />
             <Route path="/profile"              element={null} />
+            <Route path="/quote-response/*"     element={null} />
             <Route path="*"                     element={<Footer />} />
           </Routes>
         </div>

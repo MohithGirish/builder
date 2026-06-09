@@ -140,6 +140,7 @@ export default function Login() {
                 <label className="text-xs font-semibold text-slate-600">Password</label>
                 <button
                   type="button"
+                  onClick={() => setApiError('Password reset is coming soon. Please contact support.')}
                   className="text-xs text-brand-600 hover:underline font-medium"
                   tabIndex={-1}
                 >

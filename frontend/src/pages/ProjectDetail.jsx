@@ -4,12 +4,12 @@
  * Looks up a project from REAL_PROJECTS by URL param id and renders a rich
  * multi-tab detail view: Overview (with inline location map), Unit Types,
  * Floor Plan, Amenities, Specifications, and Location (Google Maps + nearby).
- * A sticky sidebar shows pricing, developer contact, site-visit booking, and
- * an Invest button visible only to investors. Includes a lightbox for gallery.
- * Scrolls to the top of the page on every project load.
+ * A sticky sidebar shows pricing with a live INR/USD/AED/GBP currency toggle,
+ * developer contact, site-visit booking, and an Invest button for investors.
+ * Includes a lightbox for gallery. Scrolls to the top on every project load.
  */
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState, useLayoutEffect } from 'react';
+import { useState, useLayoutEffect, useEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Shield, ArrowLeft, CheckCircle2,
   Building2, Layers, Clock, ChevronRight, X, ExternalLink,
@@ -17,7 +17,40 @@ import {
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
 import { useAuth } from '../context/AuthContext';
-import NearbyGoogleMap from '../components/map/NearbyGoogleMap';
+import NearbyGoogleMap   from '../components/map/NearbyGoogleMap';
+import QuoteRequestModal from '../components/quotes/QuoteRequestModal';
+import SiteVisitModal    from '../components/quotes/SiteVisitModal';
+import CurrencySelector  from '../components/project/CurrencySelector';
+
+/* ── Currency conversion helpers ─────────────────────────────────────────── */
+
+function parseInrAmount(token) {
+  const s = token.replace(/₹/, '').replace(/,/g, '').trim();
+  if (/Cr$/i.test(s))   return parseFloat(s) * 1e7;
+  if (/Lakh$/i.test(s)) return parseFloat(s) * 1e5;
+  return parseFloat(s) || 0;
+}
+
+function formatConverted(amount, currency) {
+  const symbol = { USD: '$', AED: 'AED ', GBP: '£' }[currency] || '';
+  if (amount >= 1_000_000)  return `${symbol}${(amount / 1_000_000).toFixed(2)} M`;
+  if (amount >= 1_000)      return `${symbol}${Math.round(amount).toLocaleString('en-US')}`;
+  return `${symbol}${amount.toFixed(0)}`;
+}
+
+function convertPriceString(priceRange, currency, rates) {
+  if (!priceRange || /^(on request|available on request)$/i.test(priceRange.trim())) {
+    return priceRange;
+  }
+  if (currency === 'INR' || !rates || !rates[currency]) return priceRange;
+  const rate = rates[currency];
+  return priceRange.replace(/₹([\d,]+(?:\.\d+)?)(\s*(?:Cr|Lakh))?/gi, (_, num, suffix) => {
+    const amount = parseInrAmount('₹' + num + (suffix || ''));
+    return formatConverted(amount * rate, currency);
+  });
+}
+
+const SESSION_KEY = 'builderai_currency';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -26,6 +59,32 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState('overview');
   const [lightbox, setLightbox] = useState(null);
   const [investConfirm, setInvestConfirm] = useState(false);
+  const [showQuote,     setShowQuote]     = useState(false);
+  const [showVisit,     setShowVisit]     = useState(false);
+
+  /* ── FX rates state ────────────────────────────────────────────────────── */
+  const [currency,   setCurrency]   = useState(() => sessionStorage.getItem(SESSION_KEY) || 'INR');
+  const [fxRates,    setFxRates]    = useState(null);
+  const [fxUpdated,  setFxUpdated]  = useState(null);
+  const [fxFallback, setFxFallback] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/v1/fx/rates')
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json?.success) {
+          setFxRates(json.data.rates);
+          setFxUpdated(json.data.updatedAt);
+          setFxFallback(json.data.source === 'fallback');
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function handleCurrencyChange(code) {
+    setCurrency(code);
+    sessionStorage.setItem(SESSION_KEY, code);
+  }
 
   /* Scroll to top whenever the project id changes — runs before paint */
   useLayoutEffect(() => {
@@ -126,7 +185,7 @@ export default function ProjectDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-[1fr_320px] gap-8">
 
         {/* ── Left: Tabs content ─────────────────────────────────── */}
-        <div>
+        <div className="min-w-0">
           {/* Tab nav */}
           <div className="flex gap-1 bg-white rounded-2xl p-1 shadow-sm border border-slate-100 mb-6 overflow-x-auto no-scrollbar">
             {tabs.map(t => (
@@ -399,7 +458,7 @@ export default function ProjectDetail() {
         </div>
 
         {/* ── Right: Sticky sidebar ─────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
 
           {/* ── Invest Now (investors only) ───────────────────── */}
           {role === 'investor' && (
@@ -454,8 +513,26 @@ export default function ProjectDetail() {
             className="rounded-2xl p-6 text-white shadow-lg"
             style={{ background: project.gradient }}
           >
+            <CurrencySelector
+              currency={currency}
+              onCurrencyChange={handleCurrencyChange}
+              rates={fxRates}
+              updatedAt={fxUpdated}
+              fallback={fxFallback}
+              projectGradient={project.gradient}
+            />
             <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">Price Range</p>
-            <p className="text-2xl font-extrabold mb-4">{project.priceRange}</p>
+            {currency === 'INR' || !fxRates ? (
+              <p className="text-2xl font-extrabold mb-4">{project.priceRange}</p>
+            ) : (
+              <div className="mb-4">
+                <p className="text-2xl font-extrabold leading-snug">
+                  {convertPriceString(project.priceRange, currency, fxRates)}
+                </p>
+                {/* Keep original ₹ figure visible */}
+                <p className="text-sm text-white/60 mt-1">{project.priceRange}</p>
+              </div>
+            )}
             <div className="space-y-2 border-t border-white/20 pt-4">
               {[
                 { icon: Clock, label: 'Possession', value: project.possession },
@@ -511,6 +588,7 @@ export default function ProjectDetail() {
             </div>
 
             <button
+              onClick={() => setShowVisit(true)}
               className="w-full py-3 rounded-xl text-white text-sm font-bold transition-opacity hover:opacity-90"
               style={{ background: project.gradient }}
             >
@@ -518,6 +596,7 @@ export default function ProjectDetail() {
             </button>
 
             <button
+              onClick={() => setShowQuote(true)}
               className="w-full mt-3 py-3 rounded-xl text-sm font-bold border-2 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
               style={{ borderColor: project.color, color: project.color }}
             >
@@ -558,6 +637,16 @@ export default function ProjectDetail() {
           </Link>
         </div>
       </div>
+
+      {/* ── Quote request modal ──────────────────────────────────── */}
+      {showQuote && (
+        <QuoteRequestModal project={project} onClose={() => setShowQuote(false)} />
+      )}
+
+      {/* ── Site visit modal ─────────────────────────────────────── */}
+      {showVisit && (
+        <SiteVisitModal project={project} onClose={() => setShowVisit(false)} />
+      )}
 
       {/* ── Lightbox overlay ─────────────────────────────────────── */}
       {lightbox !== null && project.images?.length && (

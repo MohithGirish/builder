@@ -79,14 +79,18 @@ export default function Projects() {
 
         <div className="flex flex-wrap gap-3">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white">
-            <CheckCircle2 size={12} /> {PROJECTS.length} Active Projects
+            <CheckCircle2 size={12} /> {REAL_PROJECTS.length} Featured Projects
           </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-            <TrendingUp size={12} /> ₹{totalGoal} Cr Total Funding Target
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
-            <IndianRupee size={12} /> ₹{totalFunding} Cr Already Raised
-          </span>
+          {totalGoal > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
+              <TrendingUp size={12} /> ₹{totalGoal} Cr Total Funding Target
+            </span>
+          )}
+          {totalFunding > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
+              <IndianRupee size={12} /> ₹{totalFunding} Cr Already Raised
+            </span>
+          )}
         </div>
       </div>
 
@@ -99,7 +103,7 @@ export default function Projects() {
           </div>
           <span className="text-xs text-slate-400 font-medium">{REAL_PROJECTS.length} live projects</span>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {REAL_PROJECTS.map(project => (
             <RealProjectCard key={project.id} project={project} />
           ))}
@@ -143,9 +147,17 @@ export default function Projects() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         {filtered.length === 0 ? (
           <div className="text-center py-24 text-slate-400">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="font-semibold text-slate-600">No projects match your filters.</p>
-            <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <TrendingUp size={28} className="text-slate-400" />
+            </div>
+            <p className="font-semibold text-slate-600 mb-1">
+              {PROJECTS.length === 0 ? 'More Projects Coming Soon' : 'No projects match your filters.'}
+            </p>
+            <p className="text-sm mt-1">
+              {PROJECTS.length === 0
+                ? 'Additional investment projects will be listed here once builders register their projects.'
+                : 'Try adjusting your search or filters.'}
+            </p>
           </div>
         ) : (
           <>

@@ -6,11 +6,12 @@
  * portfolio value stats, sector tags (up to 3 with overflow count), and a
  * "View Profile" CTA button. Accepts a builder data object as a prop.
  */
+import { Link } from 'react-router-dom';
 import { MapPin, Briefcase, TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react';
 import StarRating from '../ui/StarRating';
 
 export default function BuilderCard({ builder, compact = false }) {
-  const { initials, name, company, location, rating, projects, totalValue, sectors, verified, image } = builder;
+  const { name, company, location, rating, projects, totalValue, sectors, verified, image, projectId } = builder;
 
   return (
     <div className="card group cursor-pointer overflow-hidden flex flex-col">
@@ -36,16 +37,10 @@ export default function BuilderCard({ builder, compact = false }) {
           </div>
         )}
 
-        {/* Avatar overlapping image bottom-left */}
-        <div className="absolute -bottom-5 left-4">
-          <div className="w-12 h-12 rounded-full border-2 border-white shadow-md avatar text-sm font-bold">
-            {initials}
-          </div>
-        </div>
       </div>
 
       {/* ── Content ── */}
-      <div className="pt-7 pb-4 px-4 flex flex-col gap-2 flex-1">
+      <div className="pt-4 pb-4 px-4 flex flex-col gap-2 flex-1">
 
         {/* Name + company */}
         <div>
@@ -91,9 +86,18 @@ export default function BuilderCard({ builder, compact = false }) {
         </div>
 
         {/* CTA */}
-        <button className="mt-auto btn-brand w-full py-2 text-xs">
-          View Profile <ArrowRight size={13} />
-        </button>
+        {projectId ? (
+          <Link
+            to={`/projects/${projectId}`}
+            className="mt-auto btn-brand w-full py-2 text-xs flex items-center justify-center gap-1"
+          >
+            View Project <ArrowRight size={13} />
+          </Link>
+        ) : (
+          <button className="mt-auto btn-brand w-full py-2 text-xs">
+            View Profile <ArrowRight size={13} />
+          </button>
+        )}
       </div>
     </div>
   );

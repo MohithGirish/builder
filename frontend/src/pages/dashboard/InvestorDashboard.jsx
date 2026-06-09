@@ -163,14 +163,24 @@ export default function InvestorDashboard() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <BuilderRecommendCard builder={featured} featured />
-          <div className="lg:col-span-2 flex flex-col gap-3">
-            {rest.map((b) => (
-              <BuilderRecommendCard key={b.id} builder={b} />
-            ))}
+        {BUILDER_RECOMMENDATIONS.length === 0 ? (
+          <div className="text-center py-10 text-slate-400">
+            <Sparkles size={28} className="mx-auto mb-3 text-slate-300" />
+            <p className="text-sm font-semibold text-slate-500">AI Matches Coming Soon</p>
+            <p className="text-xs mt-1 max-w-xs mx-auto">
+              Complete your investor profile so the AI engine can surface the best builder matches for you.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {featured && <BuilderRecommendCard builder={featured} featured />}
+            <div className="lg:col-span-2 flex flex-col gap-3">
+              {rest.map((b) => (
+                <BuilderRecommendCard key={b.id} builder={b} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

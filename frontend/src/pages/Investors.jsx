@@ -42,7 +42,7 @@ export default function Investors() {
     });
   }, [search, location, type, verifiedOnly]);
 
-  const totalPortfolio = '₹9,520 Cr+';
+  const totalPortfolio = INVESTORS.length > 0 ? '₹9,520 Cr+' : '';
   const totalActive    = INVESTORS.reduce((a, i) => a + i.activeInvestments, 0);
 
   const visible = filtered.slice(0, page * PAGE_SIZE);
@@ -69,12 +69,16 @@ export default function Investors() {
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white">
             <CheckCircle2 size={12} /> {INVESTORS.filter((i) => i.verified).length} Verified Investors
           </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-            <BarChart2 size={12} /> {totalPortfolio} Total Portfolio
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
-            <DollarSign size={12} /> {totalActive}+ Active Investments
-          </span>
+          {totalPortfolio && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
+              <BarChart2 size={12} /> {totalPortfolio} Total Portfolio
+            </span>
+          )}
+          {totalActive > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
+              <DollarSign size={12} /> {totalActive}+ Active Investments
+            </span>
+          )}
         </div>
       </div>
 
@@ -94,9 +98,17 @@ export default function Investors() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
         {filtered.length === 0 ? (
           <div className="text-center py-24 text-slate-400">
-            <p className="text-4xl mb-3">🔍</p>
-            <p className="font-semibold text-slate-600">No investors match your filters.</p>
-            <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <BarChart2 size={28} className="text-slate-400" />
+            </div>
+            <p className="font-semibold text-slate-600 mb-1">
+              {INVESTORS.length === 0 ? 'Investor Directory Coming Soon' : 'No investors match your filters.'}
+            </p>
+            <p className="text-sm mt-1">
+              {INVESTORS.length === 0
+                ? 'The investor directory launches soon. Register now to list your fund.'
+                : 'Try adjusting your search or filters.'}
+            </p>
           </div>
         ) : (
           <>
