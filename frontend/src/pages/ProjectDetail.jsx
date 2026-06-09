@@ -170,13 +170,17 @@ export default function ProjectDetail() {
       {/* ── Quick stats bar ────────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-100 shadow-sm sticky top-[64px] z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex items-center gap-6 py-3 overflow-x-auto no-scrollbar">
-            {project.highlights.map(h => (
-              <div key={h.label} className="flex flex-col items-center shrink-0 px-4 border-r border-slate-100 last:border-0">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">{h.label}</span>
-                <span className="text-sm font-bold text-slate-800 whitespace-nowrap">{h.value}</span>
-              </div>
-            ))}
+          <div className="relative">
+            <div className="flex items-center gap-6 py-3 overflow-x-auto no-scrollbar">
+              {project.highlights.map(h => (
+                <div key={h.label} className="flex flex-col items-center shrink-0 px-4 border-r border-slate-100 last:border-0">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">{h.label}</span>
+                  <span className="text-sm font-bold text-slate-800 whitespace-nowrap">{h.value}</span>
+                </div>
+              ))}
+            </div>
+            {/* Scroll hint: right fade */}
+            <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" />
           </div>
         </div>
       </div>
@@ -187,18 +191,22 @@ export default function ProjectDetail() {
         {/* ── Left: Tabs content ─────────────────────────────────── */}
         <div className="min-w-0">
           {/* Tab nav */}
-          <div className="flex gap-1 bg-white rounded-2xl p-1 shadow-sm border border-slate-100 mb-6 overflow-x-auto no-scrollbar">
-            {tabs.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all
-                  ${activeTab === t.id ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                style={activeTab === t.id ? { background: project.gradient } : {}}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div className="relative mb-6">
+            <div className="flex gap-1 bg-white rounded-2xl p-1 shadow-sm border border-slate-100 overflow-x-auto no-scrollbar">
+              {tabs.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all
+                    ${activeTab === t.id ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  style={activeTab === t.id ? { background: project.gradient } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {/* Scroll hint: right fade — visible only when tabs overflow on small screens */}
+            <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent rounded-r-2xl pointer-events-none sm:hidden" />
           </div>
 
           {/* Tab content */}

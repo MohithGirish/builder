@@ -115,7 +115,7 @@ export default function BuilderMatches() {
     : BUILDER_LEADS.filter((b) => b.category === activeTab);
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-4 sm:p-6 max-w-4xl">
       {/* Back */}
       <Link to="/investor-dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:text-brand-800 mb-4">
         <ArrowLeft size={14} /> Back to Dashboard

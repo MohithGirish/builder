@@ -33,7 +33,7 @@ const INVESTOR_NAV = [
   { label: 'Analytics',       to: '/investor-dashboard/analytics',   icon: BarChart3 },
 ];
 
-export default function DashboardSidebar() {
+export default function DashboardSidebar({ onClose }) {
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
   const nav = role === 'builder' ? BUILDER_NAV : INVESTOR_NAV;
@@ -44,6 +44,7 @@ export default function DashboardSidebar() {
   const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
 
   async function handleLogout() {
+    onClose?.();
     await logout();
     navigate('/login');
   }
@@ -88,6 +89,7 @@ export default function DashboardSidebar() {
               key={to}
               to={to}
               end={to === '/dashboard' || to === '/investor-dashboard'}
+              onClick={onClose}
               className={({ isActive }) =>
                 `relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
