@@ -185,8 +185,10 @@ export default function Navbar() {
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-50"
+          className="md:hidden w-11 h-11 -m-1.5 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
           onClick={toggleMobileMenu}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>

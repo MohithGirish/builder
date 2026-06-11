@@ -28,10 +28,10 @@ export default function KPICard({ label, value, subtext, change, positive, icon,
 
       {/* Content */}
       <div className="min-w-0">
-        <p className="text-xs text-slate-400 font-medium mb-1 leading-snug">{label}</p>
+        <p className="text-xs text-slate-500 font-medium mb-1 leading-snug">{label}</p>
         <div className="flex items-baseline gap-1.5 flex-wrap">
           <span className="text-2xl font-extrabold text-slate-800 leading-none font-display tabular-nums">{value}</span>
-          {subtext && <span className="text-xs text-slate-400 font-medium">{subtext}</span>}
+          {subtext && <span className="text-xs text-slate-500 font-medium">{subtext}</span>}
         </div>
         {change && (
           <div className="mt-1.5">

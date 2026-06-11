@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronRight, ChevronLeft, FileText, CheckCircle2, Phone, Mail, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../lib/api';
 
 function getLayoutOptions(project) {
   if (project.sections?.unitTypes?.length) {
@@ -65,7 +66,7 @@ export default function QuoteRequestModal({ project, onClose }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/v1/quotes', {
+      const data = await apiFetch('/api/v1/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,8 +80,6 @@ export default function QuoteRequestModal({ project, onClose }) {
           requirements:      reqs.trim(),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || 'Something went wrong.');
       setSuccess(data.data);
     } catch (err) {
       setError(err.message);
@@ -109,7 +108,8 @@ export default function QuoteRequestModal({ project, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="text-white/60 hover:text-white transition-colors mt-0.5"
+            aria-label="Close dialog"
+            className="w-11 h-11 -m-2.5 flex items-center justify-center text-white/60 hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -190,12 +190,13 @@ export default function QuoteRequestModal({ project, onClose }) {
           {!success && step === 0 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="quote-name" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
                   Full Name
                 </label>
                 <div className="relative">
                   <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="quote-name"
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
@@ -206,12 +207,13 @@ export default function QuoteRequestModal({ project, onClose }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="quote-email" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
                   Email Address
                 </label>
                 <div className="relative">
                   <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="quote-email"
                     type="email"
                     value={email}
                     onChange={e => setEmailVal(e.target.value)}
@@ -219,16 +221,17 @@ export default function QuoteRequestModal({ project, onClose }) {
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400 text-sm text-slate-800 placeholder-slate-400 transition-colors"
                   />
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">The developer's response will be sent to this address.</p>
+                <p className="text-[11px] text-slate-500 mt-1">The developer's response will be sent to this address.</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="quote-phone" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
                   Phone Number
                 </label>
                 <div className="relative">
                   <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="quote-phone"
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
@@ -253,6 +256,7 @@ export default function QuoteRequestModal({ project, onClose }) {
                     <button
                       key={opt}
                       onClick={() => toggleLayout(opt)}
+                      aria-pressed={isOn}
                       className="text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all"
                       style={
                         isOn
@@ -290,6 +294,7 @@ export default function QuoteRequestModal({ project, onClose }) {
               <textarea
                 value={reqs}
                 onChange={e => setReqs(e.target.value)}
+                aria-label="Requirements, budget, and timeline"
                 rows={6}
                 placeholder="e.g. Looking for a 3 BHK facing east on a higher floor. Interested in the premium fittings package. Budget around ₹1.2 Cr. Ready to book by Q3 2026..."
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400 text-sm text-slate-800 placeholder-slate-400 transition-colors resize-none leading-relaxed"
@@ -299,7 +304,7 @@ export default function QuoteRequestModal({ project, onClose }) {
               </p>
 
               {error && (
-                <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <div role="alert" className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   <p className="text-red-600 text-sm font-medium">{error}</p>
                 </div>
               )}

@@ -13,6 +13,7 @@ import {
   MapPin, Briefcase, CheckCircle2, IndianRupee,
   Users, BarChart2, RefreshCw, Mail, ShieldCheck,
   Pencil, Check, X, ArrowRightLeft, TrendingUp,
+  Building2, Bot,
 } from 'lucide-react';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import { useAuth } from '../context/AuthContext';
@@ -74,7 +75,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="flex bg-[#f8fafc]" style={{ height: 'calc(100vh - 56px)' }}>
+    <div className="flex bg-[#f8fafc] h-viewport-minus-nav">
       <DashboardSidebar />
 
       <main className="flex-1 overflow-y-auto px-6 py-7">
@@ -115,7 +116,9 @@ export default function Profile() {
                         : 'linear-gradient(135deg,#f97316,#f59e0b)',
                     }}
                   >
-                    {role === 'investor' ? '📈 Investor' : '🏗️ Builder'}
+                    {role === 'investor'
+                      ? <><TrendingUp size={10} /> Investor</>
+                      : <><Building2 size={10} /> Builder</>}
                   </span>
 
                   {user?.is_verified && (
@@ -281,7 +284,7 @@ export default function Profile() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="text-3xl mb-3">🤖</div>
+                <Bot size={32} className="mx-auto mb-3 text-slate-300" />
                 <p className="text-sm text-slate-500 mb-4">
                   No preferences set yet. Complete the AI onboarding to get personalised matches.
                 </p>

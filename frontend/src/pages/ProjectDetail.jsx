@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import NearbyGoogleMap   from '../components/map/NearbyGoogleMap';
 import QuoteRequestModal from '../components/quotes/QuoteRequestModal';
 import SiteVisitModal    from '../components/quotes/SiteVisitModal';
@@ -69,8 +70,7 @@ export default function ProjectDetail() {
   const [fxFallback, setFxFallback] = useState(false);
 
   useEffect(() => {
-    fetch('/api/v1/fx/rates')
-      .then(r => r.ok ? r.json() : null)
+    apiFetch('/api/v1/fx/rates')
       .then(json => {
         if (json?.success) {
           setFxRates(json.data.rates);
@@ -664,14 +664,16 @@ export default function ProjectDetail() {
         >
           <button
             onClick={() => setLightbox(null)}
-            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+            aria-label="Close image viewer"
+            className="absolute top-2 right-2 w-12 h-12 flex items-center justify-center text-white/70 hover:text-white transition-colors"
           >
             <X size={28} />
           </button>
 
           {lightbox > 0 && (
             <button
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors text-3xl font-bold px-3 py-1"
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors text-3xl font-bold"
               onClick={e => { e.stopPropagation(); setLightbox(lightbox - 1); }}
             >
               ‹
@@ -698,7 +700,8 @@ export default function ProjectDetail() {
 
           {lightbox < project.images.length - 1 && (
             <button
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors text-3xl font-bold px-3 py-1"
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors text-3xl font-bold"
               onClick={e => { e.stopPropagation(); setLightbox(lightbox + 1); }}
             >
               ›

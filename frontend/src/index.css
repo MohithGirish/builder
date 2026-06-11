@@ -201,6 +201,27 @@
 }
 .link-underline:hover::after { width: 100%; }
 
+/* ── Mobile form-control font size ──────────────────────────────────────
+   iOS Safari auto-zooms the page when a focused form control's font-size is
+   under 16px. On small screens, lift text-sm/text-xs controls to 16px; the
+   attribute selector outranks the Tailwind utility class. */
+@media (max-width: 639px) {
+  input[class*='text-sm'], select[class*='text-sm'], textarea[class*='text-sm'],
+  input[class*='text-xs'], select[class*='text-xs'], textarea[class*='text-xs'] {
+    font-size: 1rem;
+  }
+}
+
+/* ── Viewport-fitted heights ──────────────────────────────────────────────
+   100vh overshoots on mobile while the browser URL bar is visible; dvh tracks
+   the real visible viewport. Fallback first for older browsers. */
+.h-viewport          { height: 100vh; }
+.h-viewport-minus-nav{ height: calc(100vh - 56px); }
+@supports (height: 100dvh) {
+  .h-viewport           { height: 100dvh; }
+  .h-viewport-minus-nav { height: calc(100dvh - 56px); }
+}
+
 /* ── Respect user motion preferences (accessibility) ──────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

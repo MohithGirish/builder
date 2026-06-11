@@ -10,6 +10,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { apiFetch } from '../lib/api';
 import {
   Loader2, AlertCircle, CheckCircle2, FileText, User,
   Mail, Phone, Building2, DollarSign, Clock, Send
@@ -31,9 +32,7 @@ export default function QuoteResponsePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res  = await fetch(`/api/v1/quotes/respond/${token}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'Invalid or expired link.');
+        const data = await apiFetch(`/api/v1/quotes/respond/${token}`, {}, 'Invalid or expired link.');
         setQuote(data.data);
       } catch (err) {
         setError(err.message);
@@ -52,7 +51,7 @@ export default function QuoteResponsePage() {
     setSubmitting(true);
     setSubmitErr('');
     try {
-      const res  = await fetch(`/api/v1/quotes/respond/${token}`, {
+      await apiFetch(`/api/v1/quotes/respond/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -60,9 +59,7 @@ export default function QuoteResponsePage() {
           builderQuotePrice: price.trim() || null,
           builderTimeline:   timeline.trim() || null,
         }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || 'Submission failed.');
+      }, 'Submission failed.');
       setDone(true);
     } catch (err) {
       setSubmitErr(err.message);
@@ -183,10 +180,11 @@ export default function QuoteResponsePage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                <label htmlFor="qr-price" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
                   <DollarSign size={11} className="inline mr-1" />Quoted Price (Optional)
                 </label>
                 <input
+                  id="qr-price"
                   type="text"
                   value={price}
                   onChange={e => setPrice(e.target.value)}
@@ -195,10 +193,11 @@ export default function QuoteResponsePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+                <label htmlFor="qr-timeline" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
                   <Clock size={11} className="inline mr-1" />Timeline (Optional)
                 </label>
                 <input
+                  id="qr-timeline"
                   type="text"
                   value={timeline}
                   onChange={e => setTimeline(e.target.value)}
@@ -209,10 +208,11 @@ export default function QuoteResponsePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label htmlFor="qr-response" className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">
                 Response Message <span className="text-red-400">*</span>
               </label>
               <textarea
+                id="qr-response"
                 value={response}
                 onChange={e => setResponse(e.target.value)}
                 rows={7}
@@ -222,7 +222,7 @@ export default function QuoteResponsePage() {
             </div>
 
             {submitErr && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <div role="alert" className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 <p className="text-red-600 text-sm font-medium">{submitErr}</p>
               </div>
             )}
@@ -238,7 +238,7 @@ export default function QuoteResponsePage() {
                 : <><Send size={15} /> Submit Quote Response</>
               }
             </button>
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-slate-500 text-center">
               The customer will be notified by email when you submit your response.
             </p>
           </div>

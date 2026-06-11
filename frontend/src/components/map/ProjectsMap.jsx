@@ -10,6 +10,7 @@
  */
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { REAL_PROJECTS } from '../../data/realProjects';
@@ -105,8 +106,8 @@ export default function ProjectsMap() {
                 </div>
 
                 <div style={{ padding: '0 2px' }}>
-                  <p style={{ color: '#64748b', fontSize: 11, margin: '0 0 4px 0' }}>
-                    📍 {project.location}
+                  <p style={{ color: '#64748b', fontSize: 11, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <MapPin size={10} style={{ flexShrink: 0 }} /> {project.location}
                   </p>
                   <p style={{ color: '#374151', fontSize: 11, fontWeight: 600, margin: '0 0 8px 0' }}>
                     {project.priceRange}

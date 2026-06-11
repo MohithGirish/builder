@@ -8,7 +8,7 @@
  * locally with useState. Accessible at /dashboard/projects.
  */
 import { useState } from 'react';
-import { Plus, Users, Eye, CheckCircle2, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Users, Eye, CheckCircle2, Pencil, Trash2, X, Building2 } from 'lucide-react';
 import { MY_PROJECTS, PROJECT_TYPES, PROJECT_CITIES } from '../../data/dashboard';
 
 // ── Project Form Modal ────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ function ProjectFormModal({ project, onSave, onClose }) {
           <h2 className="text-base font-bold text-slate-800">
             {project ? 'Edit Project' : 'Add New Project'}
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 transition-colors">
+          <button onClick={onClose} aria-label="Close dialog" className="w-11 h-11 -m-2 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
             <X size={18} className="text-slate-500" />
           </button>
         </div>
@@ -50,10 +50,11 @@ function ProjectFormModal({ project, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+            <label htmlFor="proj-name" className="block text-xs font-semibold text-slate-600 mb-1.5">
               Project Name <span className="text-red-500">*</span>
             </label>
             <input
+              id="proj-name"
               required
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
@@ -65,8 +66,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
           {/* Type + City */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Project Type</label>
+              <label htmlFor="proj-type" className="block text-xs font-semibold text-slate-600 mb-1.5">Project Type</label>
               <select
+                id="proj-type"
                 value={form.project_type}
                 onChange={(e) => set('project_type', e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-brand-400 transition-colors bg-white"
@@ -76,8 +78,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">City</label>
+              <label htmlFor="proj-city" className="block text-xs font-semibold text-slate-600 mb-1.5">City</label>
               <select
+                id="proj-city"
                 value={form.city}
                 onChange={(e) => set('city', e.target.value)}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-brand-400 transition-colors bg-white"
@@ -90,8 +93,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
 
           {/* Location / Area */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Area / Location</label>
+            <label htmlFor="proj-location" className="block text-xs font-semibold text-slate-600 mb-1.5">Area / Location</label>
             <input
+              id="proj-location"
               value={form.location}
               onChange={(e) => set('location', e.target.value)}
               placeholder="e.g. Worli, BKC"
@@ -102,10 +106,11 @@ function ProjectFormModal({ project, onSave, onClose }) {
           {/* Funding Target + ROI */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="proj-funding-target" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Funding Target (₹ Cr) <span className="text-red-500">*</span>
               </label>
               <input
+                id="proj-funding-target"
                 required type="number" min="1"
                 value={form.funding_target}
                 onChange={(e) => set('funding_target', e.target.value)}
@@ -114,8 +119,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Projected ROI (%)</label>
+              <label htmlFor="proj-roi" className="block text-xs font-semibold text-slate-600 mb-1.5">Projected ROI (%)</label>
               <input
+                id="proj-roi"
                 type="number" min="0" max="100"
                 value={form.roi_projected}
                 onChange={(e) => set('roi_projected', e.target.value)}
@@ -127,8 +133,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
+            <label htmlFor="proj-description" className="block text-xs font-semibold text-slate-600 mb-1.5">Description</label>
             <textarea
+              id="proj-description"
               rows={3}
               value={form.description}
               onChange={(e) => set('description', e.target.value)}
@@ -139,8 +146,9 @@ function ProjectFormModal({ project, onSave, onClose }) {
 
           {/* Image URL */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Project Image URL</label>
+            <label htmlFor="proj-image-url" className="block text-xs font-semibold text-slate-600 mb-1.5">Project Image URL</label>
             <input
+              id="proj-image-url"
               value={form.image_url}
               onChange={(e) => set('image_url', e.target.value)}
               placeholder="https://..."
@@ -204,7 +212,7 @@ function ProjectCard({ project, onEdit, onDelete }) {
           <img src={project.image_url} alt={project.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center">
-            <span className="text-brand-300 text-4xl">🏗️</span>
+            <Building2 size={40} className="text-brand-300" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -311,8 +319,8 @@ export default function MyProjects() {
 
       {/* Grid */}
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-          <span className="text-5xl mb-4">🏗️</span>
+        <div className="flex flex-col items-center justify-center py-24 text-slate-500">
+          <Building2 size={44} className="text-slate-300 mb-4" />
           <p className="font-semibold text-slate-600">No projects yet</p>
           <p className="text-sm mt-1">Click "Add New Project" to get started.</p>
         </div>

@@ -57,6 +57,9 @@ htmlcov/
 # Graphify — local knowledge graph, never push
 graphify-out/
 
+# Design system — local AI design reference, never push
+design-system/
+
 # Misc
 *.tsbuildinfo
 .eslintcache

@@ -8,7 +8,10 @@
  * /dashboard/matches.
  */
 import { useState } from 'react';
-import { ArrowLeft, MapPin, Briefcase, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowLeft, MapPin, Briefcase, CheckCircle2,
+  Users, BarChart3, BadgeCheck, Wallet, Sparkles, Search, Handshake,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   INVESTOR_LEADS, BUILDER_ANALYTICS_KPIS,
@@ -22,10 +25,10 @@ const TABS = [
 ];
 
 const STAT_CHIPS = [
-  { label: 'Total Matches',    value: INVESTOR_LEADS.length || '—',                                                        icon: '👥' },
-  { label: 'Avg Match Score',  value: INVESTOR_LEADS.length ? Math.round(INVESTOR_LEADS.reduce((a, i) => a + i.match_score, 0) / INVESTOR_LEADS.length) + '%' : '—', icon: '📊' },
-  { label: 'Verified',         value: INVESTOR_LEADS.filter(i => i.is_verified).length || '—',                             icon: '✅' },
-  { label: 'Investment Range', value: INVESTOR_LEADS.length ? `₹${Math.min(...INVESTOR_LEADS.map(i => parseInt(i.investment_range))) || '—'} Cr+` : '—', icon: '💰' },
+  { label: 'Total Matches',    value: INVESTOR_LEADS.length || '—',                                                        icon: Users },
+  { label: 'Avg Match Score',  value: INVESTOR_LEADS.length ? Math.round(INVESTOR_LEADS.reduce((a, i) => a + i.match_score, 0) / INVESTOR_LEADS.length) + '%' : '—', icon: BarChart3 },
+  { label: 'Verified',         value: INVESTOR_LEADS.filter(i => i.is_verified).length || '—',                             icon: BadgeCheck },
+  { label: 'Investment Range', value: INVESTOR_LEADS.length ? `₹${Math.min(...INVESTOR_LEADS.map(i => parseInt(i.investment_range))) || '—'} Cr+` : '—', icon: Wallet },
 ];
 
 function InvestorLeadCard({ inv }) {
@@ -87,8 +90,8 @@ function InvestorLeadCard({ inv }) {
           {/* Stats + CTA */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
             <div className="flex gap-4 text-xs text-slate-500">
-              <span>🤝 {inv.active_deals} Active Deals</span>
-              <span>💼 {inv.portfolio}</span>
+              <span className="inline-flex items-center gap-1"><Handshake size={12} /> {inv.active_deals} Active Deals</span>
+              <span className="inline-flex items-center gap-1"><Briefcase size={12} /> {inv.portfolio}</span>
             </div>
             <Link
               to="/dealroom"
@@ -123,7 +126,7 @@ export default function InvestorMatches() {
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                  style={{ background: 'linear-gradient(135deg,#0d9488,#14c38e)' }}>
-              <span className="text-white text-xs">✦</span>
+              <Sparkles size={14} className="text-white" />
             </div>
             <h1 className="text-xl font-bold text-slate-800">Your Investor Leads</h1>
           </div>
@@ -134,11 +137,11 @@ export default function InvestorMatches() {
       {/* Stat chips */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {STAT_CHIPS.map((chip) => (
-          <div key={chip.label} className="bg-white rounded-xl shadow-card px-4 py-3 flex items-center gap-2">
-            <span className="text-lg">{chip.icon}</span>
+          <div key={chip.label} className="bg-white rounded-xl shadow-card px-4 py-3 flex items-center gap-2.5">
+            <chip.icon size={18} className="text-brand-600 shrink-0" />
             <div>
               <p className="text-sm font-bold text-slate-800">{chip.value}</p>
-              <p className="text-[11px] text-slate-400">{chip.label}</p>
+              <p className="text-[11px] text-slate-500">{chip.label}</p>
             </div>
           </div>
         ))}
@@ -165,8 +168,8 @@ export default function InvestorMatches() {
       {/* Cards */}
       <div className="flex flex-col gap-4">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <p className="text-4xl mb-3">🔍</p>
+          <div className="text-center py-16">
+            <Search size={36} className="mx-auto mb-3 text-slate-300" />
             <p className="font-semibold text-slate-600">No investors in this category.</p>
           </div>
         ) : (

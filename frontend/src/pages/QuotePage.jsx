@@ -9,6 +9,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { apiFetch } from '../lib/api';
 import {
   CheckCircle2, Clock, FileText, Phone, Mail, User,
   Building2, ArrowLeft, Loader2, AlertCircle, Calendar, DollarSign
@@ -38,9 +39,7 @@ export default function QuotePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res  = await fetch(`/api/v1/quotes/${id}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'Quote not found.');
+        const data = await apiFetch(`/api/v1/quotes/${id}`, {}, 'Quote not found.');
         setQuote(data.data);
       } catch (err) {
         setError(err.message);

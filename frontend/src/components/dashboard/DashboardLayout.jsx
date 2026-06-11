@@ -29,10 +29,7 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div
-      className="flex bg-[#f0f6ff] relative"
-      style={{ height: 'calc(100vh - 56px)' }}
-    >
+    <div className="flex bg-[#f0f6ff] relative h-viewport-minus-nav">
       {/* Mobile backdrop — closes drawer on tap */}
       {sidebarOpen && (
         <div

@@ -18,7 +18,7 @@ const STATS = [
 
 export default function AuthLayout({ children, headline, sub, highlights = [] }) {
   return (
-    <div className="h-screen overflow-hidden grid lg:grid-cols-2">
+    <div className="h-viewport overflow-hidden grid lg:grid-cols-2">
 
       {/* ── Branded showcase (desktop only) ───────────────────────────── */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 aurora bg-slate-950 overflow-hidden">

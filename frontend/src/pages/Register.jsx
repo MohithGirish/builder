@@ -110,7 +110,7 @@ export default function Register() {
       <div className="bg-white rounded-2xl shadow-card p-8">
 
           {apiError && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
+            <div role="alert" className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
               {apiError}
             </div>
           )}
@@ -120,41 +120,48 @@ export default function Register() {
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">First Name *</label>
+                <label htmlFor="reg-first-name" className="block text-xs font-semibold text-slate-600 mb-1.5">First Name *</label>
                 <input
+                  id="reg-first-name"
                   name="first_name"
                   value={form.first_name}
                   onChange={handleChange}
                   placeholder="Rajesh"
                   autoComplete="given-name"
+                  aria-invalid={errors.first_name ? true : undefined}
+                  aria-describedby={errors.first_name ? 'reg-first-name-error' : undefined}
                   className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all
                     ${errors.first_name
                       ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
                       : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
                 />
-                {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
+                {errors.first_name && <p id="reg-first-name-error" role="alert" className="text-xs text-red-600 mt-1">{errors.first_name}</p>}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Last Name *</label>
+                <label htmlFor="reg-last-name" className="block text-xs font-semibold text-slate-600 mb-1.5">Last Name *</label>
                 <input
+                  id="reg-last-name"
                   name="last_name"
                   value={form.last_name}
                   onChange={handleChange}
                   placeholder="Kumar"
                   autoComplete="family-name"
+                  aria-invalid={errors.last_name ? true : undefined}
+                  aria-describedby={errors.last_name ? 'reg-last-name-error' : undefined}
                   className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all
                     ${errors.last_name
                       ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
                       : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
                 />
-                {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name}</p>}
+                {errors.last_name && <p id="reg-last-name-error" role="alert" className="text-xs text-red-600 mt-1">{errors.last_name}</p>}
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email Address *</label>
+              <label htmlFor="reg-email" className="block text-xs font-semibold text-slate-600 mb-1.5">Email Address *</label>
               <input
+                id="reg-email"
                 type="email"
                 name="email"
                 value={form.email}
@@ -162,25 +169,30 @@ export default function Register() {
                 placeholder="you@company.com"
                 autoComplete="email"
                 autoFocus
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'reg-email-error' : undefined}
                 className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all
                   ${errors.email
                     ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
                     : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100'}`}
               />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+              {errors.email && <p id="reg-email-error" role="alert" className="text-xs text-red-600 mt-1">{errors.email}</p>}
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Password *</label>
+              <label htmlFor="reg-password" className="block text-xs font-semibold text-slate-600 mb-1.5">Password *</label>
               <div className="relative">
                 <input
+                  id="reg-password"
                   type={showPass ? 'text' : 'password'}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Min 8 chars, uppercase, number, special char"
                   autoComplete="new-password"
+                  aria-invalid={errors.password ? true : undefined}
+                  aria-describedby={errors.password ? 'reg-password-error' : undefined}
                   className={`w-full px-4 py-2.5 pr-11 rounded-xl border text-sm outline-none transition-all
                     ${errors.password
                       ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
@@ -189,25 +201,29 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+              {errors.password && <p id="reg-password-error" role="alert" className="text-xs text-red-600 mt-1">{errors.password}</p>}
             </div>
 
             {/* Confirm password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Confirm Password *</label>
+              <label htmlFor="reg-confirm-password" className="block text-xs font-semibold text-slate-600 mb-1.5">Confirm Password *</label>
               <div className="relative">
                 <input
+                  id="reg-confirm-password"
                   type={showConfirm ? 'text' : 'password'}
                   name="confirm_password"
                   value={form.confirm_password}
                   onChange={handleChange}
                   placeholder="Repeat your password"
                   autoComplete="new-password"
+                  aria-invalid={errors.confirm_password ? true : undefined}
+                  aria-describedby={errors.confirm_password ? 'reg-confirm-password-error' : undefined}
                   className={`w-full px-4 py-2.5 pr-11 rounded-xl border text-sm outline-none transition-all
                     ${errors.confirm_password
                       ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
@@ -216,12 +232,13 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              {errors.confirm_password && <p className="text-xs text-red-500 mt-1">{errors.confirm_password}</p>}
+              {errors.confirm_password && <p id="reg-confirm-password-error" role="alert" className="text-xs text-red-600 mt-1">{errors.confirm_password}</p>}
             </div>
 
             <button

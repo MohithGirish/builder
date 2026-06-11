@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { X, Calendar, Clock, User, Phone, Mail, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../../lib/api';
 
 const TIME_SLOTS = [
   '9:00 AM – 11:00 AM',
@@ -37,7 +38,7 @@ export default function SiteVisitModal({ project, onClose }) {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/v1/quotes/site-visit', {
+      await apiFetch('/api/v1/quotes/site-visit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,8 +52,6 @@ export default function SiteVisitModal({ project, onClose }) {
           notes:         notes.trim(),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || 'Something went wrong.');
       setSuccess(true);
     } catch (err) {
       setError(err.message);
@@ -76,7 +75,7 @@ export default function SiteVisitModal({ project, onClose }) {
             </div>
             <h2 className="text-lg font-extrabold text-white leading-tight">{project.name}</h2>
           </div>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors mt-0.5">
+          <button onClick={onClose} aria-label="Close dialog" className="w-11 h-11 -m-2.5 flex items-center justify-center text-white/60 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -108,10 +107,11 @@ export default function SiteVisitModal({ project, onClose }) {
               {/* Name */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Name</label>
+                  <label htmlFor="visit-name" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Name</label>
                   <div className="relative">
                     <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
+                      id="visit-name"
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
@@ -121,10 +121,11 @@ export default function SiteVisitModal({ project, onClose }) {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Phone</label>
+                  <label htmlFor="visit-phone" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Phone</label>
                   <div className="relative">
                     <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
+                      id="visit-phone"
                       type="tel"
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
@@ -137,10 +138,11 @@ export default function SiteVisitModal({ project, onClose }) {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Email</label>
+                <label htmlFor="visit-email" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Email</label>
                 <div className="relative">
                   <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
+                    id="visit-email"
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -152,10 +154,11 @@ export default function SiteVisitModal({ project, onClose }) {
 
               {/* Date */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="visit-date" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
                   <Calendar size={11} className="inline mr-1" />Preferred Date
                 </label>
                 <input
+                  id="visit-date"
                   type="date"
                   value={date}
                   min={new Date().toISOString().split('T')[0]}
@@ -174,6 +177,7 @@ export default function SiteVisitModal({ project, onClose }) {
                     <button
                       key={s}
                       onClick={() => setSlot(s)}
+                      aria-pressed={slot === s}
                       className="py-2 px-3 rounded-xl text-xs font-semibold border-2 transition-all text-left"
                       style={
                         slot === s
@@ -189,8 +193,9 @@ export default function SiteVisitModal({ project, onClose }) {
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Notes (Optional)</label>
+                <label htmlFor="visit-notes" className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Notes (Optional)</label>
                 <textarea
+                  id="visit-notes"
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
@@ -200,7 +205,7 @@ export default function SiteVisitModal({ project, onClose }) {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <div role="alert" className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   <p className="text-red-600 text-sm font-medium">{error}</p>
                 </div>
               )}

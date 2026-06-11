@@ -103,7 +103,7 @@ export default function Login() {
 
           {/* API error banner */}
           {apiError && (
-            <div className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
+            <div role="alert" className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
               {apiError}
             </div>
           )}
@@ -112,10 +112,11 @@ export default function Login() {
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label htmlFor="login-email" className="block text-xs font-semibold text-slate-600 mb-1.5">
                 Email Address
               </label>
               <input
+                id="login-email"
                 type="email"
                 name="email"
                 value={form.email}
@@ -123,6 +124,8 @@ export default function Login() {
                 placeholder="you@company.com"
                 autoComplete="email"
                 autoFocus
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'login-email-error' : undefined}
                 className={`w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all
                   ${errors.email
                     ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
@@ -130,31 +133,33 @@ export default function Login() {
                   }`}
               />
               {errors.email && (
-                <p className="text-xs text-red-500 mt-1.5">{errors.email}</p>
+                <p id="login-email-error" role="alert" className="text-xs text-red-600 mt-1.5">{errors.email}</p>
               )}
             </div>
 
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-600">Password</label>
+                <label htmlFor="login-password" className="text-xs font-semibold text-slate-600">Password</label>
                 <button
                   type="button"
                   onClick={() => setApiError('Password reset is coming soon. Please contact support.')}
                   className="text-xs text-brand-600 hover:underline font-medium"
-                  tabIndex={-1}
                 >
                   Forgot password?
                 </button>
               </div>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPass ? 'text' : 'password'}
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  aria-invalid={errors.password ? true : undefined}
+                  aria-describedby={errors.password ? 'login-password-error' : undefined}
                   className={`w-full px-4 py-2.5 pr-11 rounded-xl border text-sm outline-none transition-all
                     ${errors.password
                       ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
@@ -164,13 +169,14 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-red-500 mt-1.5">{errors.password}</p>
+                <p id="login-password-error" role="alert" className="text-xs text-red-600 mt-1.5">{errors.password}</p>
               )}
             </div>
 

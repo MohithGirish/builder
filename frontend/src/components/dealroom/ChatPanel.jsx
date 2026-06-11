@@ -280,7 +280,8 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
               </div>
               <button
                 onClick={() => setShowSummary(false)}
-                className="text-white/80 hover:text-white transition-colors"
+                aria-label="Close AI summary"
+                className="w-11 h-11 -m-3 flex items-center justify-center text-white/80 hover:text-white transition-colors"
               >
                 <X size={16} />
               </button>
