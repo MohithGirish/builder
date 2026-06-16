@@ -13,7 +13,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
-  Building2, Mail, Phone, MapPin, Globe, Linkedin, Twitter, Instagram, Heart,
+  Mail, MapPin, Globe, Linkedin, Twitter, Instagram, Heart,
   ArrowRightLeft, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -92,18 +92,16 @@ export default function Footer() {
   return (
     <footer className="relative bg-slate-900 text-slate-300">
       {/* Top accent line */}
-      <div className="h-1 w-full bg-gradient-to-r from-brand-500 via-brand-400 to-amber-400" />
+      <div className="h-1 w-full bg-gradient-to-r from-teal-600 via-teal-500 to-teal-400" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
         {/* Brand */}
         <div>
-          <Link to="/" className="flex items-center gap-2 mb-4 group w-fit">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-gradient transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-              <Building2 size={16} className="text-white" />
-            </div>
-            <span className="text-white font-bold text-base">Builder.AI</span>
-            <span className="text-xs text-slate-400 font-medium">Market</span>
+          <Link to="/" className="flex items-center gap-1.5 mb-4 w-fit">
+            <span className="text-white font-bold text-base">Builder</span>
+            <span className="text-teal-400 font-bold text-base">.AI</span>
+            <span className="text-xs text-slate-400 font-medium ml-0.5">Market</span>
           </Link>
           <p className="text-sm text-slate-400 leading-relaxed mb-5">
             India's premier AI-powered platform connecting verified builders and investors for
@@ -111,8 +109,7 @@ export default function Footer() {
           </p>
           <div className="space-y-2 text-sm text-slate-400">
             <div className="flex items-center gap-2"><Mail size={14} /><span>contact@layeredai.us</span></div>
-            <div className="flex items-center gap-2"><Phone size={14} /><span>+91 123456789</span></div>
-            <div className="flex items-center gap-2"><Globe size={14} /><a href="https://layeredai.us/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-400 transition-colors">layeredai.us</a></div>
+            <div className="flex items-center gap-2"><Globe size={14} /><a href="https://layeredai.us/" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">layeredai.us</a></div>
             <div className="flex items-center gap-2"><MapPin size={14} /><span>Mumbai, India</span></div>
           </div>
         </div>
@@ -158,7 +155,7 @@ export default function Footer() {
       <div className="border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-slate-500 flex items-center gap-1.5">
-            © 2025 Builder AI Market · Made with
+            © 2026 Builder AI Market · Made with
             <Heart size={11} className="text-red-400 fill-red-400" />
             in India
           </p>

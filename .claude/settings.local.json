@@ -8,7 +8,9 @@
       "Bash(python scripts/search.py \"real estate investment marketplace premium professional dealmaking two-sided platform\" --design-system -p \"Builder AI Market\" -f markdown)",
       "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/**)",
       "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max\" 2>/dev/**)",
-      "Bash(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment marketplace premium professional fintech trust\" --design-system -f markdown)"
+      "Bash(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment marketplace premium professional fintech trust\" --design-system -f markdown)",
+      "Bash(python3 \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment matchmaking marketplace SaaS premium\" --design-system -p \"Builder AI\" -f markdown)",
+      "PowerShell(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment matchmaking marketplace SaaS premium\" --design-system -p \"Builder AI\" -f markdown 2>&1)"
     ]
   }
 }

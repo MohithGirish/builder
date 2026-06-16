@@ -70,10 +70,10 @@ export default function ProjectCard({ project }) {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-slate-500">Funding Progress</span>
-            <span className="text-xs font-bold text-brand-700">{progress}%</span>
+            <span className="text-xs font-bold text-teal-700">{progress}%</span>
           </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-teal-600 transition-all duration-500" style={{ width: `${progress}%` }} />
           </div>
           <div className="flex items-center justify-between mt-1">
             <span className="text-[11px] text-slate-500">Raised: ₹{raised} Cr</span>
@@ -83,15 +83,15 @@ export default function ProjectCard({ project }) {
 
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-2 border-t border-slate-50 pt-2">
-          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg p-2">
-            <Clock size={12} className="text-brand-500 shrink-0" />
+          <div className="flex items-center gap-1.5 bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <Clock size={12} className="text-teal-500 shrink-0" />
             <div>
               <p className="text-[10px] text-slate-500">Timeline</p>
               <p className="text-xs font-semibold text-slate-700">{timeline}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 rounded-lg p-2">
-            <IndianRupee size={12} className="text-amber-500 shrink-0" />
+          <div className="flex items-center gap-1.5 bg-slate-50 rounded-xl border border-slate-100 p-2">
+            <IndianRupee size={12} className="text-teal-500 shrink-0" />
             <div>
               <p className="text-[10px] text-slate-500">Min. Investment</p>
               <p className="text-xs font-semibold text-slate-700">{minInvestment}</p>
@@ -110,7 +110,7 @@ export default function ProjectCard({ project }) {
         </div>
 
         {/* CTA */}
-        <button className="mt-auto btn-brand w-full py-2 text-xs">
+        <button className="mt-auto btn-brand w-full py-2 text-xs flex items-center justify-center gap-1.5">
           View Project Details <ArrowRight size={13} />
         </button>
       </div>

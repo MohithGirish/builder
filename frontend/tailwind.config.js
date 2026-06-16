@@ -57,6 +57,7 @@ export default {
           '0%':   { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(2000%)' },
         },
+        'slide-in-right': { '0%': { opacity: '0', transform: 'translateX(100%)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
       },
       animation: {
         'fade-up':     'fade-up 0.6s cubic-bezier(0.22,1,0.36,1) forwards',
@@ -69,7 +70,8 @@ export default {
         'pulse-ring':  'pulse-ring 2s ease-out infinite',
         'scroll-wheel':'scroll-wheel 2.2s cubic-bezier(0.37, 0, 0.63, 1) infinite',
         'chev-fade':   'chev-fade 2.2s ease-in-out infinite',
-        'scan-line':   'scan-line 5s linear infinite',
+        'scan-line':       'scan-line 5s linear infinite',
+        'slide-in-right':  'slide-in-right 0.25s cubic-bezier(0.22,1,0.36,1) forwards',
       },
     },
   },

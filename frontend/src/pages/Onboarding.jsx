@@ -1,14 +1,16 @@
 /*
  * Onboarding.jsx — Role selection screen (post-registration, pre-dashboard).
  *
- * Presents two role cards ("I'm a Builder" / "I'm an Investor") with feature
- * highlights for each. On selection, saves the chosen role to AuthContext via
- * setOnboardingRole() and navigates to the OnboardingChat questionnaire.
- * This page is only accessible to authenticated users who have not yet
- * completed onboarding.
+ * Full-viewport 50/50 CSS grid: Builder half (teal gradient) left, Investor
+ * half (slate gradient) right. Each half has a large icon, role name, 4 perks
+ * as a checkmark list, and an inner card (bg-white/10 rounded-2xl). On hover
+ * the inner card scales to 1.02. On selection: white ring-4 on the selected
+ * half's card, other half fades to opacity-60. "Continue →" button slides in
+ * from bottom after selection. Mobile stacks vertically, each half min-h-[260px].
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, Briefcase, TrendingUp } from 'lucide-react';
+import { Wrench, TrendingUp, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const BUILDER_PERKS = [
@@ -25,114 +27,119 @@ const INVESTOR_PERKS = [
   'Direct builder communication',
 ];
 
-export default function Onboarding() {
-  const { setOnboardingRole } = useAuth();
-  const navigate = useNavigate();
-
-  function handleSelect(role) {
-    setOnboardingRole(role);
-    navigate('/onboarding/chat');
+function RoleHalf({ role, icon: Icon, title, description, perks, gradient, selected, dimmed, onSelect }) {
+  function handleKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); }
   }
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center py-12 px-4"
-      style={{ background: 'linear-gradient(160deg,#fdf6ee 0%,#fef9f5 60%,#f7fdf9 100%)' }}
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      aria-label={`Select ${title} role`}
+      className={`relative flex items-center justify-center p-8 min-h-[260px] transition-opacity duration-200 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 ${
+        dimmed ? 'opacity-60' : 'opacity-100'
+      }`}
+      style={{ background: gradient }}
+      onClick={onSelect}
+      onKeyDown={handleKey}
     >
-      {/* AI Powered pill */}
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-xs font-semibold text-slate-500 mb-6">
-        <Sparkles size={12} className="text-brand-600" />
-        AI-Powered Matchmaking
-      </div>
-
-      {/* Heading */}
-      <h1 className="text-2xl sm:text-3xl font-semibold text-slate-700 text-center mb-3">
-        👋 Namaste! Welcome to Builder.AI Market
-      </h1>
-      <p className="text-base text-slate-500 text-center max-w-2xl leading-relaxed mb-2">
-        I'm your AI guide. Tell me a bit about your goals — are you building, funding, or exploring
-        opportunities in India's booming real-estate and infrastructure sector?
-      </p>
-      <p className="text-sm text-slate-400 mb-10">Select your role to get started</p>
-
-      {/* Role cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl mb-10">
-
-        {/* ── Builder card ── */}
-        <div className="bg-white rounded-2xl p-7 border-2 border-orange-400 shadow-sm flex flex-col">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
-            style={{ background: 'linear-gradient(135deg,#f97316,#f59e0b)' }}
-          >
-            <Briefcase size={22} className="text-white" />
-          </div>
-
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">I'm a Builder</h2>
-          <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-            List verified projects, connect with global investors, and secure funding for your
-            real-estate and infrastructure developments.
-          </p>
-
-          <ul className="space-y-2.5 mb-5">
-            {BUILDER_PERKS.map(p => (
-              <li key={p} className="flex items-center gap-2.5 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
-                {p}
-              </li>
-            ))}
-          </ul>
-
-          <p className="text-xs font-semibold text-orange-500 mb-5">45,000+ Builders Trust Us</p>
-
-          <button
-            onClick={() => handleSelect('builder')}
-            className="mt-auto w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 hover:shadow-md active:scale-[0.99]"
-            style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
-          >
-            Get Started as Builder <ArrowRight size={16} />
-          </button>
+      {/* Inner card */}
+      <div
+        className={`w-full max-w-sm rounded-2xl p-7 transition-all duration-200 ${
+          selected
+            ? 'ring-4 ring-white ring-offset-4 ring-offset-transparent scale-[1.02]'
+            : 'scale-100 hover:scale-[1.02]'
+        }`}
+        style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}
+      >
+        {/* Icon */}
+        <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mb-5">
+          <Icon size={28} className="text-white" />
         </div>
 
-        {/* ── Investor card ── */}
-        <div className="bg-white rounded-2xl p-7 border border-slate-200 shadow-sm flex flex-col hover:border-sky-300 transition-colors">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
-            style={{ background: 'linear-gradient(135deg,#1e88e5,#42a5f5)' }}
-          >
-            <TrendingUp size={22} className="text-white" />
-          </div>
+        {/* Title */}
+        <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+        <p className="text-sm text-white/75 mb-5 leading-relaxed">{description}</p>
 
-          <h2 className="text-lg font-semibold text-slate-800 mb-2">I'm an Investor</h2>
-          <p className="text-sm text-slate-500 mb-5 leading-relaxed">
-            Discover verified builders and high-potential projects across India. Make data-driven
-            investment decisions with AI insights.
-          </p>
+        {/* Perks */}
+        <ul className="space-y-2.5">
+          {perks.map((p) => (
+            <li key={p} className="flex items-start gap-2.5 text-sm text-white/90">
+              <CheckCircle2 size={15} className="text-white/70 shrink-0 mt-0.5" />
+              {p}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
-          <ul className="space-y-2.5 mb-5">
-            {INVESTOR_PERKS.map(p => (
-              <li key={p} className="flex items-center gap-2.5 text-sm text-slate-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
-                {p}
-              </li>
-            ))}
-          </ul>
+export default function Onboarding() {
+  const { setOnboardingRole } = useAuth();
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState(null);
+  const [loading,  setLoading]  = useState(false);
 
-          <p className="text-xs font-semibold text-sky-600 mb-5">₹25,000+ Cr Invested Through Platform</p>
+  async function handleContinue() {
+    if (!selected) return;
+    setLoading(true);
+    setOnboardingRole(selected);
+    navigate('/onboarding/chat');
+  }
 
-          <button
-            onClick={() => handleSelect('investor')}
-            className="mt-auto w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 hover:shadow-md active:scale-[0.99]"
-            style={{ background: 'linear-gradient(135deg,#1e88e5,#0369a1)' }}
-          >
-            Get Started as Investor <ArrowRight size={16} />
-          </button>
-        </div>
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* 50/50 grid: stacks on mobile */}
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2">
+        <RoleHalf
+          role="builder"
+          icon={Wrench}
+          title="I'm a Builder"
+          description="List verified projects, connect with global investors, and secure funding."
+          perks={BUILDER_PERKS}
+          gradient="linear-gradient(135deg, #0d9488 0%, #0f766e 100%)"
+          selected={selected === 'builder'}
+          dimmed={selected === 'investor'}
+          onSelect={() => setSelected('builder')}
+        />
+        <RoleHalf
+          role="investor"
+          icon={TrendingUp}
+          title="I'm an Investor"
+          description="Discover verified builders and high-potential projects across India."
+          perks={INVESTOR_PERKS}
+          gradient="linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
+          selected={selected === 'investor'}
+          dimmed={selected === 'builder'}
+          onSelect={() => setSelected('investor')}
+        />
       </div>
 
-      {/* Trust footer */}
-      <p className="text-xs text-slate-400">
-        Trusted by 45,000+ Builders and 8,500+ Investors across India
-      </p>
+      {/* Continue button — slides in after role is selected */}
+      <div
+        className={`border-t border-slate-100 bg-white px-6 py-5 transition-all duration-300 ${
+          selected ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
+        <div className="max-w-sm mx-auto">
+          <button
+            onClick={handleContinue}
+            disabled={!selected || loading}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 text-white hover:bg-slate-800 transition-colors disabled:opacity-60"
+          >
+            {loading
+              ? <><Loader2 size={16} className="animate-spin" /> Loading…</>
+              : <>Continue as {selected === 'builder' ? 'Builder' : 'Investor'} <ArrowRight size={16} /></>
+            }
+          </button>
+          <p className="text-center text-xs text-slate-400 mt-3">
+            You can change your role later in Settings
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

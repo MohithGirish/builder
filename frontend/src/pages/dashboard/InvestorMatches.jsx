@@ -153,12 +153,7 @@ export default function InvestorMatches() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === tab.id
-                ? 'text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'
-            }`}
-            style={activeTab === tab.id ? { background: 'linear-gradient(135deg,#0d9488,#14c38e)' } : {}}
+            className={activeTab === tab.id ? 'tab-active' : 'tab-inactive'}
           >
             {tab.label}
           </button>
@@ -168,9 +163,18 @@ export default function InvestorMatches() {
       {/* Cards */}
       <div className="flex flex-col gap-4">
         {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Search size={36} className="mx-auto mb-3 text-slate-300" />
-            <p className="font-semibold text-slate-600">No investors in this category.</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-slate-100 shadow-card">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <Search size={22} className="text-slate-300" />
+            </div>
+            <h3 className="font-semibold text-slate-700 mb-1">
+              {INVESTOR_LEADS.length === 0 ? 'No matches yet' : 'No investors in this category'}
+            </h3>
+            <p className="text-sm text-slate-500 max-w-xs">
+              {INVESTOR_LEADS.length === 0
+                ? 'Complete your profile to improve your match score and attract investors.'
+                : 'Try a different category tab.'}
+            </p>
           </div>
         ) : (
           filtered.map((inv) => <InvestorLeadCard key={inv.id} inv={inv} />)

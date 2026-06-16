@@ -1,57 +1,51 @@
 /*
  * DashboardLayout.jsx — Shared layout shell for all dashboard pages.
  *
- * Renders a full-viewport flex container with a fixed DashboardSidebar on
- * the left and a scrollable main content area on the right. On mobile (<md)
- * the sidebar hides off-screen and slides in as a drawer when the hamburger
- * FAB is tapped; a backdrop overlay closes it on outside-click. Uses React
- * Router's <Outlet> to render the matched child route. Used by both builder
- * (/dashboard) and investor (/investor-dashboard) route groups.
+ * Wraps SidebarProvider so both this layout and DashboardSidebar share collapse/
+ * mobile-open state without window.dispatchEvent hacks. Desktop: static sidebar
+ * column that collapses from w-56 to w-14. Mobile: fixed Sheet drawer from left,
+ * opened by a teal FAB fixed at bottom-left. Uses React Router <Outlet> for the
+ * matched child route. Serves /dashboard and /investor-dashboard route groups.
  */
-import { useState, useEffect } from 'react';
 import { PanelLeft } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import DashboardSidebar from './DashboardSidebar';
+import { SidebarProvider, useSidebar } from '../../context/SidebarContext';
 
-export default function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Close this drawer when the navbar mobile menu signals it is opening
-  useEffect(() => {
-    const handler = () => setSidebarOpen(false);
-    window.addEventListener('builderai:close-sidebar', handler);
-    return () => window.removeEventListener('builderai:close-sidebar', handler);
-  }, []);
-
-  function openSidebar() {
-    window.dispatchEvent(new CustomEvent('builderai:close-navbar'));
-    setSidebarOpen(true);
-  }
+function LayoutInner() {
+  const { collapsed, mobileOpen, setMobileOpen } = useSidebar();
 
   return (
-    <div className="flex bg-[#f0f6ff] relative h-viewport-minus-nav">
+    <div className="flex bg-slate-50 relative h-viewport-minus-nav overflow-hidden">
+
       {/* Mobile backdrop — closes drawer on tap */}
-      {sidebarOpen && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
-          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar wrapper — drawer on mobile, static column on md+ */}
+      {/* Desktop sidebar — static column, width transitions 200ms */}
       <div
         className={[
-          'fixed md:static',
-          'top-[56px] md:top-auto',
-          'left-0',
-          'bottom-0 md:bottom-auto',
-          'md:h-full',
-          'z-40 md:z-auto',
-          'transition-transform duration-300 ease-in-out md:transition-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          'hidden md:flex shrink-0 flex-col',
+          'transition-[width] duration-200 ease',
+          collapsed ? 'w-14' : 'w-56',
         ].join(' ')}
       >
-        <DashboardSidebar onClose={() => setSidebarOpen(false)} />
+        <DashboardSidebar />
+      </div>
+
+      {/* Mobile sidebar — fixed Sheet from left */}
+      <div
+        className={[
+          'fixed top-0 left-0 bottom-0 z-40 md:hidden',
+          'transition-transform duration-200 ease',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        ].join(' ')}
+      >
+        <DashboardSidebar mobile onClose={() => setMobileOpen(false)} />
       </div>
 
       {/* Main content */}
@@ -59,14 +53,22 @@ export default function DashboardLayout() {
         <Outlet />
       </main>
 
-      {/* Mobile hamburger FAB — only visible on mobile, behind drawer backdrop */}
+      {/* Mobile FAB — teal, rounded-full, fixed bottom-left */}
       <button
-        onClick={openSidebar}
-        className="md:hidden fixed bottom-5 left-4 z-20 p-3 rounded-2xl bg-white shadow-lg border border-slate-200 text-slate-600 active:scale-95 transition-transform"
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed bottom-5 left-4 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-teal-600 shadow-lg text-white active:scale-95 transition-transform"
         aria-label="Open navigation"
       >
         <PanelLeft size={20} />
       </button>
     </div>
+  );
+}
+
+export default function DashboardLayout() {
+  return (
+    <SidebarProvider>
+      <LayoutInner />
+    </SidebarProvider>
   );
 }

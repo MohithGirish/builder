@@ -7,13 +7,14 @@
  * Hyderabad projects (REAL_PROJECTS) above the main filterable list.
  * Back-navigation destination is determined by the user's auth and role state.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle2, TrendingUp, IndianRupee, ChevronDown, MapPin } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, TrendingUp, IndianRupee, ChevronDown, MapPin, FolderOpen } from 'lucide-react';
 import ProjectCard     from '../components/cards/ProjectCard';
 import RealProjectCard from '../components/cards/RealProjectCard';
 import FilterBar       from '../components/filters/FilterBar';
+import { SkeletonCard }from '../components/ui/SkeletonCard';
 import { PROJECTS, PROJECT_SECTORS, FUNDING_STAGES, PROJ_LOCATIONS } from '../data/projects';
 import { REAL_PROJECTS } from '../data/realProjects';
 
@@ -32,6 +33,12 @@ export default function Projects() {
   const [stage,       setStage]    = useState('All Stages');
   const [view,        setView]     = useState('grid');
   const [page,        setPage]     = useState(1);
+  const [loading,     setLoading]  = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = useMemo(() => {
     return PROJECTS.filter((p) => {
@@ -145,17 +152,21 @@ export default function Projects() {
 
       {/* ── Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        {filtered.length === 0 ? (
-          <div className="text-center py-24 text-slate-400">
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-              <TrendingUp size={28} className="text-slate-400" />
+              <FolderOpen size={28} className="text-slate-400" />
             </div>
-            <p className="font-semibold text-slate-600 mb-1">
-              {PROJECTS.length === 0 ? 'More Projects Coming Soon' : 'No projects match your filters.'}
-            </p>
-            <p className="text-sm mt-1">
+            <h3 className="font-semibold text-slate-700 mb-1">
+              {PROJECTS.length === 0 ? 'More Projects Coming Soon' : 'No projects match your filters'}
+            </h3>
+            <p className="text-sm text-slate-500 max-w-xs">
               {PROJECTS.length === 0
-                ? 'Additional investment projects will be listed here once builders register their projects.'
+                ? 'Additional investment projects will be listed here once builders register.'
                 : 'Try adjusting your search or filters.'}
             </p>
           </div>
@@ -170,7 +181,7 @@ export default function Projects() {
               <div className="flex justify-center mt-10">
                 <button
                   onClick={() => setPage((p) => p + 1)}
-                  className="btn-outline-brand px-8 py-2.5 text-sm flex items-center gap-2"
+                  className="btn-ghost px-8 py-2.5 text-sm flex items-center gap-2"
                 >
                   Load More Projects <ChevronDown size={15} />
                 </button>

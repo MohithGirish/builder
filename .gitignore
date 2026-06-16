@@ -60,6 +60,13 @@ graphify-out/
 # Design system — local AI design reference, never push
 design-system/
 
+# Tech stack reference — local only, never push
+tech_stack/
+
+# Playwright MCP — local browser automation state, never push
+.playwright/
+.playwright-mcp/
+
 # Misc
 *.tsbuildinfo
 .eslintcache

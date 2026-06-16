@@ -114,13 +114,20 @@
     background: linear-gradient(135deg, #0d9488, #14b8a6);
   }
 
+  /* ── Tab buttons ─────────────────────────────────────────────────────── */
+  .tab-active {
+    @apply px-4 py-1.5 rounded-full text-sm font-semibold bg-teal-600 text-white border border-teal-600 transition-all;
+  }
+  .tab-inactive {
+    @apply px-4 py-1.5 rounded-full text-sm font-semibold text-slate-500 bg-white border border-slate-200 hover:border-teal-300 transition-all;
+  }
+
   /* ── Progress bar ─────────────────────────────────────────────────────── */
   .progress-bar {
     @apply w-full h-1.5 bg-slate-100 rounded-full overflow-hidden;
   }
   .progress-fill {
-    @apply h-full rounded-full transition-all duration-500;
-    background: linear-gradient(to right, #f97316, #f59e0b);
+    @apply h-full bg-teal-600 rounded-full transition-all duration-500;
   }
 }
 

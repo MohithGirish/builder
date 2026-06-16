@@ -56,5 +56,7 @@ export function SocketProvider({ token, children }) {
 }
 
 export function useSocket() {
-  return useContext(SocketContext);
+  const ctx = useContext(SocketContext);
+  if (!ctx) throw new Error('useSocket must be inside SocketProvider');
+  return ctx;
 }

@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import {
   Sparkles, ArrowRight, Bot, Users, Shield,
   Zap, Target, Clock, Building2, TrendingUp, Lock,
-  BadgeCheck, Scale, Star, Send, MapPin, ClipboardList, Handshake, IndianRupee,
+  BadgeCheck, Scale, Star, MapPin, ClipboardList, Handshake, IndianRupee, CheckCircle2,
 } from 'lucide-react';
 import BuilderCard       from '../components/cards/BuilderCard';
 import InvestorCard      from '../components/cards/InvestorCard';
@@ -31,13 +31,6 @@ import { PROJECTS }      from '../data/projects';
 import { REAL_PROJECTS } from '../data/realProjects';
 
 const ProjectsMap = lazy(() => import('../components/map/ProjectsMap'));
-
-/* ── AI Chat preview messages ─────────────────────────────────────────────── */
-const AI_MESSAGES = [
-  { from: 'user', text: "I'm looking for luxury residential developers in Hyderabad with RERA-approved projects." },
-  { from: 'ai',   text: "Analysing 5 verified projects in Hyderabad matching your criteria. Skyven Kokapet and Moonglade Kokapet score highest — both RERA approved, ultra-luxury, with strong ROI potential. Would you like a detailed comparison?" },
-  { from: 'user', text: "Yes please — show me the comparison!" },
-];
 
 /* ── Trust items ──────────────────────────────────────────────────────────── */
 const TRUST = [
@@ -86,20 +79,11 @@ const STATS = [
   { icon: BadgeCheck,  value: 98,    suffix: '%',     label: 'Success Rate',      sub: 'Verified Matches',  accent: '#16a34a' },
 ];
 
-/* ── Hero mini-stats ──────────────────────────────────────────────────────── */
-const HERO_STATS = [
-  { icon: BadgeCheck, label: 'Verified Profiles' },
-  { icon: Bot,        label: 'AI-Driven Matchmaking' },
-  { icon: IndianRupee, label: '₹2000 Cr+ in Active Projects' },
-];
-
 /* ── Discover section tabs ─────────────────────────────────────────────────── */
 const TABS = ['Builders', 'Investors', 'Projects'];
 
 export default function Home() {
-  const [activeTab,  setActiveTab]  = useState('Builders');
-  const [chatInput,  setChatInput]  = useState('');
-  const [chatMsgs,   setChatMsgs]   = useState(AI_MESSAGES);
+  const [activeTab, setActiveTab] = useState('Builders');
   const navigate = useNavigate();
   const { isAuthenticated, onboardingComplete, role } = useAuth();
 
@@ -111,21 +95,6 @@ export default function Home() {
     } else {
       navigate('/login');
     }
-  }
-
-  function handleChatSend() {
-    if (!chatInput.trim()) return;
-    const userMsg = { from: 'user', text: chatInput.trim() };
-    const aiReply = {
-      from: 'ai',
-      text: "Great question! Our AI matchmaking engine is analysing your query. Sign up to get personalised builder and investor recommendations powered by real-time data.",
-    };
-    setChatMsgs(prev => [...prev, userMsg, aiReply]);
-    setChatInput('');
-  }
-
-  function handleChatKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChatSend(); }
   }
 
   return (
@@ -168,12 +137,8 @@ export default function Home() {
               matching and secure digital workflows.
             </p>
 
-            <p className="text-brand-700 text-sm italic font-medium mb-8 animate-fade-up" style={{ animationDelay: '300ms' }}>
-              "Empowering India's growth through trusted partnerships and data-driven investments."
-            </p>
-
             {/* CTAs */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-8 animate-fade-up" style={{ animationDelay: '380ms' }}>
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8 animate-fade-up" style={{ animationDelay: '300ms' }}>
               <button onClick={handleCTA} className="btn-cta px-7 py-3 text-sm">
                 <Sparkles size={15} /> Start Matching with AI
               </button>
@@ -182,14 +147,16 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Mini stats */}
-            <div className="grid grid-cols-3 gap-4 border-t border-slate-100 pt-6 animate-fade-up" style={{ animationDelay: '460ms' }}>
-              {HERO_STATS.map(({ icon: Icon, label }) => (
-                <div key={label} className="flex flex-col items-center gap-2">
-                  <span className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
-                    <Icon size={16} className="text-brand-600" />
-                  </span>
-                  <span className="text-[11px] text-slate-600 font-medium text-center leading-tight">{label}</span>
+            {/* Trust signals */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-slate-100 pt-6 animate-fade-up" style={{ animationDelay: '380ms' }}>
+              {[
+                '45,000+ Verified Profiles',
+                '₹12,000 Cr+ Projects',
+                '98% Match Rate',
+              ].map((signal) => (
+                <div key={signal} className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                  <span className="text-xs text-slate-600 font-medium">{signal}</span>
                 </div>
               ))}
             </div>
@@ -344,7 +311,7 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           STATS
       ════════════════════════════════════════════════════════════ */}
-      <section className="py-24 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #020b18 0%, #040e1a 50%, #020c14 100%)' }}>
+      <section className="py-20 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #020b18 0%, #040e1a 50%, #020c14 100%)' }}>
         {/* Background texture */}
         <div className="absolute inset-0 hero-dot-grid opacity-[0.035] pointer-events-none" />
         {/* Ambient glow blobs */}
@@ -366,7 +333,7 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           {STATS.map(({ icon: Icon, value, prefix, suffix, label, sub, accent }, i) => (
-            <Reveal key={label} delay={i * 100}>
+            <Reveal key={label} delay={i * 60}>
               <div className="relative rounded-2xl p-6 group overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-1.5"
                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 {/* Accent top bar */}
@@ -386,9 +353,6 @@ export default function Home() {
                   </div>
                   <div className="text-sm font-semibold text-slate-300">{label}</div>
                   <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
-                  <div className="mt-4 h-px rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <div className="h-full w-4/5 rounded-full" style={{ background: `linear-gradient(to right, ${accent}cc, ${accent}40)` }} />
-                  </div>
                 </div>
               </div>
             </Reveal>
@@ -397,86 +361,107 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          AI CHAT PREVIEW
+          HOW THE AI WORKS
       ════════════════════════════════════════════════════════════ */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <Reveal className="text-center mb-10">
-            <div className="flex justify-center mb-4">
-              <SectionPill icon={<Bot size={12} />}>Powered by Advanced AI</SectionPill>
-            </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-3">Talk to Your AI Matchmaker</h2>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto">
-              Ask anything — from funding matches to market insights. Our AI assistant understands
-              your needs and provides intelligent recommendations.
-            </p>
-          </Reveal>
+          <div className="grid lg:grid-cols-5 gap-12 items-center">
 
-          <Reveal delay={80} className="max-w-2xl mx-auto">
-            <div className="rounded-3xl overflow-hidden shadow-xl border border-slate-100">
-              {/* Chat header */}
-              <div className="px-5 py-4 flex items-center gap-3 bg-hero-gradient">
-                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-                  <Bot size={18} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold text-sm">AI Matchmaker</p>
-                  <p className="text-white/70 text-xs flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-                    Online · Ready to help
-                  </p>
-                </div>
-                <Sparkles size={16} className="text-white/60 ml-auto" />
+            {/* Left — feature list (60%) */}
+            <Reveal className="lg:col-span-3">
+              <div className="flex justify-start mb-5">
+                <SectionPill><Bot size={11} className="mr-1" />Powered by Advanced AI</SectionPill>
               </div>
+              <h2 className="text-3xl font-extrabold text-slate-900 mb-3 leading-tight">
+                AI that understands<br />real estate
+              </h2>
+              <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-md">
+                Our five-dimension scoring engine analyses thousands of data points to surface
+                the right match — every time.
+              </p>
 
-              {/* Messages */}
-              <div className="bg-slate-50 px-5 py-5 flex flex-col gap-4 min-h-[240px] max-h-72 overflow-y-auto">
-                {chatMsgs.map((m, i) => (
-                  <div key={i} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {m.from === 'ai' && (
-                      <div className="w-7 h-7 rounded-full mr-2 flex items-center justify-center shrink-0 bg-brand-gradient">
-                        <Bot size={13} className="text-white" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-                        ${m.from === 'ai'
-                          ? 'bg-white text-slate-700 shadow-sm rounded-tl-none'
-                          : 'text-white rounded-tr-none bg-brand-gradient'}`}
-                    >
-                      {m.text}
+              <div className="flex flex-col gap-5">
+                {[
+                  {
+                    title: 'Sector + Location fit scoring',
+                    desc: 'Matches builders and investors across 25+ sectors and 50+ cities with geo-weighted relevance.',
+                  },
+                  {
+                    title: 'ROI & risk profiling',
+                    desc: 'Analyses historical returns, project stage risk, and funding runway to rank compatibility.',
+                  },
+                  {
+                    title: 'Instant dealroom connection',
+                    desc: 'One click from a match to a live, secure dealroom with document sharing and real-time chat.',
+                  },
+                ].map(({ title, desc }) => (
+                  <div key={title} className="flex items-start gap-4">
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={13} className="text-teal-600" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{title}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
+            </Reveal>
 
-              {/* Input */}
-              <div className="bg-white border-t border-slate-100 px-4 py-3 flex items-center gap-3">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={handleChatKey}
-                  placeholder="Ask about builders, investors, or projects..."
-                  className="flex-1 text-sm text-slate-700 bg-transparent outline-none placeholder-slate-400"
-                />
-                <button
-                  onClick={handleChatSend}
-                  aria-label="Send message"
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0 bg-brand-gradient transition-transform hover:scale-105 active:scale-95"
-                >
-                  <Send size={14} />
-                </button>
+            {/* Right — static AI Score Card mockup (40%) */}
+            <Reveal delay={120} className="lg:col-span-2">
+              <div className="bg-white rounded-2xl shadow-card border border-slate-100 p-6">
+                {/* Mock builder */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-full bg-brand-gradient flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    RS
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Rajesh Sharma</p>
+                    <p className="text-xs text-slate-400">Luxury Residential · Hyderabad</p>
+                  </div>
+                </div>
+
+                {/* Circular progress ring */}
+                <div className="flex flex-col items-center mb-5">
+                  <svg width="88" height="88" viewBox="0 0 88 88" className="mb-2">
+                    <circle cx="44" cy="44" r="34" fill="none" stroke="#f1f5f9" strokeWidth="7" />
+                    <circle
+                      cx="44" cy="44" r="34" fill="none" stroke="#0d9488" strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 34}`}
+                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - 0.87)}`}
+                      transform="rotate(-90 44 44)"
+                    />
+                    <text x="44" y="49" textAnchor="middle" fontSize="16" fontWeight="700" fill="#0d9488">87%</text>
+                  </svg>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Match Score</p>
+                </div>
+
+                {/* Dimension bars */}
+                <div className="space-y-3">
+                  {[
+                    { label: 'Sector', value: 92 },
+                    { label: 'Location', value: 85 },
+                    { label: 'ROI', value: 78 },
+                  ].map(({ label, value }) => (
+                    <div key={label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-500">{label}</span>
+                        <span className="text-xs font-semibold text-teal-700">{value}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-teal-600 rounded-full"
+                          style={{ width: `${value}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Feature chips below chat */}
-            <div className="flex flex-wrap justify-center gap-3 mt-6">
-              {['Smart Matching', 'Real-time Insights', '24/7 Availability', 'Verified Data'].map((f) => (
-                <span key={f} className="tag-teal text-xs px-4 py-1.5">{f}</span>
-              ))}
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
       </section>
 
@@ -637,15 +622,15 @@ export default function Home() {
             </p>
           </Reveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 gap-5">
             {TRUST.map(({ icon: Icon, title, desc }, i) => (
-              <Reveal key={title} delay={(i % 3) * 80}>
-                <div className="card p-5 flex gap-4 items-start border border-transparent hover:border-brand-200 h-full">
-                  <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-brand-600" />
+              <Reveal key={title} delay={(i % 2) * 80}>
+                <div className="bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-100 hover:border-teal-200 transition-colors duration-200 h-full shadow-card">
+                  <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+                    <Icon size={18} className="text-teal-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-800 text-sm mb-1">{title}</h4>
+                    <h4 className="font-semibold text-slate-900 text-sm mb-1">{title}</h4>
                     <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
                   </div>
                 </div>

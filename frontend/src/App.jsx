@@ -10,6 +10,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider }    from './context/AuthContext';
 import { useLayoutEffect } from 'react';
+import { Toaster }         from 'sonner';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,6 +58,21 @@ import DashboardAnalytics from './pages/dashboard/DashboardAnalytics';
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: '#fff',
+            border: '1px solid #e2e8f0',
+            color: '#0f172a',
+            fontSize: '0.875rem',
+          },
+          classNames: {
+            success: 'border-l-4 border-l-emerald-500',
+            error:   'border-l-4 border-l-red-500',
+          },
+        }}
+      />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <div className="min-h-screen flex flex-col">
@@ -98,15 +114,17 @@ export default function App() {
                 }
               />
 
-              {/* ── Profile ───────────────────────────────────── */}
+              {/* ── Profile (uses DashboardLayout for sidebar) ── */}
               <Route
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Profile />
+                    <DashboardLayout />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<Profile />} />
+              </Route>
 
               {/* ── Public pages ───────────────────────────────── */}
               <Route path="/"          element={<Home />} />

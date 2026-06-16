@@ -7,9 +7,11 @@
  * a link to initiate a dealroom conversation. Serves as the index route for
  * the /dashboard nested route group.
  */
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, CheckCircle2, MapPin, Briefcase } from 'lucide-react';
 import KPICard from '../../components/dashboard/KPICard';
+import { SkeletonKPI } from '../../components/ui/SkeletonCard';
 import { useAuth } from '../../context/AuthContext';
 import {
   BUILDER_KPIS, INVESTOR_RECOMMENDATIONS,
@@ -66,8 +68,7 @@ function InvestorRecommendCard({ inv }) {
           </p>
           <Link
             to="/dealroom"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors"
           >
             Connect
           </Link>
@@ -79,24 +80,31 @@ function InvestorRecommendCard({ inv }) {
 
 export default function BuilderDashboard() {
   const { user } = useAuth();
+  const [kpiLoading, setKpiLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setKpiLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-800">
-          Welcome back, {user.first_name}! 🎉
+          Welcome back, {user.first_name}!
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Here's what's happening with your projects today
+          Here&apos;s what&apos;s happening with your projects today
         </p>
       </div>
 
-      {/* KPI row */}
+      {/* KPI row — skeleton until data ready */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        {BUILDER_KPIS.map((kpi) => (
-          <KPICard key={kpi.id} {...kpi} />
-        ))}
+        {kpiLoading
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
+          : BUILDER_KPIS.map((kpi) => <KPICard key={kpi.id} {...kpi} />)
+        }
       </div>
 
       {/* AI Match Recommendations */}

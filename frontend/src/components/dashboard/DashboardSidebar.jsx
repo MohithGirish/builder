@@ -1,18 +1,18 @@
 /*
- * DashboardSidebar.jsx — Role-aware navigation sidebar for dashboard pages.
+ * DashboardSidebar.jsx — Collapsible role-aware navigation sidebar.
  *
- * Renders the user's avatar, name, company, and verified badge at the top,
- * followed by a role-specific navigation menu (BUILDER_NAV or INVESTOR_NAV)
- * with active-state styling and unread-count badges for the Dealroom and
- * Builder Matches links. Includes a sign-out button at the bottom that calls
- * AuthContext.logout() and redirects to /login.
+ * Desktop: toggles between w-56 (full labels) and w-14 (icon-only with CSS
+ * tooltips). Mobile: rendered as a full Sheet (no width constraint). Active
+ * item shows a 3 px left teal accent border + bg-teal-50. Collapse toggle at
+ * bottom uses ChevronLeft that rotates 180° when collapsed. No window events.
  */
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FolderKanban, Users, MessageSquare,
-  BarChart3, Wallet, List, Star, CheckCircle2, LogOut,
+  BarChart3, Wallet, List, Star, CheckCircle2, LogOut, ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSidebar } from '../../context/SidebarContext';
 import { MOCK_DEALROOMS } from '../../data/dealrooms';
 import { BUILDER_LEADS, INVESTOR_LEADS } from '../../data/dashboard';
 
@@ -33,10 +33,14 @@ const INVESTOR_NAV = [
   { label: 'Analytics',       to: '/investor-dashboard/analytics',   icon: BarChart3 },
 ];
 
-export default function DashboardSidebar({ onClose }) {
+export default function DashboardSidebar({ mobile = false, onClose }) {
   const { user, role, logout } = useAuth();
+  const { collapsed, setCollapsed } = useSidebar();
   const navigate = useNavigate();
   const nav = role === 'builder' ? BUILDER_NAV : INVESTOR_NAV;
+
+  // In mobile mode never collapse — always show full labels
+  const isCollapsed = !mobile && collapsed;
 
   const totalUnread = MOCK_DEALROOMS.reduce((s, d) => s + (d.unread_count || 0), 0);
   const matchCount  = role === 'investor' ? BUILDER_LEADS.length : INVESTOR_LEADS.length;
@@ -50,37 +54,49 @@ export default function DashboardSidebar({ onClose }) {
   }
 
   return (
-    <aside className="w-52 shrink-0 flex flex-col bg-white border-r border-slate-100 h-full overflow-y-auto">
-
+    <aside
+      className={[
+        'flex flex-col bg-white border-r border-slate-100 h-full overflow-hidden',
+        // Mobile always w-64, desktop transitions via parent wrapper
+        mobile ? 'w-64' : 'w-full',
+      ].join(' ')}
+    >
       {/* ── User info ─────────────────────────────────────────── */}
-      <div className="px-4 pt-5 pb-4 border-b border-slate-100">
-        <div className="flex flex-col items-center text-center gap-2">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white bg-brand-gradient shadow-sm">
+      <div className={`border-b border-slate-100 ${isCollapsed ? 'px-2 pt-4 pb-3 flex justify-center' : 'px-4 pt-5 pb-4'}`}>
+        {isCollapsed ? (
+          /* Collapsed: avatar only */
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white bg-brand-gradient shadow-sm">
             {initials}
           </div>
-          <div>
-            <p className="text-sm font-bold text-slate-800 leading-tight">
-              {user?.first_name} {user?.last_name}
-            </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[160px]">
-              {user?.company || (role === 'investor' ? 'VC Firm' : 'Builder')}
-            </p>
-            {user?.is_verified && (
-              <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-white bg-brand-gradient">
-                <CheckCircle2 size={9} />
-                Verified
-              </span>
-            )}
+        ) : (
+          /* Expanded: avatar + name + role badge */
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white bg-brand-gradient shadow-sm shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-800 leading-tight truncate">
+                {user?.first_name} {user?.last_name}
+              </p>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-0.5">
+                {role === 'investor' ? 'Investor' : 'Builder'}
+              </p>
+              {user?.is_verified && (
+                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-white bg-brand-gradient">
+                  <CheckCircle2 size={8} /> Verified
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Nav items ─────────────────────────────────────────── */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto">
         {nav.map(({ label, to, icon: Icon, badge }) => {
           const count = badge && label === 'Dealroom'
             ? totalUnread
-            : badge && label === 'Builder Matches'
+            : badge && (label === 'Builder Matches' || label === 'Investor Matches')
             ? matchCount
             : 0;
 
@@ -91,22 +107,47 @@ export default function DashboardSidebar({ onClose }) {
               end={to === '/dashboard' || to === '/investor-dashboard'}
               onClick={onClose}
               className={({ isActive }) =>
-                `relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                [
+                  'relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                  isCollapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2',
                   isActive
-                    ? 'text-white shadow-sm bg-cta-gradient'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:translate-x-0.5'
-                }`
+                    ? 'text-slate-900 bg-teal-50'
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                ].join(' ')
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white/70" />}
-                  <Icon size={15} className="shrink-0" />
-                  <span className="flex-1">{label}</span>
-                  {count > 0 && (
-                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white text-orange-600">
-                      {count}
-                    </span>
+                  {/* 3px left accent border on active */}
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-teal-600" />
+                  )}
+
+                  {/* Icon — with CSS tooltip in collapsed mode */}
+                  <span className="relative group/tip flex items-center justify-center">
+                    <Icon
+                      size={16}
+                      className={`shrink-0 ${isActive ? 'text-teal-600' : 'text-slate-400 group-hover/tip:text-slate-600'}`}
+                    />
+                    {/* Tooltip: only visible when collapsed + desktop */}
+                    {isCollapsed && (
+                      <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-white whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 shadow-lg">
+                        {label}
+                        {count > 0 && ` (${count})`}
+                      </span>
+                    )}
+                  </span>
+
+                  {/* Label + badge (hidden when collapsed) */}
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 truncate">{label}</span>
+                      {count > 0 && (
+                        <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-teal-600 text-white shrink-0">
+                          {count}
+                        </span>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -115,15 +156,44 @@ export default function DashboardSidebar({ onClose }) {
         })}
       </nav>
 
-      {/* ── Sign out ───────────────────────────────────────────── */}
-      <div className="px-3 pb-4 pt-2 border-t border-slate-100">
+      {/* ── Collapse toggle (desktop only) ────────────────────── */}
+      {!mobile && (
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
+          onClick={() => setCollapsed((c) => !c)}
+          className="hidden md:flex items-center justify-center p-2.5 border-t border-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <LogOut size={13} />
-          Sign Out
+          <ChevronLeft
+            size={16}
+            className={`transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+          />
         </button>
+      )}
+
+      {/* ── Sign out ───────────────────────────────────────────── */}
+      <div className={`border-t border-slate-100 ${isCollapsed ? 'px-2 py-3 flex justify-center' : 'px-3 pb-4 pt-2'}`}>
+        {isCollapsed ? (
+          <span className="relative group/tip">
+            <button
+              onClick={handleLogout}
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+              aria-label="Sign out"
+            >
+              <LogOut size={15} />
+            </button>
+            <span className="pointer-events-none absolute left-full ml-3 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-white whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 shadow-lg">
+              Sign Out
+            </span>
+          </span>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
+          >
+            <LogOut size={13} />
+            Sign Out
+          </button>
+        )}
       </div>
     </aside>
   );

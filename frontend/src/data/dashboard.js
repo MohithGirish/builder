@@ -17,17 +17,17 @@ export const BUILDER_USER  = null;
 export const INVESTOR_USER = null;
 
 export const BUILDER_KPIS = [
-  { id: 'active_projects',   label: 'Active Projects',   value: '—', change: '', positive: false, icon: 'Briefcase',  color: 'bg-teal-50 text-teal-600' },
-  { id: 'total_raised',      label: 'Total Raised',      value: '—', change: '', positive: false, icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500' },
-  { id: 'investor_matches',  label: 'Investor Matches',  value: '—', change: '', positive: false, icon: 'Users',      color: 'bg-blue-50 text-blue-600' },
-  { id: 'profile_views',     label: 'Profile Views',     value: '—', change: '', positive: false, icon: 'Eye',        color: 'bg-amber-50 text-amber-500' },
+  { id: 'active_projects',   label: 'Active Projects',   value: '—', change: '', positive: true,  icon: 'Briefcase',  color: 'bg-teal-50 text-teal-600',    sparkline: [3,4,3,5,4,6,5] },
+  { id: 'total_raised',      label: 'Total Raised',      value: '—', change: '', positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [10,12,11,14,13,16,18] },
+  { id: 'investor_matches',  label: 'Investor Matches',  value: '—', change: '', positive: true,  icon: 'Users',      color: 'bg-blue-50 text-blue-600',     sparkline: [2,3,4,3,5,4,6] },
+  { id: 'profile_views',     label: 'Profile Views',     value: '—', change: '', positive: false, icon: 'Eye',        color: 'bg-amber-50 text-amber-500',   sparkline: [130,120,125,115,120,110,108] },
 ];
 
 export const INVESTOR_KPIS = [
-  { id: 'total_invested',   label: 'Total Invested',   value: '—', change: '', positive: false, icon: 'Wallet',     color: 'bg-teal-50 text-teal-600' },
-  { id: 'avg_roi',          label: 'Avg ROI',          value: '—', change: '', positive: false, icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500' },
-  { id: 'active_projects',  label: 'Active Projects',  value: '—', change: '', positive: false, icon: 'Briefcase',  color: 'bg-blue-50 text-blue-600' },
-  { id: 'builder_matches',  label: 'Builder Matches',  value: '—', change: '', positive: false, icon: 'Sparkles',   color: 'bg-amber-50 text-amber-500' },
+  { id: 'total_invested',   label: 'Total Invested',   value: '—', change: '', positive: true,  icon: 'Wallet',     color: 'bg-teal-50 text-teal-600',    sparkline: [40,50,48,60,58,70,80] },
+  { id: 'avg_roi',          label: 'Avg ROI',          value: '—', change: '', positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [18,19,18,20,21,22,23] },
+  { id: 'active_projects',  label: 'Active Projects',  value: '—', change: '', positive: true,  icon: 'Briefcase',  color: 'bg-blue-50 text-blue-600',     sparkline: [5,6,6,7,7,8,9] },
+  { id: 'builder_matches',  label: 'Builder Matches',  value: '—', change: '', positive: false, icon: 'Sparkles',   color: 'bg-amber-50 text-amber-500',   sparkline: [12,10,11,9,10,8,7] },
 ];
 
 export const BUILDER_ANALYTICS_KPIS = [

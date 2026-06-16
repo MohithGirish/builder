@@ -1,28 +1,35 @@
 /*
  * Builders.jsx — Public builders directory page.
  *
- * Renders a searchable and filterable list of verified builders with location,
- * sector, and verified-only filters plus grid/list view toggle and infinite-
- * load pagination. Displays summary stat chips (verified count, portfolio
- * value, total projects) above the filter bar. Filters are computed
- * client-side via useMemo against the static BUILDERS dataset.
+ * Shows 6 skeleton cards for 350 ms on first render before real cards appear,
+ * giving a polished loading feel. Searchable and filterable grid of builders
+ * with location, sector, verified-only filters, and grid/list view toggle.
+ * Uses SkeletonCard for loading state and an upgraded FilterBar.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, TrendingUp, Briefcase, ChevronDown } from 'lucide-react';
-import BuilderCard from '../components/cards/BuilderCard';
-import FilterBar   from '../components/filters/FilterBar';
+import { ArrowLeft, CheckCircle2, TrendingUp, Briefcase, ChevronDown, Users } from 'lucide-react';
+import BuilderCard       from '../components/cards/BuilderCard';
+import FilterBar         from '../components/filters/FilterBar';
+import { SkeletonCard }  from '../components/ui/SkeletonCard';
 import { BUILDERS, SECTORS, LOCATIONS } from '../data/builders';
 
 const PAGE_SIZE = 6;
 
 export default function Builders() {
-  const [search,      setSearch]      = useState('');
-  const [location,    setLocation]    = useState('All Location');
-  const [sector,      setSector]      = useState('All Sectors');
+  const [search,       setSearch]       = useState('');
+  const [location,     setLocation]     = useState('All Location');
+  const [sector,       setSector]       = useState('All Sectors');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [view,        setView]        = useState('grid');
-  const [page,        setPage]        = useState(1);
+  const [view,         setView]         = useState('grid');
+  const [page,         setPage]         = useState(1);
+  const [loading,      setLoading]      = useState(true);
+
+  /* Brief skeleton period to show loading state */
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = useMemo(() => {
     return BUILDERS.filter((b) => {
@@ -42,79 +49,80 @@ export default function Builders() {
     });
   }, [search, location, sector, verifiedOnly]);
 
-  const totalProjects = BUILDERS.reduce((a, b) => a + b.projects, 0);
-  const totalValue    = BUILDERS.length > 0 ? '₹8,346 Cr+' : '';
-
   const visible = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = visible.length < filtered.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50/60 to-slate-50">
 
       {/* ── Header ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-6">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-brand-700 text-sm font-medium hover:text-brand-800 mb-5">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-teal-700 text-sm font-medium hover:text-teal-800 mb-5">
           <ArrowLeft size={15} /> Back to Home
         </Link>
 
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
           Discover India's Premier Builders
         </h1>
         <p className="text-slate-500 text-sm mb-5 max-w-xl">
-          Connect with verified, trusted builders and developers across India. Browse portfolios,
-          read reviews, and find your perfect construction partner.
+          Connect with verified, trusted builders and developers across India.
         </p>
 
         {/* Stat chips */}
         <div className="flex flex-wrap gap-3">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-teal-600 text-white">
             <CheckCircle2 size={12} /> {BUILDERS.filter((b) => b.verified).length} Verified Builders
           </span>
-          {totalValue && (
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-              <TrendingUp size={12} /> {totalValue} Portfolio Value
-            </span>
-          )}
-          {totalProjects > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white">
-              <Briefcase size={12} /> {totalProjects}+ Projects Completed
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
+            <TrendingUp size={12} /> ₹8,346 Cr+ Portfolio Value
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-teal-700 text-white">
+            <Briefcase size={12} /> {BUILDERS.reduce((a, b) => a + b.projects, 0)}+ Projects
+          </span>
         </div>
       </div>
 
       {/* ── Filter bar ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6 sticky top-14 z-20">
         <FilterBar
-          search={search}     onSearch={setSearch}
-          locationOptions={LOCATIONS} location={location} onLocation={setLocation}
-          sectorOptions={SECTORS}     sector={sector}     onSector={setSector}
-          verifiedOnly={verifiedOnly} onVerifiedOnly={setVerifiedOnly}
-          view={view}   onView={setView}
+          search={search}               onSearch={setSearch}
+          locationOptions={LOCATIONS}   location={location}     onLocation={setLocation}
+          sectorOptions={SECTORS}       sector={sector}         onSector={setSector}
+          verifiedOnly={verifiedOnly}   onVerifiedOnly={setVerifiedOnly}
+          view={view}                   onView={setView}
           placeholder="Search builders, companies, specializations..."
         />
       </div>
 
       {/* ── Grid ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        {filtered.length === 0 ? (
-          <div className="text-center py-24 text-slate-400">
+        {loading ? (
+          /* Skeleton loading state — 6 cards */
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          /* Empty / no-results state */
+          <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-              <Briefcase size={28} className="text-slate-400" />
+              <Users size={28} className="text-slate-400" />
             </div>
-            <p className="font-semibold text-slate-600 mb-1">
-              {BUILDERS.length === 0 ? 'Builders Coming Soon' : 'No builders match your filters.'}
-            </p>
-            <p className="text-sm mt-1">
+            <h3 className="font-semibold text-slate-700 mb-1">
+              {BUILDERS.length === 0 ? 'No builders available' : 'No builders match your filters'}
+            </h3>
+            <p className="text-sm text-slate-500 max-w-xs">
               {BUILDERS.length === 0
-                ? 'The builder directory launches soon. Register now to be among the first.'
-                : 'Try adjusting your search or filters.'}
+                ? 'The builder directory launches soon. Register now to be first.'
+                : 'Try adjusting your search or clearing filters.'}
             </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-slate-400 mb-4">{filtered.length} builders found</p>
-            <div className={view === 'grid' ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-6 min-w-0' : 'flex flex-col gap-4'}>
+            <div className={view === 'grid'
+              ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-6'
+              : 'flex flex-col gap-4'
+            }>
               {visible.map((b) => <BuilderCard key={b.id} builder={b} />)}
             </div>
 
@@ -122,7 +130,7 @@ export default function Builders() {
               <div className="flex justify-center mt-10">
                 <button
                   onClick={() => setPage((p) => p + 1)}
-                  className="btn-outline-brand px-8 py-2.5 text-sm flex items-center gap-2"
+                  className="btn-ghost px-8 py-2.5 text-sm flex items-center gap-2"
                 >
                   Load More Builders <ChevronDown size={15} />
                 </button>
