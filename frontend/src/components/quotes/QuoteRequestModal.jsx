@@ -4,14 +4,23 @@
  * Renders a 3-step flow: (1) contact details with name pre-filled from auth,
  * (2) layout preferences derived dynamically from the project's unit types,
  * (3) free-form requirements textarea. On submission POSTs to the backend
- * /api/v1/quotes endpoint which sends email to the builder and returns a
- * quote ID. Shows a success screen with a link to the generated quote page.
+ * /api/v1/quotes endpoint which sends email to the builder and (if consented)
+ * a WhatsApp template message to the user. Returns a quote ID for tracking.
+ * Shows a success screen with a link to the generated quote page.
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronRight, ChevronLeft, FileText, CheckCircle2, Phone, Mail, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
+
+function WhatsAppIcon({ className, style }) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  );
+}
 
 function getLayoutOptions(project) {
   if (project.sections?.unitTypes?.length) {
@@ -42,11 +51,12 @@ export default function QuoteRequestModal({ project, onClose }) {
   const [error,   setError]   = useState('');
 
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
-  const [name,     setName]     = useState(fullName || '');
-  const [email,    setEmailVal] = useState(user?.email || '');
-  const [phone,    setPhone]    = useState('');
-  const [selected, setSelected] = useState([]);
-  const [reqs,     setReqs]     = useState('');
+  const [name,             setName]           = useState(fullName || '');
+  const [email,            setEmailVal]       = useState(user?.email || '');
+  const [phone,            setPhone]          = useState('');
+  const [whatsappConsent,  setWhatsappConsent]= useState(false);
+  const [selected,         setSelected]       = useState([]);
+  const [reqs,             setReqs]           = useState('');
 
   const layoutOptions = getLayoutOptions(project);
 
@@ -76,6 +86,7 @@ export default function QuoteRequestModal({ project, onClose }) {
           userName:          name.trim(),
           userEmail:         email.trim(),
           userPhone:         phone.trim(),
+          whatsappConsent,
           layoutPreferences: selected,
           requirements:      reqs.trim(),
         }),
@@ -161,9 +172,19 @@ export default function QuoteRequestModal({ project, onClose }) {
               <p className="text-slate-500 text-sm mb-1 leading-relaxed">
                 Your request for <strong>{project.name}</strong> has been sent to the developer.
               </p>
-              <p className="text-slate-500 text-sm mb-5 leading-relaxed">
+              <p className="text-slate-500 text-sm mb-4 leading-relaxed">
                 You'll receive an email confirmation shortly. The developer will review your requirements and send you a quote.
               </p>
+              {whatsappConsent && (
+                <div className="animate-fade-in flex items-center gap-2.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-4 py-2.5 mb-4 text-left">
+                  <div className="w-7 h-7 rounded-lg bg-[#25D366] flex items-center justify-center shrink-0">
+                    <WhatsAppIcon className="w-3.5 h-3.5" style={{ color: '#fff' }} />
+                  </div>
+                  <p className="text-xs text-[#15803d] font-medium leading-snug">
+                    WhatsApp confirmation on its way to your number
+                  </p>
+                </div>
+              )}
               <div className="bg-slate-50 rounded-xl px-4 py-3 mb-5 text-left">
                 <p className="text-xs text-slate-400 mb-1">Reference ID</p>
                 <p className="text-xs font-mono font-bold text-slate-700 break-all">{success.id}</p>
@@ -239,6 +260,74 @@ export default function QuoteRequestModal({ project, onClose }) {
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-teal-400 text-sm text-slate-800 placeholder-slate-400 transition-colors"
                   />
                 </div>
+
+                {/* WhatsApp consent toggle */}
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={whatsappConsent}
+                  onClick={() => setWhatsappConsent(c => !c)}
+                  className="w-full mt-2.5 flex items-center gap-3 px-3.5 py-3 rounded-xl border-2 text-left cursor-pointer select-none transition-all duration-300 focus-visible:outline-none"
+                  style={{
+                    borderColor:      whatsappConsent ? '#25D366' : '#e2e8f0',
+                    backgroundColor:  whatsappConsent ? '#f0fdf4' : '#f8fafc',
+                  }}
+                >
+                  {/* Icon bubble */}
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300"
+                    style={{
+                      background:  whatsappConsent ? '#25D366' : '#e2e8f0',
+                      boxShadow:   whatsappConsent ? '0 2px 10px rgba(37,211,102,0.4)' : 'none',
+                    }}
+                  >
+                    <WhatsAppIcon
+                      className="w-4 h-4 transition-colors duration-300"
+                      style={{ color: whatsappConsent ? '#fff' : '#94a3b8' }}
+                    />
+                  </div>
+
+                  {/* Labels */}
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-sm font-semibold transition-colors duration-300 leading-tight"
+                      style={{ color: whatsappConsent ? '#15803d' : '#475569' }}
+                    >
+                      WhatsApp confirmation
+                    </p>
+                    <p
+                      className="text-xs mt-0.5 leading-snug transition-colors duration-300"
+                      style={{ color: whatsappConsent ? '#16a34a' : '#94a3b8' }}
+                    >
+                      {whatsappConsent
+                        ? 'One message will be sent to your number'
+                        : 'Tap to receive a quick WhatsApp update'}
+                    </p>
+                  </div>
+
+                  {/* Animated checkbox tick */}
+                  <div
+                    className="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all duration-200"
+                    style={{
+                      borderColor:     whatsappConsent ? '#25D366' : '#cbd5e1',
+                      backgroundColor: whatsappConsent ? '#25D366' : '#fff',
+                    }}
+                  >
+                    {whatsappConsent && (
+                      <svg
+                        className="animate-scale-in"
+                        width="11" height="8" viewBox="0 0 11 8"
+                        fill="none" xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M1 3.5L4 6.5L10 1"
+                          stroke="white" strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                </button>
               </div>
             </div>
           )}

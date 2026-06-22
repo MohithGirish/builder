@@ -7,9 +7,8 @@
  * Includes a pending state while the developer has not yet responded. Accessible
  * via the deep-link sent in the "quote ready" email notification.
  */
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { apiFetch } from '../lib/api';
+import { useApi } from '../lib/useApi';
 import {
   CheckCircle2, Clock, FileText, Phone, Mail, User,
   Building2, ArrowLeft, Loader2, AlertCircle, Calendar, DollarSign
@@ -32,23 +31,10 @@ function StatusBadge({ status }) {
 
 export default function QuotePage() {
   const { id } = useParams();
-  const [quote,   setQuote]   = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await apiFetch(`/api/v1/quotes/${id}`, {}, 'Quote not found.');
-        setQuote(data.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [id]);
+  // Cached GET — a short TTL is fine (quote status changes only when the
+  // builder responds); revisiting the page won't refetch within the window.
+  const { data, loading, error } = useApi(`/api/v1/quotes/${id}`, { ttl: 15000 });
+  const quote = data?.data;
 
   if (loading) {
     return (

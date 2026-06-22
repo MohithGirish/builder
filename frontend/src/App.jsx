@@ -38,6 +38,7 @@ import Profile from './pages/Profile';
 // Public pages
 import Home                from './pages/Home';
 import Builders            from './pages/Builders';
+import BuilderDetail       from './pages/BuilderDetail';
 import Investors           from './pages/Investors';
 import Projects            from './pages/Projects';
 import Dealroom            from './pages/Dealroom';
@@ -127,8 +128,9 @@ export default function App() {
               </Route>
 
               {/* ── Public pages ───────────────────────────────── */}
-              <Route path="/"          element={<Home />} />
-              <Route path="/builders"  element={<Builders />} />
+              <Route path="/"            element={<Home />} />
+              <Route path="/builders"    element={<Builders />} />
+              <Route path="/builders/:id" element={<BuilderDetail />} />
               <Route path="/investors" element={<Investors />} />
               <Route path="/projects"  element={<Projects />} />
               <Route path="/dealroom"  element={<Navigate to="/dashboard/dealroom" replace />} />

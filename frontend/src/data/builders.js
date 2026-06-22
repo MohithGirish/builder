@@ -1,12 +1,11 @@
 /*
  * builders.js — Static mock dataset for the builders directory.
  *
- * Exports BUILDERS (array of builder profile objects), SECTORS (unique sector
- * options for the filter dropdown), and LOCATIONS (unique city options). Each
- * builder entry includes id, initials, name, company, location, rating,
- * projects, totalValue, sectors, verified flag, and a cover image URL.
- * Consumed by the Builders directory page, BuildersFeed, and the Home page
- * discover section.
+ * Exports BUILDERS (project-centric rows — one per project), UNIQUE_BUILDERS
+ * (rows grouped by builder name, each with a nested projects[] array),
+ * getBuilderById, TOTAL_PROJECTS/PORTFOLIO_VALUE header stats, SECTORS (filter
+ * options), and LOCATIONS (city options). The directory and Home discover render
+ * UNIQUE_BUILDERS; BuildersFeed still uses the raw BUILDERS rows.
  */
 export const BUILDERS = [
   {
@@ -80,6 +79,69 @@ export const BUILDERS = [
     image: '/images/moonglade/gallery-14.png',
   },
 ];
+
+/* ── Unique builders (deduped by name) ─────────────────────────────────────────
+ * The rows above are project-centric (one row per project), so the same builder
+ * can appear more than once. The directory shows one card per builder, so we
+ * group by name and nest each builder's projects under it. totalValue is the
+ * sum of the builder's project values; projects is the list to show on detail.
+ */
+const slugify    = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const crToNumber = (v) => Number(String(v).replace(/[^0-9.]/g, '')) || 0;
+const formatCr   = (n) => `₹${n.toLocaleString('en-IN')} Cr+`;
+
+export const UNIQUE_BUILDERS = (() => {
+  const byName = new Map();
+  for (const row of BUILDERS) {
+    if (!byName.has(row.name)) {
+      byName.set(row.name, {
+        id:       slugify(row.name),
+        name:     row.name,
+        location: row.location,
+        verified: false,
+        sectors:  [],
+        projects: [],
+        _value:   0,
+      });
+    }
+    const b = byName.get(row.name);
+    b.verified = b.verified || row.verified;
+    for (const s of row.sectors) if (!b.sectors.includes(s)) b.sectors.push(s);
+    b._value += crToNumber(row.totalValue);
+    b.projects.push({
+      projectId:  row.projectId,
+      name:       row.company,
+      location:   row.location,
+      totalValue: row.totalValue,
+      sectors:    row.sectors,
+      image:      row.image,
+    });
+  }
+  // backdrop = one of the builder's own project images. Each project belongs to
+  // exactly one builder, so picking the first project's image is unique per card.
+  return [...byName.values()].map(({ _value, ...b }) => ({
+    ...b,
+    totalValue: formatCr(_value),
+    backdrop:   b.projects[0]?.image || null,
+  }));
+})();
+
+export const getBuilderById = (id) => UNIQUE_BUILDERS.find((b) => b.id === id);
+
+// Avatar initials from real words only — skips connectors like "&" whose glyph
+// reads as a different font in an avatar bubble.
+export const initialsOf = (name) =>
+  (name || '?')
+    .split(/\s+/)
+    .filter((w) => /[a-z0-9]/i.test(w))
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+
+// Directory header stats — derived so they stay in sync with the data above.
+export const TOTAL_PROJECTS  = BUILDERS.length;
+export const PORTFOLIO_VALUE = formatCr(BUILDERS.reduce((a, r) => a + crToNumber(r.totalValue), 0));
 
 export const SECTORS = [
   'All Sectors', 'Residential', 'Commercial', 'Infrastructure',

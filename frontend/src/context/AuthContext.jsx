@@ -9,6 +9,7 @@
  * session. Also exports the useAuth() convenience hook.
  */
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { invalidate } from '../lib/api';
 
 const API = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -134,6 +135,7 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ refresh_token: rt }),
       });
     } catch {}
+    invalidate();      // drop the module-global GET cache so no response leaks to the next user
     _clearSession();
   }
 

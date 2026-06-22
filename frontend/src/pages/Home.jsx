@@ -25,7 +25,7 @@ import RealProjectCard   from '../components/cards/RealProjectCard';
 import SectionPill       from '../components/ui/SectionPill';
 import Reveal            from '../components/ui/Reveal';
 import Counter           from '../components/ui/Counter';
-import { BUILDERS }      from '../data/builders';
+import { UNIQUE_BUILDERS } from '../data/builders';
 import { INVESTORS }     from '../data/investors';
 import { PROJECTS }      from '../data/projects';
 import { REAL_PROJECTS } from '../data/realProjects';
@@ -496,7 +496,7 @@ export default function Home() {
           {/* Grid */}
           {(() => {
             const items =
-              activeTab === 'Builders'  ? BUILDERS.slice(0, 3) :
+              activeTab === 'Builders'  ? UNIQUE_BUILDERS.slice(0, 3) :
               activeTab === 'Investors' ? INVESTORS.slice(0, 3) :
               PROJECTS.slice(0, 3);
 
@@ -516,7 +516,7 @@ export default function Home() {
 
             return (
               <div key={activeTab} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeTab === 'Builders'  && BUILDERS.slice(0, 3).map((b, i) => <Reveal key={b.id}  delay={i * 80}><BuilderCard  builder={b} /></Reveal>)}
+                {activeTab === 'Builders'  && UNIQUE_BUILDERS.slice(0, 3).map((b, i) => <Reveal key={b.id}  delay={i * 80}><BuilderCard  builder={b} /></Reveal>)}
                 {activeTab === 'Investors' && INVESTORS.slice(0, 3).map((iv, i) => <Reveal key={iv.id} delay={i * 80}><InvestorCard investor={iv} /></Reveal>)}
                 {activeTab === 'Projects'  && PROJECTS.slice(0, 3).map((p, i)  => <Reveal key={p.id}  delay={i * 80}><ProjectCard  project={p} /></Reveal>)}
               </div>

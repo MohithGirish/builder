@@ -12,7 +12,8 @@
 const fs     = require('fs');
 const path   = require('path');
 const crypto = require('crypto');
-const email  = require('../services/email.service');
+const email     = require('../services/email.service');
+const whatsapp  = require('../services/whatsapp.service');
 
 const QUOTES_FILE  = path.join(__dirname, '../../data/quotes.json');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -36,6 +37,7 @@ async function createQuote(req, res, next) {
     const {
       projectId, projectName, projectEmail,
       userName, userEmail, userPhone,
+      whatsappConsent,
       layoutPreferences, requirements,
     } = req.body;
 
@@ -58,6 +60,7 @@ async function createQuote(req, res, next) {
       userPhone,
       layoutPreferences: Array.isArray(layoutPreferences) ? layoutPreferences : [],
       requirements:      requirements || '',
+      whatsappConsent:   whatsappConsent === true,
       responseToken,
       status:            'pending',
       builderResponse:   null,
@@ -73,10 +76,14 @@ async function createQuote(req, res, next) {
 
     const responseLink = `${FRONTEND_URL}/quote-response/${responseToken}`;
 
-    Promise.all([
+    const notifications = [
       email.sendQuoteRequestToBuilder({ quote, responseLink }),
       email.sendQuoteConfirmationToUser({ quote }),
-    ]).catch(err => console.error('[EMAIL ERROR]', err.message));
+    ];
+    if (whatsappConsent === true) {
+      notifications.push(whatsapp.sendQuoteConfirmation(quote.userPhone));
+    }
+    Promise.all(notifications).catch(err => console.error('[NOTIFICATION ERROR]', err.message));
 
     return res.status(201).json({
       success: true,

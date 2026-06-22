@@ -10,7 +10,29 @@
       "Read(//c/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max\" 2>/dev/**)",
       "Bash(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment marketplace premium professional fintech trust\" --design-system -f markdown)",
       "Bash(python3 \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment matchmaking marketplace SaaS premium\" --design-system -p \"Builder AI\" -f markdown)",
-      "PowerShell(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment matchmaking marketplace SaaS premium\" --design-system -p \"Builder AI\" -f markdown 2>&1)"
+      "PowerShell(python \"C:/Users/kumar/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate investment matchmaking marketplace SaaS premium\" --design-system -p \"Builder AI\" -f markdown 2>&1)",
+      "Bash(node .ds-sync/package-build.mjs --config .design-sync/config.json --node-modules ./frontend/node_modules --entry ./frontend/.ds-build/ds-entry.jsx --out ./ds-bundle)",
+      "Bash(node .ds-sync/package-capture.mjs --out ./ds-bundle --components QuoteRequestModal,SiteVisitModal)",
+      "Bash(node *)",
+      "Bash(netstat -ano)",
+      "Bash(git check-ignore *)",
+      "Bash(git status *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(python build_ui_doc.py)",
+      "Bash(python -c ' *)",
+      "Bash(npm run *)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_resize",
+      "Bash(ls -1 *.png)",
+      "Bash(mv builder-*.png investor-*.png ui-documentation-assets/)",
+      "PowerShell(npm run *)",
+      "mcp__playwright__browser_close"
     ]
   }
 }

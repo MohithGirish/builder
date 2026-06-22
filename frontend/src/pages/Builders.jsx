@@ -12,7 +12,7 @@ import { ArrowLeft, CheckCircle2, TrendingUp, Briefcase, ChevronDown, Users } fr
 import BuilderCard       from '../components/cards/BuilderCard';
 import FilterBar         from '../components/filters/FilterBar';
 import { SkeletonCard }  from '../components/ui/SkeletonCard';
-import { BUILDERS, SECTORS, LOCATIONS } from '../data/builders';
+import { UNIQUE_BUILDERS, SECTORS, LOCATIONS, TOTAL_PROJECTS, PORTFOLIO_VALUE } from '../data/builders';
 
 const PAGE_SIZE = 6;
 
@@ -32,14 +32,15 @@ export default function Builders() {
   }, []);
 
   const filtered = useMemo(() => {
-    return BUILDERS.filter((b) => {
+    return UNIQUE_BUILDERS.filter((b) => {
       if (search) {
         const s = search.toLowerCase();
+        const projectNames = b.projects.map((p) => p.name).join(' ').toLowerCase();
         if (
           !b.name.toLowerCase().includes(s) &&
-          !b.company.toLowerCase().includes(s) &&
           !b.location.toLowerCase().includes(s) &&
-          !b.sectors.join(' ').toLowerCase().includes(s)
+          !b.sectors.join(' ').toLowerCase().includes(s) &&
+          !projectNames.includes(s)
         ) return false;
       }
       if (location !== 'All Location' && !b.location.includes(location)) return false;
@@ -71,13 +72,13 @@ export default function Builders() {
         {/* Stat chips */}
         <div className="flex flex-wrap gap-3">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-teal-600 text-white">
-            <CheckCircle2 size={12} /> {BUILDERS.filter((b) => b.verified).length} Verified Builders
+            <CheckCircle2 size={12} /> {UNIQUE_BUILDERS.filter((b) => b.verified).length} Verified Builders
           </span>
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
-            <TrendingUp size={12} /> ₹8,346 Cr+ Portfolio Value
+            <TrendingUp size={12} /> {PORTFOLIO_VALUE} Portfolio Value
           </span>
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-teal-700 text-white">
-            <Briefcase size={12} /> {BUILDERS.reduce((a, b) => a + b.projects, 0)}+ Projects
+            <Briefcase size={12} /> {TOTAL_PROJECTS} Projects
           </span>
         </div>
       </div>
@@ -108,10 +109,10 @@ export default function Builders() {
               <Users size={28} className="text-slate-400" />
             </div>
             <h3 className="font-semibold text-slate-700 mb-1">
-              {BUILDERS.length === 0 ? 'No builders available' : 'No builders match your filters'}
+              {UNIQUE_BUILDERS.length === 0 ? 'No builders available' : 'No builders match your filters'}
             </h3>
             <p className="text-sm text-slate-500 max-w-xs">
-              {BUILDERS.length === 0
+              {UNIQUE_BUILDERS.length === 0
                 ? 'The builder directory launches soon. Register now to be first.'
                 : 'Try adjusting your search or clearing filters.'}
             </p>

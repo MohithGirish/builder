@@ -11,8 +11,7 @@
 'use strict';
 
 const https             = require('https');
-const AppError          = require('../utils/AppError');
-const { getCache, setCache } = require('../services/redis.service');
+const { cacheAside }     = require('../services/redis.service');
 
 const FX_CACHE_KEY = 'fx:rates:inr';
 const FX_TTL       = 2 * 60 * 60; // 2 hours in seconds
@@ -52,33 +51,22 @@ function fetchLiveRates() {
 
 exports.getRates = async (req, res, next) => {
   try {
-    const cached = await getCache(FX_CACHE_KEY);
-    if (cached) {
-      return res.json({
-        success: true,
-        data: { ...cached, source: 'cache' },
-      });
-    }
-
-    let rates;
-    let fallback = false;
+    // Read-through cache: only successful live fetches are cached (cacheAside
+    // caches the producer's return value; a throw propagates and is never
+    // cached, so the fallback below is always fresh).
+    let payload;
     try {
-      rates = await fetchLiveRates();
+      payload = await cacheAside(FX_CACHE_KEY, FX_TTL, async () => ({
+        rates:     await fetchLiveRates(),
+        updatedAt: new Date().toISOString(),
+        source:    'live',
+      }));
     } catch (err) {
       console.warn('[FX] Live rate fetch failed, using fallback:', err.message);
-      rates    = FALLBACK_RATES;
-      fallback = true;
+      payload = { rates: FALLBACK_RATES, updatedAt: new Date().toISOString(), source: 'fallback' };
     }
 
-    const updatedAt = new Date().toISOString();
-    if (!fallback) {
-      await setCache(FX_CACHE_KEY, { rates, updatedAt }, FX_TTL);
-    }
-
-    return res.json({
-      success: true,
-      data: { rates, updatedAt, source: fallback ? 'fallback' : 'live' },
-    });
+    return res.json({ success: true, data: payload });
   } catch (err) {
     next(err);
   }

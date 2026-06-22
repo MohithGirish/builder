@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "89224cab-e332-4499-8027-4094ec36d9cc",
+    "projectId": "elegant-nivasa",
+    "projectName": "Elegant Nivasa",
+    "projectEmail": "sales@e-infra.in",
+    "userName": "Mohith Gowda",
+    "userEmail": "kumarmohith847@gmail.com",
+    "userPhone": "+917338000740",
+    "layoutPreferences": [
+      "3 BHK (East)"
+    ],
+    "requirements": "",
+    "whatsappConsent": true,
+    "responseToken": "ca5829aa-4d70-4b7a-87f3-de5b75ac72c1",
+    "status": "pending",
+    "builderResponse": null,
+    "builderQuotePrice": null,
+    "builderTimeline": null,
+    "createdAt": "2026-06-17T04:40:36.611Z",
+    "respondedAt": null
+  }
+]

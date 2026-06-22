@@ -1,103 +1,104 @@
 /*
- * BuilderCard.jsx — Reusable display card for a builder profile.
+ * BuilderCard.jsx — Reusable display card for a unique builder.
  *
- * No cover image. Clean anatomy: teal-gradient Avatar + verified badge,
- * name/company, divider, 2-col stats row (projects + total value), sector
- * Badge tags, and a full-width "View Profile" CTA. Card lifts -4px on hover.
- * Used in the Builders directory page and the Home discovery section.
+ * The whole card is a link to the builder's detail page (/builders/:id). A cover
+ * banner pulled from one of the builder's own projects anchors the card; a
+ * teal-gradient brand tile (initials) overlaps it with a white ring. Below: name,
+ * location, a 2-up divided stats row (project count + portfolio value), sector
+ * tags, and a "View Projects" CTA. Used in the Builders directory and Home discover.
  */
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ArrowRight, Briefcase, TrendingUp } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Briefcase, TrendingUp, MapPin } from 'lucide-react';
+import { initialsOf } from '../../data/builders';
 
 export default function BuilderCard({ builder }) {
-  const { name, company, location, projects, totalValue, sectors, verified, projectId } = builder;
-
-  const initials = (name || company || '?')
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
+  const { id, name, location, projects, totalValue, sectors, verified, backdrop } = builder;
+  const projectCount = Array.isArray(projects) ? projects.length : projects;
+  const initials = initialsOf(name);
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-100 shadow-card flex flex-col h-full transition-all duration-200 hover:shadow-card-hover hover:-translate-y-1">
+    <Link
+      to={`/builders/${id}`}
+      aria-label={`View projects by ${name}`}
+      className="group flex flex-col h-full bg-white rounded-2xl border border-slate-100 shadow-card overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 focus-visible:outline-none"
+    >
+      {/* ── Cover: one of the builder's projects ── */}
+      <div className="relative h-32 bg-slate-100 overflow-hidden shrink-0">
+        {backdrop && (
+          <img
+            src={backdrop}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        )}
+        {/* Subtle bottom scrim for depth where the tile overlaps */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent" />
+        {verified && (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/95 text-brand-700 shadow-sm backdrop-blur-sm">
+            <CheckCircle2 size={10} className="text-brand-600" /> Verified
+          </span>
+        )}
+      </div>
 
-      {/* ── Top row: avatar + verified badge ── */}
-      <div className="flex items-start justify-between px-5 pt-5 pb-4">
-        <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold text-white bg-brand-gradient shadow-sm shrink-0">
+      {/* ── Body ── */}
+      <div className="flex flex-col flex-1 px-5 pb-5">
+        {/* Brand tile — overlaps the cover (relative z-10 keeps it above the scrim) */}
+        <div className="relative z-10 -mt-9 mb-3 w-16 h-16 rounded-2xl bg-brand-gradient flex items-center justify-center text-white font-display font-bold text-xl shadow-lifted ring-4 ring-white">
           {initials}
         </div>
-        {verified && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white bg-brand-gradient shrink-0">
-            <CheckCircle2 size={9} /> Verified
-          </span>
-        )}
-      </div>
 
-      {/* ── Name + company ── */}
-      <div className="px-5 pb-3">
-        <h3 className="text-base font-semibold text-slate-900 leading-snug">{name}</h3>
-        <p className="text-sm text-slate-500 mt-0.5 truncate">{company}</p>
+        {/* Name + location */}
+        <h3 className="text-lg font-semibold text-slate-900 leading-snug truncate">{name}</h3>
         {location && (
-          <p className="text-xs text-slate-400 mt-1 truncate">{location}</p>
-        )}
-      </div>
-
-      {/* ── Divider ── */}
-      <div className="border-t border-slate-100 mx-5" />
-
-      {/* ── Stats row: 2-col ── */}
-      <div className="grid grid-cols-2 px-5 py-3 gap-x-4">
-        <div>
-          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1 mb-0.5">
-            <Briefcase size={11} /> Projects
+          <p className="flex items-center gap-1.5 text-sm text-slate-500 mt-1">
+            <MapPin size={13} className="text-slate-400 shrink-0" />
+            <span className="truncate">{location}</span>
           </p>
-          <p className="text-sm font-semibold text-slate-800">{projects}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1 mb-0.5">
-            <TrendingUp size={11} /> Total Value
-          </p>
-          <p className="text-sm font-semibold text-teal-700">{totalValue}</p>
-        </div>
-      </div>
-
-      {/* ── Sector tags ── */}
-      <div className="flex flex-wrap gap-1.5 px-5 pb-4 flex-1">
-        {sectors.slice(0, 3).map((s) => (
-          <span
-            key={s}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium border border-slate-200 text-slate-600 bg-white"
-          >
-            {s}
-          </span>
-        ))}
-        {sectors.length > 3 && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">
-            +{sectors.length - 3}
-          </span>
         )}
-      </div>
 
-      {/* ── CTA ── */}
-      <div className="px-5 pb-5 mt-auto">
-        {projectId ? (
-          <Link
-            to={`/projects/${projectId}`}
-            aria-label={`View project by ${name}`}
-            className="btn-brand w-full py-2.5 text-xs flex items-center justify-center gap-1.5"
-          >
-            View Project <ArrowRight size={13} />
-          </Link>
-        ) : (
-          <button
-            aria-label={`View profile of ${name}`}
-            className="btn-brand w-full py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            View Profile <ArrowRight size={13} />
-          </button>
-        )}
+        {/* Stats — two tiles split by a hairline */}
+        <div className="grid grid-cols-2 gap-px mt-4 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-100">
+          <div className="bg-white px-3.5 py-3">
+            <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">
+              <Briefcase size={11} /> Projects
+            </p>
+            <p className="text-base font-semibold text-slate-900">{projectCount}</p>
+          </div>
+          <div className="bg-white px-3.5 py-3">
+            <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">
+              <TrendingUp size={11} /> Portfolio
+            </p>
+            <p className="text-base font-semibold text-brand-700">{totalValue}</p>
+          </div>
+        </div>
+
+        {/* Sector tags */}
+        <div className="flex flex-wrap gap-1.5 mt-4">
+          {sectors.slice(0, 3).map((s) => (
+            <span
+              key={s}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border border-slate-200 text-slate-600"
+            >
+              {s}
+            </span>
+          ))}
+          {sectors.length > 3 && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">
+              +{sectors.length - 3}
+            </span>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div className="mt-auto pt-5">
+          <span className="btn-brand w-full py-2.5 text-xs">
+            View Projects
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          </span>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../lib/api';
+import { cachedFetch } from '../lib/api';
 import NearbyGoogleMap   from '../components/map/NearbyGoogleMap';
 import QuoteRequestModal from '../components/quotes/QuoteRequestModal';
 import SiteVisitModal    from '../components/quotes/SiteVisitModal';
@@ -70,7 +70,9 @@ export default function ProjectDetail() {
   const [fxFallback, setFxFallback] = useState(false);
 
   useEffect(() => {
-    apiFetch('/api/v1/fx/rates')
+    // FX rates change at most every 2h server-side; cache client-side for 5min
+    // so opening multiple projects doesn't refetch on every mount.
+    cachedFetch('/api/v1/fx/rates', {}, { ttl: 5 * 60 * 1000 })
       .then(json => {
         if (json?.success) {
           setFxRates(json.data.rates);

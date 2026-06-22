@@ -12,8 +12,10 @@ const { Op }     = require('sequelize');
 const { Project, User } = require('../models');
 const { success } = require('../utils/response');
 const AppError   = require('../utils/AppError');
+const { cacheAside, getVersion, bumpVersion } = require('../services/redis.service');
 
-const BUILDER_ATTRS = ['id', 'first_name', 'last_name', 'is_verified'];
+const BUILDER_ATTRS    = ['id', 'first_name', 'last_name', 'is_verified'];
+const PUBLIC_LIST_TTL  = 60; // seconds — short TTL backed by version invalidation
 
 /** List projects — public or filtered by builder */
 async function listProjects(req, res, next) {
@@ -34,18 +36,34 @@ async function listProjects(req, res, next) {
       where.builder_id = req.user.id;
     }
 
-    const { count, rows } = await Project.findAndCountAll({
-      where,
-      include: [{ model: User, as: 'builder', attributes: BUILDER_ATTRS }],
-      order:   [['created_at', 'DESC']],
-      limit:   Math.min(50, parseInt(limit, 10)),
-      offset,
-    });
+    const runQuery = async () => {
+      const { count, rows } = await Project.findAndCountAll({
+        where,
+        include: [{ model: User, as: 'builder', attributes: BUILDER_ATTRS }],
+        order:   [['created_at', 'DESC']],
+        limit:   Math.min(50, parseInt(limit, 10)),
+        offset,
+      });
+      return {
+        projects:   rows,
+        pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total: count },
+      };
+    };
 
-    res.json(success({
-      projects:   rows,
-      pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total: count },
-    }));
+    // Cache the public (non-builder) listing only — a builder's own view is
+    // user-scoped and changes on their edits. Keyed by query + a version
+    // counter that create/update/delete bump for O(1) invalidation.
+    const isPublic = !req.user || req.user.role !== 'builder';
+    let payload;
+    if (isPublic) {
+      const ver = await getVersion('projects:list');
+      const key = `projects:list:${ver}:${JSON.stringify({ builder_id, city, type, page, limit })}`;
+      payload = await cacheAside(key, PUBLIC_LIST_TTL, runQuery);
+    } else {
+      payload = await runQuery();
+    }
+
+    res.json(success(payload));
   } catch (err) {
     next(err);
   }
@@ -89,6 +107,7 @@ async function createProject(req, res, next) {
       status:         'active',
     });
 
+    await bumpVersion('projects:list'); // invalidate cached public listings
     res.status(201).json(success({ project }));
   } catch (err) {
     next(err);
@@ -113,6 +132,7 @@ async function updateProject(req, res, next) {
     allowed.forEach((k) => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
 
     await project.update(updates);
+    await bumpVersion('projects:list'); // invalidate cached public listings
     res.json(success({ project }));
   } catch (err) {
     next(err);
@@ -129,6 +149,7 @@ async function deleteProject(req, res, next) {
     }
 
     await project.destroy();
+    await bumpVersion('projects:list'); // invalidate cached public listings
     res.json(success({ message: 'Project deleted.' }));
   } catch (err) {
     next(err);
