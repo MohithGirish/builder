@@ -41,6 +41,8 @@ Node.js / Express (port 5000)
 | Backend | Node.js, Express, Sequelize ORM, Socket.io |
 | Auth | JWT (access + refresh token rotation), RBAC middleware |
 | AI Engine | Python, FastAPI, Pydantic v2, Uvicorn |
+| AI Onboarding | Claude conversational chat (`@anthropic-ai/sdk`, `claude-haiku-4-5`) — optional, with scripted fallback |
+| Maps | Leaflet/OpenStreetMap (landing) · Google Maps Embed (project & profile) |
 | Database | PostgreSQL 16 |
 | Cache | Redis 7 (AOF persistence) |
 | Infrastructure | Docker, Docker Compose, Nginx |
@@ -105,6 +107,13 @@ DB_PASSWORD=builder_secret_dev
 REDIS_HOST=redis
 AI_SERVICE_URL=http://ai_service:8000
 ```
+
+**Optional:**
+
+- `ANTHROPIC_API_KEY` (in `backend/.env`) — enables the Claude-powered conversational onboarding chat. Leave it blank to use the scripted onboarding questions. It's a standalone toggle, not tied to any account.
+- `VITE_GOOGLE_MAPS_API_KEY` (in `frontend/.env.local`) — Google Maps Embed key for the project-detail and profile maps. Without it those maps show a deep-link fallback.
+
+> **Docker note:** the backend runs with `node_modules` in a named volume, so after adding a backend dependency, install it in the container (`docker compose exec backend npm install <pkg>`) or rebuild (`docker compose up -d --build backend`).
 
 ### 3. Start all services
 
@@ -176,7 +185,10 @@ The Node.js backend calls the AI service internally and returns a `compatibility
 - **Discovery pages** — searchable, filterable directories for Builders, Investors, and Projects
 - **Dealrooms** — private real-time chat rooms with file sharing and full message persistence
 - **Dashboards** — KPI cards, match lists, and SVG analytics charts for both roles
-- **Interactive map** — Leaflet-powered project location map
+- **AI onboarding** — Claude-powered conversational preference gathering, with a scripted-question fallback when no API key is set
+- **Role-based profile maps** — Google Maps embed showing an investor's target regions or a builder's project locations
+- **Interactive map** — Leaflet-powered project location map on the landing page
+- **Account management** — role switching and account deletion guarded by email + password re-authentication
 - **Auth** — JWT with refresh token rotation, protected routes, role-aware navigation
 
 ---
