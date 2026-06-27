@@ -17,39 +17,50 @@ export const BUILDER_USER  = null;
 export const INVESTOR_USER = null;
 
 export const BUILDER_KPIS = [
-  { id: 'active_projects',   label: 'Active Projects',   value: '—', change: '', positive: true,  icon: 'Briefcase',  color: 'bg-teal-50 text-teal-600',    sparkline: [3,4,3,5,4,6,5] },
-  { id: 'total_raised',      label: 'Total Raised',      value: '—', change: '', positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [10,12,11,14,13,16,18] },
-  { id: 'investor_matches',  label: 'Investor Matches',  value: '—', change: '', positive: true,  icon: 'Users',      color: 'bg-blue-50 text-blue-600',     sparkline: [2,3,4,3,5,4,6] },
-  { id: 'profile_views',     label: 'Profile Views',     value: '—', change: '', positive: false, icon: 'Eye',        color: 'bg-amber-50 text-amber-500',   sparkline: [130,120,125,115,120,110,108] },
+  { id: 'active_projects',   label: 'Active Projects',   value: '5',       change: '+2 this month', positive: true,  icon: 'Briefcase',  color: 'bg-teal-50 text-teal-600',    sparkline: [3,4,3,5,4,6,5] },
+  { id: 'total_raised',      label: 'Total Raised',      value: '₹128 Cr', change: '+18%',          positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [10,12,11,14,13,16,18] },
+  { id: 'investor_matches',  label: 'Investor Matches',  value: '24',      change: '+6 new',        positive: true,  icon: 'Users',      color: 'bg-blue-50 text-blue-600',     sparkline: [2,3,4,3,5,4,6] },
+  { id: 'profile_views',     label: 'Profile Views',     value: '1,840',   change: '-8%',           positive: false, icon: 'Eye',        color: 'bg-amber-50 text-amber-500',   sparkline: [130,120,125,115,120,110,108] },
 ];
 
 export const INVESTOR_KPIS = [
-  { id: 'total_invested',   label: 'Total Invested',   value: '—', change: '', positive: true,  icon: 'Wallet',     color: 'bg-teal-50 text-teal-600',    sparkline: [40,50,48,60,58,70,80] },
-  { id: 'avg_roi',          label: 'Avg ROI',          value: '—', change: '', positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [18,19,18,20,21,22,23] },
-  { id: 'active_projects',  label: 'Active Projects',  value: '—', change: '', positive: true,  icon: 'Briefcase',  color: 'bg-blue-50 text-blue-600',     sparkline: [5,6,6,7,7,8,9] },
-  { id: 'builder_matches',  label: 'Builder Matches',  value: '—', change: '', positive: false, icon: 'Sparkles',   color: 'bg-amber-50 text-amber-500',   sparkline: [12,10,11,9,10,8,7] },
+  { id: 'total_invested',   label: 'Total Invested',   value: '₹85 Cr', change: '+12%',          positive: true,  icon: 'Wallet',     color: 'bg-teal-50 text-teal-600',    sparkline: [40,50,48,60,58,70,80] },
+  { id: 'avg_roi',          label: 'Avg ROI',          value: '21.4%',  change: '+1.2%',         positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [18,19,18,20,21,22,23] },
+  { id: 'active_projects',  label: 'Active Projects',  value: '9',      change: '+1 this month', positive: true,  icon: 'Briefcase',  color: 'bg-blue-50 text-blue-600',     sparkline: [5,6,6,7,7,8,9] },
+  { id: 'builder_matches',  label: 'Project Matches',  value: '5',      change: '+5 new',        positive: true,  icon: 'Sparkles',   color: 'bg-amber-50 text-amber-500',   sparkline: [1,2,3,3,4,5,5] },
 ];
 
 export const BUILDER_ANALYTICS_KPIS = [
-  { label: 'Total Projects',        value: '—', change: '', positive: false, icon: 'Briefcase' },
-  { label: 'Total Funding Secured', value: '—', change: '', positive: false, icon: 'TrendingUp' },
-  { label: 'Active Investors',      value: '—', change: '', positive: false, icon: 'Users' },
-  { label: 'Avg Match Rate',        value: '—', change: '', positive: false, icon: 'Star' },
+  { label: 'Total Projects',        value: '12',      change: '+3 this year', positive: true, icon: 'Briefcase',  sparkline: [6,7,8,9,10,11,12] },
+  { label: 'Total Funding Secured', value: '₹775 Cr', change: '+22%',         positive: true, icon: 'TrendingUp', sparkline: [380,440,510,590,680,730,775] },
+  { label: 'Active Investors',      value: '38',      change: '+9',           positive: true, icon: 'Users',      sparkline: [18,22,25,29,33,36,38] },
+  { label: 'Avg Match Rate',        value: '82%',     change: '+4%',          positive: true, icon: 'Star',       sparkline: [70,72,74,76,78,80,82] },
 ];
 
 export const INVESTOR_ANALYTICS_KPIS = [
-  { label: 'Total Invested',     value: '—', change: '', positive: false, icon: 'Wallet' },
-  { label: 'Active Investments', value: '—', change: '', positive: false, icon: 'Briefcase' },
-  { label: 'Portfolio ROI',      value: '—', change: '', positive: false, icon: 'TrendingUp' },
-  { label: 'Builder Matches',    value: '—', change: '', positive: false, icon: 'Sparkles' },
+  { label: 'Total Invested',     value: '₹85 Cr', change: '+12%',   positive: true, icon: 'Wallet',     sparkline: [40,50,55,62,70,78,85] },
+  { label: 'Active Investments', value: '9',      change: '+1',     positive: true, icon: 'Briefcase',  sparkline: [4,5,6,6,7,8,9] },
+  { label: 'Portfolio ROI',      value: '21.4%',  change: '+1.2%',  positive: true, icon: 'TrendingUp', sparkline: [17,18,18,19,20,21,21] },
+  { label: 'Builder Matches',    value: '5',      change: '+5 new', positive: true, icon: 'Sparkles',   sparkline: [1,2,3,4,4,5,5] },
 ];
 
-export const INVESTOR_RECOMMENDATIONS = [];
+// Investor leads surfaced to builders (InvestorMatches page + dashboard recommendations).
+export const INVESTOR_LEADS = [
+  { id: 'lead-1', category: 'vc',    avatar_color: '#0d9488', initials: 'LV', company: 'Lighthouse Ventures',      is_verified: true,  type: 'VC Firm',        city: 'Mumbai',    match_score: 94, investment_range: '₹50–150 Cr',  sectors: ['Residential', 'Commercial'],    focus_areas: ['Mumbai', 'Pune'],       active_deals: 7, portfolio: '₹1,200 Cr AUM' },
+  { id: 'lead-2', category: 'pe',    avatar_color: '#f97316', initials: 'MC', company: 'Meridian Capital Partners', is_verified: true,  type: 'PE Fund',        city: 'Delhi',     match_score: 90, investment_range: '₹100–300 Cr', sectors: ['Infrastructure', 'Commercial'], focus_areas: ['NCR', 'Bangalore'],     active_deals: 5, portfolio: '₹3,400 Cr AUM' },
+  { id: 'lead-3', category: 'vc',    avatar_color: '#7c3aed', initials: 'GR', company: 'Greenfield Realty Fund',    is_verified: true,  type: 'VC Firm',        city: 'Hyderabad', match_score: 88, investment_range: '₹40–120 Cr',  sectors: ['Smart Cities', 'Mixed-use'],    focus_areas: ['Hyderabad', 'Chennai'], active_deals: 6, portfolio: '₹900 Cr AUM' },
+  { id: 'lead-4', category: 'pe',    avatar_color: '#4f46e5', initials: 'SI', company: 'Sterling Infra Partners',   is_verified: true,  type: 'PE Fund',        city: 'Pune',      match_score: 84, investment_range: '₹150–400 Cr', sectors: ['Infrastructure'],               focus_areas: ['Pune', 'Mumbai'],       active_deals: 4, portfolio: '₹5,100 Cr AUM' },
+  { id: 'lead-5', category: 'angel', avatar_color: '#2563eb', initials: 'AM', company: 'Arjun Mehta',               is_verified: false, type: 'Angel Investor', city: 'Bangalore', match_score: 81, investment_range: '₹2–10 Cr',    sectors: ['PropTech', 'Residential'],      focus_areas: ['Bangalore'],            active_deals: 3, portfolio: '12 startups' },
+  { id: 'lead-6', category: 'angel', avatar_color: '#e11d48', initials: 'PN', company: 'Priya Nair',                is_verified: false, type: 'Angel Investor', city: 'Chennai',   match_score: 78, investment_range: '₹1–8 Cr',     sectors: ['Residential', 'Hospitality'],   focus_areas: ['Chennai'],              active_deals: 2, portfolio: '8 startups' },
+];
+
+// Top 3 leads shown on the builder dashboard "AI Match Recommendations".
+export const INVESTOR_RECOMMENDATIONS = INVESTOR_LEADS.slice(0, 3);
+
 export const BUILDER_RECOMMENDATIONS  = [];
 export const MY_PROJECTS              = [];
 export const MY_INVESTMENTS           = [];
 export const BUILDER_LEADS            = [];
-export const INVESTOR_LEADS           = [];
 
 // ─── Analytics Chart Data ────────────────────────────────────────────────────
 

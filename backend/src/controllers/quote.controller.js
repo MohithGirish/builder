@@ -94,6 +94,28 @@ async function createQuote(req, res, next) {
   }
 }
 
+async function listQuotes(req, res, next) {
+  try {
+    const email        = (req.query.email || '').trim().toLowerCase();
+    const projectEmail = (req.query.projectEmail || '').trim().toLowerCase();
+    if (!email && !projectEmail) {
+      return res.status(400).json({ success: false, error: { message: 'email or projectEmail query parameter is required.' } });
+    }
+    // email → quotes this user requested (investor side);
+    // projectEmail → quotes against a builder's projects (builder side).
+    const match = email
+      ? (q) => (q.userEmail || '').toLowerCase() === email
+      : (q) => (q.projectEmail || '').toLowerCase() === projectEmail;
+    const quotes = readQuotes()
+      .filter(match)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(({ responseToken, ...safe }) => safe);
+    return res.json({ success: true, data: quotes });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getQuote(req, res, next) {
   try {
     const { id } = req.params;
@@ -188,4 +210,4 @@ async function scheduleSiteVisit(req, res, next) {
   }
 }
 
-module.exports = { createQuote, getQuote, getQuoteByToken, submitBuilderResponse, scheduleSiteVisit };
+module.exports = { createQuote, listQuotes, getQuote, getQuoteByToken, submitBuilderResponse, scheduleSiteVisit };

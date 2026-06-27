@@ -9,16 +9,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FolderKanban, Users, MessageSquare,
-  BarChart3, Wallet, List, Star, CheckCircle2, LogOut, ChevronLeft,
+  BarChart3, Wallet, List, Star, CheckCircle2, LogOut, ChevronLeft, FileText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../context/SidebarContext';
 import { MOCK_DEALROOMS } from '../../data/dealrooms';
-import { BUILDER_LEADS, INVESTOR_LEADS } from '../../data/dashboard';
+import { INVESTOR_LEADS } from '../../data/dashboard';
+import { PROJECT_MATCHES } from '../../data/realProjects';
 
 const BUILDER_NAV = [
   { label: 'Dashboard',        to: '/dashboard',           icon: LayoutDashboard },
   { label: 'My Projects',      to: '/dashboard/projects',  icon: FolderKanban },
+  { label: 'Quote Requests',   to: '/dashboard/quote-requests', icon: FileText },
   { label: 'Investor Matches', to: '/dashboard/matches',   icon: Star },
   { label: 'Dealroom',         to: '/dashboard/dealroom',  icon: MessageSquare, badge: true },
   { label: 'Analytics',        to: '/dashboard/analytics', icon: BarChart3 },
@@ -26,8 +28,8 @@ const BUILDER_NAV = [
 
 const INVESTOR_NAV = [
   { label: 'Dashboard',       to: '/investor-dashboard',             icon: LayoutDashboard },
-  { label: 'My Investments',  to: '/investor-dashboard/investments', icon: Wallet },
-  { label: 'Builder Matches', to: '/investor-dashboard/matches',     icon: Users, badge: true },
+  { label: 'My Quotes',       to: '/investor-dashboard/investments', icon: Wallet },
+  { label: 'Project Matches', to: '/investor-dashboard/matches',     icon: Users, badge: true },
   { label: 'Builders Feed',   to: '/investor-dashboard/feed',        icon: List },
   { label: 'Dealroom',        to: '/investor-dashboard/dealroom',    icon: MessageSquare, badge: true },
   { label: 'Analytics',       to: '/investor-dashboard/analytics',   icon: BarChart3 },
@@ -43,7 +45,7 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
   const isCollapsed = !mobile && collapsed;
 
   const totalUnread = MOCK_DEALROOMS.reduce((s, d) => s + (d.unread_count || 0), 0);
-  const matchCount  = role === 'investor' ? BUILDER_LEADS.length : INVESTOR_LEADS.length;
+  const matchCount  = role === 'investor' ? PROJECT_MATCHES.length : INVESTOR_LEADS.length;
 
   const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
 

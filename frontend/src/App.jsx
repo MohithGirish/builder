@@ -39,7 +39,6 @@ import Profile from './pages/Profile';
 import Home                from './pages/Home';
 import Builders            from './pages/Builders';
 import BuilderDetail       from './pages/BuilderDetail';
-import Investors           from './pages/Investors';
 import Projects            from './pages/Projects';
 import Dealroom            from './pages/Dealroom';
 import ProjectDetail       from './pages/ProjectDetail';
@@ -50,6 +49,7 @@ import QuoteResponsePage   from './pages/QuoteResponsePage';
 import BuilderDashboard   from './pages/dashboard/BuilderDashboard';
 import InvestorDashboard  from './pages/dashboard/InvestorDashboard';
 import MyProjects         from './pages/dashboard/MyProjects';
+import BuilderQuotes      from './pages/dashboard/BuilderQuotes';
 import InvestorMatches    from './pages/dashboard/InvestorMatches';
 import MyInvestments      from './pages/dashboard/MyInvestments';
 import BuilderMatches     from './pages/dashboard/BuilderMatches';
@@ -129,10 +129,10 @@ export default function App() {
 
               {/* ── Public pages ───────────────────────────────── */}
               <Route path="/"            element={<Home />} />
-              <Route path="/builders"    element={<Builders />} />
-              <Route path="/builders/:id" element={<BuilderDetail />} />
-              <Route path="/investors" element={<Investors />} />
-              <Route path="/projects"  element={<Projects />} />
+              {/* Builders & Projects require auth — redirect to login, then back */}
+              <Route path="/builders"     element={<ProtectedRoute><Builders /></ProtectedRoute>} />
+              <Route path="/builders/:id" element={<ProtectedRoute><BuilderDetail /></ProtectedRoute>} />
+              <Route path="/projects"     element={<ProtectedRoute><Projects /></ProtectedRoute>} />
               <Route path="/dealroom"  element={<Navigate to="/dashboard/dealroom" replace />} />
 
               {/* ── Real project detail (protected — auth + onboarding) ── */}
@@ -160,6 +160,7 @@ export default function App() {
               >
                 <Route index             element={<BuilderDashboard />} />
                 <Route path="projects"   element={<MyProjects />} />
+                <Route path="quote-requests" element={<BuilderQuotes />} />
                 <Route path="matches"    element={<InvestorMatches />} />
                 <Route path="analytics"  element={<DashboardAnalytics />} />
                 <Route path="dealroom"   element={<Dealroom />} />

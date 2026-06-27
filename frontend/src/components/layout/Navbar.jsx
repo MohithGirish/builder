@@ -52,7 +52,6 @@ export default function Navbar() {
     { label: 'Discover',  to: '/' },
     ...(isAuthenticated ? [{ label: 'Dashboard', to: dashDest }] : []),
     { label: 'Builders',  to: '/builders' },
-    { label: 'Investors', to: '/investors' },
     { label: 'Projects',  to: '/projects' },
   ];
 

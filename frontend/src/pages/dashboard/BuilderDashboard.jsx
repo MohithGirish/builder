@@ -35,8 +35,7 @@ function InvestorRecommendCard({ inv }) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-bold text-slate-800">{inv.company}</span>
               {inv.is_verified && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                      style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white bg-brand-gradient">
                   <CheckCircle2 size={8} /> Verified
                 </span>
               )}
@@ -47,8 +46,7 @@ function InvestorRecommendCard({ inv }) {
           </div>
           {/* Match badge */}
           <span
-            className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}
+            className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white bg-brand-gradient"
           >
             {inv.match_score}% Match
           </span>
@@ -111,8 +109,7 @@ export default function BuilderDashboard() {
       <div className="bg-white rounded-2xl shadow-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                 style={{ background: 'linear-gradient(135deg,#0d9488,#14c38e)' }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-gradient">
               <Sparkles size={15} className="text-white" />
             </div>
             <div>

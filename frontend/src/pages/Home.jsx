@@ -4,7 +4,7 @@
  * Renders the full marketing homepage including: an aurora hero with CTA,
  * interactive Leaflet map of Hyderabad real-estate projects, live project
  * cards, "How It Works" explainer, animated platform statistics, AI chat
- * preview, tabbed Builders/Investors/Projects discovery section, AI precision
+ * preview, tabbed Builders/Projects discovery section, AI precision
  * features, and a trust-and-transparency grid. Scroll-reveal animations and
  * count-up stats give the page a premium, dynamic feel. Navigation to the
  * dashboard or onboarding is driven by the current auth and onboarding state.
@@ -19,14 +19,12 @@ import {
   BadgeCheck, Scale, Star, MapPin, ClipboardList, Handshake, IndianRupee, CheckCircle2,
 } from 'lucide-react';
 import BuilderCard       from '../components/cards/BuilderCard';
-import InvestorCard      from '../components/cards/InvestorCard';
 import ProjectCard       from '../components/cards/ProjectCard';
 import RealProjectCard   from '../components/cards/RealProjectCard';
 import SectionPill       from '../components/ui/SectionPill';
 import Reveal            from '../components/ui/Reveal';
 import Counter           from '../components/ui/Counter';
 import { UNIQUE_BUILDERS } from '../data/builders';
-import { INVESTORS }     from '../data/investors';
 import { PROJECTS }      from '../data/projects';
 import { REAL_PROJECTS } from '../data/realProjects';
 
@@ -46,13 +44,13 @@ const TRUST = [
 const STEPS = [
   {
     icon: ClipboardList,
-    color: 'from-teal-500 to-teal-600',
+    color: 'from-brand-500 to-brand-600',
     title: 'Create Your Profile',
     desc: 'Builders and investors sign up with verified credentials, showcasing expertise and investment goals.',
   },
   {
     icon: Bot,
-    color: 'from-teal-600 to-teal-700',
+    color: 'from-brand-600 to-brand-700',
     title: 'AI Matchmaking',
     desc: 'Our intelligent model pairs ideal partners based on ROI, risk assessment, and strategic goals.',
   },
@@ -80,7 +78,7 @@ const STATS = [
 ];
 
 /* ── Discover section tabs ─────────────────────────────────────────────────── */
-const TABS = ['Builders', 'Investors', 'Projects'];
+const TABS = ['Builders', 'Projects'];
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('Builders');
@@ -155,7 +153,7 @@ export default function Home() {
                 '98% Match Rate',
               ].map((signal) => (
                 <div key={signal} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-brand-500 shrink-0" />
                   <span className="text-xs text-slate-600 font-medium">{signal}</span>
                 </div>
               ))}
@@ -396,8 +394,8 @@ export default function Home() {
                   },
                 ].map(({ title, desc }) => (
                   <div key={title} className="flex items-start gap-4">
-                    <span className="mt-0.5 w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                      <CheckCircle2 size={13} className="text-teal-600" />
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={13} className="text-brand-600" />
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">{title}</p>
@@ -448,11 +446,11 @@ export default function Home() {
                     <div key={label}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-slate-500">{label}</span>
-                        <span className="text-xs font-semibold text-teal-700">{value}%</span>
+                        <span className="text-xs font-semibold text-brand-700">{value}%</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-teal-600 rounded-full"
+                          className="h-full bg-brand-600 rounded-full"
                           style={{ width: `${value}%` }}
                         />
                       </div>
@@ -496,8 +494,7 @@ export default function Home() {
           {/* Grid */}
           {(() => {
             const items =
-              activeTab === 'Builders'  ? UNIQUE_BUILDERS.slice(0, 3) :
-              activeTab === 'Investors' ? INVESTORS.slice(0, 3) :
+              activeTab === 'Builders' ? UNIQUE_BUILDERS.slice(0, 3) :
               PROJECTS.slice(0, 3);
 
             if (items.length === 0) {
@@ -516,9 +513,8 @@ export default function Home() {
 
             return (
               <div key={activeTab} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeTab === 'Builders'  && UNIQUE_BUILDERS.slice(0, 3).map((b, i) => <Reveal key={b.id}  delay={i * 80}><BuilderCard  builder={b} /></Reveal>)}
-                {activeTab === 'Investors' && INVESTORS.slice(0, 3).map((iv, i) => <Reveal key={iv.id} delay={i * 80}><InvestorCard investor={iv} /></Reveal>)}
-                {activeTab === 'Projects'  && PROJECTS.slice(0, 3).map((p, i)  => <Reveal key={p.id}  delay={i * 80}><ProjectCard  project={p} /></Reveal>)}
+                {activeTab === 'Builders' && UNIQUE_BUILDERS.slice(0, 3).map((b, i) => <Reveal key={b.id} delay={i * 80}><BuilderCard builder={b} /></Reveal>)}
+                {activeTab === 'Projects' && PROJECTS.slice(0, 3).map((p, i)  => <Reveal key={p.id} delay={i * 80}><Link to="/projects" className="block h-full"><ProjectCard project={p} /></Link></Reveal>)}
               </div>
             );
           })()}
@@ -625,9 +621,9 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 gap-5">
             {TRUST.map(({ icon: Icon, title, desc }, i) => (
               <Reveal key={title} delay={(i % 2) * 80}>
-                <div className="bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-100 hover:border-teal-200 transition-colors duration-200 h-full shadow-card">
-                  <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-teal-600" />
+                <div className="bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-100 hover:border-brand-200 transition-colors duration-200 h-full shadow-card">
+                  <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
+                    <Icon size={18} className="text-brand-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 text-sm mb-1">{title}</h4>

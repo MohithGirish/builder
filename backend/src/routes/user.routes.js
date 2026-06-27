@@ -32,6 +32,12 @@ router.get('/me', userController.getMe);
 router.put('/me', validateUpdateProfile, userController.updateMe);
 
 /**
+ * @route   DELETE /users/me
+ * @access  Protected (any role) — permanently deletes own account
+ */
+router.delete('/me', userController.deleteMe);
+
+/**
  * @route   GET /users
  * @access  Protected (admin only)
  */

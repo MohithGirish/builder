@@ -1,22 +1,25 @@
 /*
- * OnboardingChat.jsx — AI-guided onboarding questionnaire.
+ * OnboardingChat.jsx — AI-guided onboarding conversation.
  *
- * Simulates a conversational AI assistant that walks the user through 4
- * role-specific preference questions (city, project type, funding range, etc.)
- * step by step. Collects answers, saves them via AuthContext.savePreferences(),
- * marks onboarding complete, and animates a progress bar before redirecting to
- * the appropriate dashboard. Also supports the "/onboarding/retake" path for
- * updating preferences post-onboarding.
+ * Talks to POST /api/v1/onboarding/chat (Claude, model claude-haiku-4-5) for a
+ * warm, open-ended conversation that gathers the user's role-specific
+ * preferences. When the backend signals completion it carries the same
+ * structured preference fields the scripted flow used, which are saved via
+ * AuthContext.savePreferences() before redirecting to the dashboard.
+ * If the AI endpoint is unavailable (no API key) or errors on the first turn,
+ * it falls back to the original scripted question flow so onboarding never
+ * breaks. Also supports the "/onboarding/retake" path for updating preferences.
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Building2, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 
 const BUILDER_PREF_KEYS  = ['city', 'project_type', 'projects_completed', 'funding_range'];
 const INVESTOR_PREF_KEYS = ['investor_type', 'sectors', 'investment_range', 'regions'];
 
-/* ── Question sets ────────────────────────────────────────────────────────── */
+/* ── Scripted fallback question sets (used only if the AI is unavailable) ───── */
 const BUILDER_QUESTIONS = [
   (a, name) => `Welcome to Builder.AI Market, ${name}! Let's personalise your experience. Which city are you based in?`,
   ()        => "What type of projects do you specialise in? (e.g., Luxury Residential, Commercial, Infrastructure, Smart Cities)",
@@ -43,19 +46,20 @@ const LOADING_MSG = {
 
 /* ── Component ────────────────────────────────────────────────────────────── */
 export default function OnboardingChat() {
-  const { role, user, completeOnboarding, savePreferences } = useAuth();
+  const { role, user, completeOnboarding, savePreferences, getAccessToken } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const isRetake  = location.pathname.includes('retake');
 
-  const questions   = role === 'investor' ? INVESTOR_QUESTIONS : BUILDER_QUESTIONS;
-  const totalSteps  = questions.length; // 5
+  const questions  = role === 'investor' ? INVESTOR_QUESTIONS : BUILDER_QUESTIONS;
+  const totalSteps = questions.length;
 
+  const [mode,        setMode]        = useState('deciding'); // 'deciding' | 'ai' | 'scripted'
   const [messages,    setMessages]    = useState([]);
   const [input,       setInput]       = useState('');
-  const [step,        setStep]        = useState(0);       // which question we're on
-  const [answers,     setAnswers]     = useState([]);
-  const [isTyping,    setIsTyping]    = useState(false);
+  const [step,        setStep]        = useState(0);          // scripted only
+  const [answers,     setAnswers]     = useState([]);         // scripted only
+  const [isTyping,    setIsTyping]    = useState(true);
   const [isComplete,  setIsComplete]  = useState(false);
   const [isLoading,   setIsLoading]   = useState(false);
   const [progress,    setProgress]    = useState(0);
@@ -63,27 +67,89 @@ export default function OnboardingChat() {
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
-  // Scroll to bottom on new messages
+  const firstName = user?.first_name || 'there';
+
+  // Scroll to bottom on new messages, the typing indicator, and the loading bar.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, [messages, isTyping, isLoading]);
 
-  // Show AI question when step advances
+  // Re-focus the input whenever it becomes enabled again, so the user can type
+  // the next answer immediately without clicking. Runs after render (when the
+  // disabled attribute has actually been cleared), unlike an inline .focus().
   useEffect(() => {
-    if (isComplete) return;
+    if (mode !== 'deciding' && !isTyping && !isComplete) {
+      inputRef.current?.focus();
+    }
+  }, [isTyping, isComplete, mode]);
+
+  /* POST one conversational turn to the backend AI proxy. */
+  async function postTurn(apiMessages) {
+    const at = getAccessToken?.();
+    const json = await apiFetch('/api/v1/onboarding/chat', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', ...(at ? { Authorization: `Bearer ${at}` } : {}) },
+      body:    JSON.stringify({ role, userName: firstName, messages: apiMessages }),
+    });
+    return json.data; // { available, done, message, preferences }
+  }
+
+  /* UI messages → Anthropic message shape. */
+  const toApi = (uiMsgs) =>
+    uiMsgs.map((m) => ({ role: m.from === 'ai' ? 'assistant' : 'user', content: m.text }));
+
+  // Decide the mode on mount: try the AI greeting, else fall back to scripted.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await postTurn([]);
+        if (cancelled) return;
+        // Key present (available) → LLM drives the whole conversation. The scripted
+        // questions are only ever used when the AI is unavailable.
+        if (res?.available) {
+          setMode('ai');
+          setIsTyping(false);
+          const greeting = res.message
+            || `Hi ${firstName}! I'd love to get to know you a little before we set things up. Tell me a bit about what you do?`;
+          setMessages([{ from: 'ai', text: greeting }]);
+          if (res.done && res.preferences) finishWith(res.preferences);
+          inputRef.current?.focus();
+        } else {
+          startScripted();
+        }
+      } catch {
+        if (!cancelled) startScripted();
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function startScripted() {
+    setMode('scripted');
     setIsTyping(true);
-    const delay = messages.length === 0 ? 600 : 900;
-    const timer = setTimeout(() => {
-      const text = questions[step](answers, user?.first_name || 'there');
-      setMessages(prev => [...prev, { from: 'ai', text }]);
+    setTimeout(() => {
+      setMessages([{ from: 'ai', text: questions[0](answers, firstName) }]);
       setIsTyping(false);
       inputRef.current?.focus();
-    }, delay);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, isComplete]);
+    }, 600);
+  }
 
-  // Animate loading progress bar
+  // Scripted: show the next question when the step advances.
+  useEffect(() => {
+    if (mode !== 'scripted' || isComplete || step === 0) return;
+    setIsTyping(true);
+    const timer = setTimeout(() => {
+      setMessages((prev) => [...prev, { from: 'ai', text: questions[step](answers, firstName) }]);
+      setIsTyping(false);
+      inputRef.current?.focus();
+    }, 900);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, isComplete, mode]);
+
+  // Animate loading progress bar, then complete onboarding + redirect.
   useEffect(() => {
     if (!isLoading) return;
     if (progress >= 88) {
@@ -99,24 +165,55 @@ export default function OnboardingChat() {
       }, 600);
       return () => clearTimeout(t);
     }
-    const t = setTimeout(() => setProgress(p => p + 1), 28);
+    const t = setTimeout(() => setProgress((p) => p + 1), 28);
     return () => clearTimeout(t);
-  }, [isLoading, progress, role, navigate, completeOnboarding]);
+  }, [isLoading, progress, role, navigate, completeOnboarding, isRetake]);
+
+  /* Save preferences and kick off the completion animation. */
+  function finishWith(preferences) {
+    savePreferences(preferences);
+    setIsComplete(true);
+    setIsTyping(false);
+    setTimeout(() => setIsLoading(true), 600);
+  }
 
   function handleSend() {
     const val = input.trim();
     if (!val || isTyping || isComplete) return;
+    if (mode === 'ai') handleSendAI(val);
+    else handleSendScripted(val);
+  }
 
-    // Add user bubble
-    setMessages(prev => [...prev, { from: 'user', text: val }]);
+  async function handleSendAI(val) {
+    const next = [...messages, { from: 'user', text: val }];
+    setMessages(next);
+    setInput('');
+    setIsTyping(true);
+    try {
+      const res = await postTurn(toApi(next));
+      if (!res?.available) {
+        setMessages((prev) => [...prev, { from: 'ai', text: "Sorry, I lost my train of thought there — could you say that again?" }]);
+        setIsTyping(false);
+        return;
+      }
+      if (res.message) setMessages((prev) => [...prev, { from: 'ai', text: res.message }]);
+      setIsTyping(false);
+      if (res.done && res.preferences) finishWith(res.preferences);
+    } catch {
+      setMessages((prev) => [...prev, { from: 'ai', text: "Sorry, I had a hiccup there — could you try sending that again?" }]);
+      setIsTyping(false);
+    }
+  }
+
+  function handleSendScripted(val) {
+    setMessages((prev) => [...prev, { from: 'user', text: val }]);
     const newAnswers = [...answers, val];
     setAnswers(newAnswers);
     setInput('');
 
     if (step + 1 < totalSteps) {
-      setStep(s => s + 1);
+      setStep((s) => s + 1);
     } else {
-      // Save preferences before loading
       const keys  = role === 'builder' ? BUILDER_PREF_KEYS : INVESTOR_PREF_KEYS;
       const prefs = keys.reduce((acc, key, i) => ({ ...acc, [key]: newAnswers[i] }), {});
       savePreferences(prefs);
@@ -124,7 +221,7 @@ export default function OnboardingChat() {
       setIsComplete(true);
       setIsTyping(true);
       setTimeout(() => {
-        setMessages(prev => [...prev, { from: 'ai', text: COMPLETION[role] }]);
+        setMessages((prev) => [...prev, { from: 'ai', text: COMPLETION[role] }]);
         setIsTyping(false);
         setTimeout(() => setIsLoading(true), 600);
       }, 900);
@@ -138,9 +235,19 @@ export default function OnboardingChat() {
     }
   }
 
-  const userInitial = (user?.first_name?.[0] || 'U').toUpperCase();
+  const userInitial = (firstName[0] || 'U').toUpperCase();
+
+  // Header subtitle + progress differ by mode (AI has no fixed step count).
   const currentStep = Math.min(step + 1, totalSteps);
-  const headerProgress = isComplete ? 100 : ((step) / totalSteps) * 100;
+  const subtitle =
+    mode === 'scripted' ? (isRetake ? `Question ${currentStep} of ${totalSteps}` : `Step ${currentStep} of ${totalSteps}`)
+    : mode === 'ai'      ? (isComplete ? 'All set!' : 'A quick chat to get to know you')
+    :                      'Starting…';
+  const headerProgress =
+    isComplete           ? 100
+    : mode === 'scripted' ? (step / totalSteps) * 100
+    : mode === 'ai'       ? Math.min(90, messages.length * 12)
+    :                       8;
 
   return (
     <div
@@ -152,10 +259,7 @@ export default function OnboardingChat() {
         style={{ height: '560px' }}
       >
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div
-          className="shrink-0"
-          style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
-        >
+        <div className="shrink-0 bg-cta-gradient">
           <div className="flex items-center gap-3 px-5 pt-4 pb-3">
             {/* Icon */}
             <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -167,9 +271,7 @@ export default function OnboardingChat() {
               <p className="text-white font-bold text-sm leading-tight">
                 {isRetake ? 'Update Your Preferences' : 'AI Onboarding Assistant'}
               </p>
-              <p className="text-white/80 text-[11px] mt-0.5">
-                {isRetake ? `Question ${currentStep} of ${totalSteps}` : `Almost there! Step ${currentStep} of ${totalSteps}`}
-              </p>
+              <p className="text-white/80 text-[11px] mt-0.5">{subtitle}</p>
             </div>
           </div>
 
@@ -192,27 +294,21 @@ export default function OnboardingChat() {
             msg.from === 'ai' ? (
               /* AI bubble */
               <div key={i} className="flex items-start gap-2.5">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: 'linear-gradient(135deg,#f97316,#f59e0b)' }}
-                >
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-cta-gradient">
                   <Building2 size={13} className="text-white" />
                 </div>
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[82%]">
-                  <p className="text-sm text-slate-700 leading-relaxed">{msg.text}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 </div>
               </div>
             ) : (
               /* User bubble */
               <div key={i} className="flex items-start gap-2.5 flex-row-reverse">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5"
-                  style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
-                >
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5 bg-cta-gradient">
                   {userInitial}
                 </div>
                 <div className="bg-slate-100 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[82%]">
-                  <p className="text-sm text-slate-700 leading-relaxed">{msg.text}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 </div>
               </div>
             )
@@ -221,10 +317,7 @@ export default function OnboardingChat() {
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex items-start gap-2.5">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: 'linear-gradient(135deg,#f97316,#f59e0b)' }}
-              >
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-cta-gradient">
                 <Building2 size={13} className="text-white" />
               </div>
               <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3.5">
@@ -253,11 +346,8 @@ export default function OnboardingChat() {
               </div>
               <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all duration-75"
-                  style={{
-                    width: `${progress}%`,
-                    background: 'linear-gradient(to right,#0d9488,#14c38e)',
-                  }}
+                  className="h-full rounded-full transition-all duration-75 bg-brand-gradient"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
               <p className="text-xs text-slate-400 mt-1.5">{progress}% complete</p>
@@ -282,8 +372,7 @@ export default function OnboardingChat() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || isTyping || isComplete}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-              style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 bg-cta-gradient"
             >
               <Send size={16} />
             </button>

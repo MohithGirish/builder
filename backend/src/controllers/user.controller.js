@@ -9,6 +9,7 @@
  */
 'use strict';
 
+const bcrypt      = require('bcryptjs');
 const AppError    = require('../utils/AppError');
 const { sendSuccess } = require('../utils/response');
 const { User }    = require('../models');
@@ -36,6 +37,36 @@ async function updateMe(req, res, next) {
 
     await user.update(req.body);
     return sendSuccess(res, 200, { user: user.toPublicJSON() }, 'Profile updated successfully.');
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * DELETE /users/me — permanently delete own account.
+ * Requires the owner to re-authenticate (email + password) in the request body.
+ * RefreshTokens cascade via User.hasMany(onDelete: 'CASCADE').
+ */
+async function deleteMe(req, res, next) {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return next(new AppError('Email and password are required to delete your account.', 400, 'VALIDATION_ERROR'));
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return next(new AppError('User not found.', 404, 'USER_001'));
+
+    // Re-authenticate the owner: the supplied email must match the logged-in
+    // account and the password must verify against the stored hash.
+    const emailMatches    = String(email).trim().toLowerCase() === user.email.toLowerCase();
+    const passwordMatches = await bcrypt.compare(password, user.password_hash);
+    if (!emailMatches || !passwordMatches) {
+      return next(new AppError('Email or password is incorrect.', 401, 'AUTH_002'));
+    }
+
+    await user.destroy();
+    return sendSuccess(res, 200, null, 'Your account has been deleted.');
   } catch (err) {
     return next(err);
   }
@@ -114,4 +145,4 @@ async function listUsers(req, res, next) {
   }
 }
 
-module.exports = { getMe, updateMe, getUserById, updateUserStatus, listUsers };
+module.exports = { getMe, updateMe, deleteMe, getUserById, updateUserStatus, listUsers };

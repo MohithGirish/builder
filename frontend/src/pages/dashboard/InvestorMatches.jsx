@@ -28,7 +28,7 @@ const STAT_CHIPS = [
   { label: 'Total Matches',    value: INVESTOR_LEADS.length || '—',                                                        icon: Users },
   { label: 'Avg Match Score',  value: INVESTOR_LEADS.length ? Math.round(INVESTOR_LEADS.reduce((a, i) => a + i.match_score, 0) / INVESTOR_LEADS.length) + '%' : '—', icon: BarChart3 },
   { label: 'Verified',         value: INVESTOR_LEADS.filter(i => i.is_verified).length || '—',                             icon: BadgeCheck },
-  { label: 'Investment Range', value: INVESTOR_LEADS.length ? `₹${Math.min(...INVESTOR_LEADS.map(i => parseInt(i.investment_range))) || '—'} Cr+` : '—', icon: Wallet },
+  { label: 'Investment Range', value: INVESTOR_LEADS.length ? `₹${Math.min(...INVESTOR_LEADS.map(i => parseInt(i.investment_range.match(/\d+/)?.[0] || 0))) || '—'} Cr+` : '—', icon: Wallet },
 ];
 
 function InvestorLeadCard({ inv }) {
@@ -50,8 +50,7 @@ function InvestorLeadCard({ inv }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-bold text-slate-800">{inv.company}</h3>
                 {inv.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                        style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}>
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white bg-brand-gradient">
                     <CheckCircle2 size={8} /> Verified
                   </span>
                 )}
@@ -60,8 +59,7 @@ function InvestorLeadCard({ inv }) {
                 <MapPin size={10} /> {inv.type} · {inv.city}
               </p>
             </div>
-            <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}>
+            <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white bg-brand-gradient">
               {inv.match_score}% Match
             </span>
           </div>
@@ -124,8 +122,7 @@ export default function InvestorMatches() {
       <div className="flex items-start justify-between mb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                 style={{ background: 'linear-gradient(135deg,#0d9488,#14c38e)' }}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-brand-gradient">
               <Sparkles size={14} className="text-white" />
             </div>
             <h1 className="text-xl font-bold text-slate-800">Your Investor Leads</h1>

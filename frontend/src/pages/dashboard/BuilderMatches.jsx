@@ -1,103 +1,94 @@
 /*
- * BuilderMatches.jsx — Investor leads page for the investor dashboard.
+ * BuilderMatches.jsx — Project matches page for the investor dashboard.
  *
- * Displays a filterable list of builder leads (BUILDER_LEADS) categorised by
- * project type (Residential, Commercial, Infrastructure) with stat summary
- * chips, sector tags, highlight tags, and match scores. Each card includes
- * a "View Project" CTA linking to the dealroom. Accessible at
- * /investor-dashboard/matches.
+ * Surfaces the onboarded real projects (PROJECT_MATCHES) as the investor's
+ * automatic AI matches: a filterable list by category (Residential, Commercial,
+ * Villa) with stat summary chips, match scores, location, developer, price
+ * range, and highlight tags. Each card links to the project detail page.
+ * Accessible at /investor-dashboard/matches.
  */
 import { useState } from 'react';
 import {
-  ArrowLeft, MapPin, CheckCircle2, Star,
-  Users, BarChart3, BadgeCheck, Wallet, Sparkles, Search,
+  ArrowLeft, MapPin, Star,
+  Building2, BarChart3, BadgeCheck, Wallet, Sparkles, Search,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { BUILDER_LEADS } from '../../data/dashboard';
+import { PROJECT_MATCHES } from '../../data/realProjects';
 
 const TABS = [
-  { id: 'all',            label: 'All Projects'  },
-  { id: 'residential',   label: 'Residential'   },
-  { id: 'commercial',    label: 'Commercial'     },
-  { id: 'infrastructure',label: 'Infrastructure' },
+  { id: 'all',         label: 'All Projects' },
+  { id: 'residential', label: 'Residential'  },
+  { id: 'commercial',  label: 'Commercial'   },
+  { id: 'villa',       label: 'Villa'        },
 ];
+
+const avg = (arr) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
 const STAT_CHIPS = [
-  { label: 'Total Leads',     value: BUILDER_LEADS.length || '—',                                                       icon: Users },
-  { label: 'Avg Match Score', value: BUILDER_LEADS.length ? Math.round(BUILDER_LEADS.reduce((a, b) => a + b.match_score, 0) / BUILDER_LEADS.length) + '%' : '—', icon: BarChart3 },
-  { label: 'Verified',        value: BUILDER_LEADS.filter(b => b.is_verified).length || '—',                            icon: BadgeCheck },
-  { label: 'Funding Range',   value: BUILDER_LEADS.length ? `₹${Math.min(...BUILDER_LEADS.map(b => b.funding_req))} Cr+` : '—', icon: Wallet },
+  { label: 'Total Matches',   value: PROJECT_MATCHES.length || '—',                                              icon: Building2 },
+  { label: 'Avg Match Score', value: PROJECT_MATCHES.length ? avg(PROJECT_MATCHES.map(p => p.matchScore)) + '%' : '—', icon: BarChart3 },
+  { label: 'RERA Approved',   value: PROJECT_MATCHES.filter(p => /^TS ?RERA/i.test(p.rera)).length || '—',        icon: BadgeCheck },
+  { label: 'Locations',       value: new Set(PROJECT_MATCHES.map(p => p.location.split(',')[0])).size || '—',     icon: Wallet },
 ];
 
-function BuilderLeadCard({ builder }) {
+function ProjectMatchCard({ project }) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-5 hover:shadow-card-hover transition-shadow duration-300">
       <div className="flex items-start gap-4">
-        {/* Avatar */}
+        {/* Project badge */}
         <div
-          className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-          style={{ background: builder.avatar_color }}
+          className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0"
+          style={{ background: project.color }}
         >
-          {builder.initials}
+          {project.name.slice(0, 2).toUpperCase()}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-bold text-slate-800">{builder.company}</h3>
-                {builder.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold text-white"
-                        style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}>
-                    <CheckCircle2 size={8} /> Verified
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Founder: {builder.name} · {builder.projects_done} Projects Completed
-              </p>
+              <h3 className="text-sm font-bold text-slate-800">{project.name}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{project.developer} · {project.type}</p>
             </div>
-            <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg,#0d9488,#14b8a6)' }}>
-              {builder.match_score}% Match
+            <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold text-white bg-brand-gradient">
+              {project.matchScore}% Match
             </span>
           </div>
 
           {/* Location */}
           <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
-            <MapPin size={11} /> {builder.city}
+            <MapPin size={11} /> {project.location}
           </p>
 
-          {/* Sectors */}
+          {/* Tags */}
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {builder.sectors.map((s) => <span key={s} className="tag-teal text-[11px]">{s}</span>)}
+            <span className="tag-teal text-[11px] capitalize">{project.category}</span>
+            <span className="tag-teal text-[11px]">{project.status}</span>
           </div>
 
-          {/* Funding req */}
+          {/* Price range */}
           <p className="text-xs text-slate-500 mt-2">
-            Funding Required:{' '}
-            <span className="font-semibold text-slate-700">₹{builder.funding_req} Cr</span>
+            Price Range:{' '}
+            <span className="font-semibold text-slate-700">{project.priceRange}</span>
           </p>
 
-          {/* Project Highlights */}
+          {/* Highlights */}
           <div className="mt-2">
             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide mb-1">Project Highlights</p>
             <div className="flex flex-wrap gap-1.5">
-              {builder.highlight_tags.map((t) => <span key={t} className="tag-orange text-[11px]">{t}</span>)}
+              {project.highlights.slice(0, 3).map((h) => (
+                <span key={h.label} className="tag-orange text-[11px]">{h.label}: {h.value}</span>
+              ))}
             </div>
           </div>
 
-          {/* Stats + CTA */}
+          {/* Footer + CTA */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-            <div className="flex gap-4 text-xs text-slate-500">
-              <span className="flex items-center gap-1">
-                <Star size={11} fill="#f59e0b" className="text-amber-400" /> {builder.rating}
-              </span>
-              <span>Total: {builder.total_value}</span>
-            </div>
+            <span className="flex items-center gap-1 text-xs text-slate-500">
+              <Star size={11} fill="#f59e0b" className="text-amber-400" /> RERA {project.rera}
+            </span>
             <Link
-              to="/dealroom"
+              to={`/projects/${project.id}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors"
             >
               View Project
@@ -113,8 +104,8 @@ export default function BuilderMatches() {
   const [activeTab, setActiveTab] = useState('all');
 
   const filtered = activeTab === 'all'
-    ? BUILDER_LEADS
-    : BUILDER_LEADS.filter((b) => b.category === activeTab);
+    ? PROJECT_MATCHES
+    : PROJECT_MATCHES.filter((p) => p.category === activeTab);
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl">
@@ -126,13 +117,12 @@ export default function BuilderMatches() {
       {/* Header */}
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-               style={{ background: 'linear-gradient(135deg,#0d9488,#14c38e)' }}>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-brand-gradient">
             <Sparkles size={14} className="text-white" />
           </div>
-          <h1 className="text-xl font-bold text-slate-800">Builder Leads for You</h1>
+          <h1 className="text-xl font-bold text-slate-800">Project Matches for You</h1>
         </div>
-        <p className="text-sm text-slate-500">These builders match your investment criteria and risk profile.</p>
+        <p className="text-sm text-slate-500">These onboarded projects match your investment criteria and risk profile.</p>
       </div>
 
       {/* Stat chips */}
@@ -170,17 +160,11 @@ export default function BuilderMatches() {
             <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
               <Search size={22} className="text-slate-300" />
             </div>
-            <h3 className="font-semibold text-slate-700 mb-1">
-              {BUILDER_LEADS.length === 0 ? 'No matches yet' : 'No builders in this category'}
-            </h3>
-            <p className="text-sm text-slate-500 max-w-xs">
-              {BUILDER_LEADS.length === 0
-                ? 'Complete your investor profile to improve your match score.'
-                : 'Try a different category tab.'}
-            </p>
+            <h3 className="font-semibold text-slate-700 mb-1">No projects in this category</h3>
+            <p className="text-sm text-slate-500 max-w-xs">Try a different category tab.</p>
           </div>
         ) : (
-          filtered.map((b) => <BuilderLeadCard key={b.id} builder={b} />)
+          filtered.map((p) => <ProjectMatchCard key={p.id} project={p} />)
         )}
       </div>
     </div>

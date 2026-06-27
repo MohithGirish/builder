@@ -140,9 +140,8 @@ export default function Projects() {
               onClick={() => setStage(s)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all
                 ${stage === s
-                  ? 'text-white shadow-sm'
+                  ? 'text-white shadow-sm bg-brand-gradient'
                   : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-400'}`}
-              style={stage === s ? { background: 'linear-gradient(135deg,#0d9488,#14c38e)' } : {}}
             >
               {s}
             </button>

@@ -10,6 +10,7 @@
  */
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { invalidate } from '../lib/api';
+import { isEinfraBuilder } from '../data/realProjects';
 
 const API = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -62,7 +63,7 @@ export function AuthProvider({ children }) {
         if (stored) {
           const u = JSON.parse(stored);
           setUser(u);
-          _restoreUserState(u.id);
+          _restoreUserState(u);
         }
       })
       .catch(() => {
@@ -72,9 +73,13 @@ export function AuthProvider({ children }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  function _restoreUserState(uid) {
+  function _restoreUserState(u) {
+    const uid = u?.id;
     if (!uid) return;
-    const wasOnboarded = !!localStorage.getItem(`builderai_onboarded_${uid}`);
+    // E-Infra is a pre-provisioned builder — never gate it behind onboarding.
+    const forced = isEinfraBuilder(u);
+    if (forced) localStorage.setItem(`builderai_onboarded_${uid}`, 'true');
+    const wasOnboarded = forced || !!localStorage.getItem(`builderai_onboarded_${uid}`);
     setOnboardingCompleteState(wasOnboarded);
     try {
       const prefs = localStorage.getItem(`builderai_prefs_${uid}`);
@@ -139,6 +144,35 @@ export function AuthProvider({ children }) {
     _clearSession();
   }
 
+  async function deleteAccount(email, password) {
+    const at = accessTokenRef.current;
+    let res;
+    try {
+      res = await fetch(`${API}/api/v1/users/me`, {
+        method:  'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(at ? { Authorization: `Bearer ${at}` } : {}),
+        },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      throw new Error('Unable to connect to server. Please ensure the backend is running.');
+    }
+    if (!res.ok) {
+      let msg = 'Failed to delete account.';
+      try { const j = await res.json(); msg = j.error?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    // Purge this user's local artifacts (kept by _clearSession) before signing out.
+    if (user?.id) {
+      localStorage.removeItem(`builderai_onboarded_${user.id}`);
+      localStorage.removeItem(`builderai_prefs_${user.id}`);
+    }
+    invalidate();
+    _clearSession();
+  }
+
   function setOnboardingRole(selectedRole) {
     if (user) {
       const updated = { ...user, role: selectedRole };
@@ -170,7 +204,10 @@ export function AuthProvider({ children }) {
     const updated = { ...user, role: newRole };
     setUser(updated);
     localStorage.setItem('builderai_u', JSON.stringify(updated));
-    // Clear old preferences so onboarding collects fresh ones for the new role
+    // Clear old preferences so the retake flow collects fresh ones for the new
+    // role. onboardingComplete stays true on purpose: the caller routes to the
+    // /onboarding/retake questions directly (role already set, no role picker),
+    // and keeping it true means dashboards never fall back to the role picker.
     setPreferences(null);
     if (user?.id) localStorage.removeItem(`builderai_prefs_${user.id}`);
   }
@@ -180,7 +217,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('builderai_rt', tokens.refresh_token);
     localStorage.setItem('builderai_u', JSON.stringify(u));
     setUser(u);
-    _restoreUserState(u.id);
+    _restoreUserState(u);
   }
 
   function _clearSession() {
@@ -211,6 +248,7 @@ export function AuthProvider({ children }) {
       getAccessToken: () => accessTokenRef.current,
       updatePreference,
       switchRole,
+      deleteAccount,
     }}>
       {children}
     </AuthContext.Provider>

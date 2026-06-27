@@ -8,6 +8,10 @@
  * gradient, and brand colour. Consumed by the Leaflet map, RealProjectCard,
  * and ProjectDetail page.
  */
+/* Investor auto-matches: every onboarded real project surfaced as a match with a
+   deterministic compatibility score. Exported below the data array. */
+const MATCH_SCORES = [94, 91, 89, 86, 83];
+
 export const REAL_PROJECTS = [
   {
     id: 'one-downtown',
@@ -663,3 +667,39 @@ export const REAL_PROJECTS = [
     ],
   },
 ];
+
+// ponytail: fixed scores for now — wire to the AI /match service once investor
+// preferences exist. Until then every investor auto-matches all 5 onboarded projects.
+export const PROJECT_MATCHES = REAL_PROJECTS.map((p, i) => ({
+  ...p,
+  matchScore: MATCH_SCORES[i] ?? 80,
+}));
+
+// ── E-Infra test builder ─────────────────────────────────────────────────────
+// The seeded builder (builder@e-infra.in) that owns all five projects. Quote
+// requests for these projects carry projectEmail 'sales@e-infra.in'.
+export const EINFRA_PROJECT_EMAIL = 'sales@e-infra.in';
+export const isEinfraBuilder = (user) =>
+  !!user?.email && user.email.toLowerCase().endsWith('@e-infra.in');
+
+// The five onboarded projects mapped to the builder "My Projects" card shape,
+// with deterministic dashboard stats (funding / investors / views) for display.
+const LISTING_STATS = [
+  { funding_target: 250, funding_raised: 160, investor_count: 12, view_count: 3200 },
+  { funding_target: 180, funding_raised: 95,  investor_count: 8,  view_count: 2100 },
+  { funding_target: 120, funding_raised: 70,  investor_count: 5,  view_count: 1400 },
+  { funding_target: 400, funding_raised: 240, investor_count: 18, view_count: 5400 },
+  { funding_target: 320, funding_raised: 210, investor_count: 14, view_count: 4300 },
+];
+export const EINFRA_LISTINGS = REAL_PROJECTS.map((p, i) => ({
+  id:            p.id,
+  name:          p.name,
+  project_type:  p.type,
+  city:          'Hyderabad',
+  location:      p.location,
+  coordinates:   p.coordinates,
+  image_url:     p.thumbnail,
+  rera_approved: /RERA/i.test(p.rera),
+  status:        'active',
+  ...LISTING_STATS[i],
+}));
