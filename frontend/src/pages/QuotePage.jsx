@@ -7,7 +7,7 @@
  * Includes a pending state while the developer has not yet responded. Accessible
  * via the deep-link sent in the "quote ready" email notification.
  */
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useApi } from '../lib/useApi';
 import {
   CheckCircle2, Clock, FileText, Phone, Mail, User,
@@ -31,6 +31,11 @@ function StatusBadge({ status }) {
 
 export default function QuotePage() {
   const { id } = useParams();
+  // Where "back" returns to: the caller (e.g. My Quotes) passes it via Link
+  // state; email deep-links have no state, so fall back to Home.
+  const { state } = useLocation();
+  const backTo    = state?.from || '/';
+  const backLabel = state?.fromLabel || 'Back to Home';
   // Cached GET — a short TTL is fine (quote status changes only when the
   // builder responds); revisiting the page won't refetch within the window.
   const { data, loading, error } = useApi(`/api/v1/quotes/${id}`, { ttl: 15000 });
@@ -70,10 +75,10 @@ export default function QuotePage() {
 
         {/* Back */}
         <Link
-          to="/"
+          to={backTo}
           className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm font-medium mb-6 transition-colors"
         >
-          <ArrowLeft size={14} /> Back to Home
+          <ArrowLeft size={14} /> {backLabel}
         </Link>
 
         {/* Header card */}

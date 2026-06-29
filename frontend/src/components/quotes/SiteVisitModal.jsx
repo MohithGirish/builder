@@ -63,11 +63,11 @@ export default function SiteVisitModal({ project, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scale-in overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scale-in overflow-hidden flex flex-col max-h-[90dvh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-5 flex items-start justify-between" style={{ background: project.gradient }}>
+        <div className="px-6 pt-6 pb-5 flex items-start justify-between shrink-0" style={{ background: project.gradient }}>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <MapPin size={15} className="text-white/80" />
@@ -80,7 +80,7 @@ export default function SiteVisitModal({ project, onClose }) {
           </button>
         </div>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto">
           {success ? (
             <div className="text-center py-4">
               <div

@@ -183,6 +183,7 @@ The Node.js backend calls the AI service internally and returns a `compatibility
 ## Key Features
 
 - **Discovery pages** — searchable, filterable directories for Builders, Investors, and Projects
+- **Quote requests** — investors request quotes on projects (styled email confirmation to both sides), track them live in **My Quotes**, and can delete a request (a cancellation email is sent and the record is purged)
 - **Dealrooms** — private real-time chat rooms with file sharing and full message persistence
 - **Dashboards** — KPI cards, match lists, and SVG analytics charts for both roles
 - **AI onboarding** — Claude-powered conversational preference gathering, with a scripted-question fallback when no API key is set

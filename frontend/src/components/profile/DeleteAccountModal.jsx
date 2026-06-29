@@ -37,10 +37,10 @@ export default function DeleteAccountModal({ role, onClose, onDeleted }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90dvh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 shrink-0">
           <h2 className="text-base font-bold text-red-700 flex items-center gap-2">
             <AlertTriangle size={18} /> Delete Account
           </h2>
@@ -55,7 +55,7 @@ export default function DeleteAccountModal({ role, onClose, onDeleted }) {
 
         {/* ── Step 1: irreversible warning ─────────────────────────────── */}
         {step === 'confirm' && (
-          <div className="px-6 py-5">
+          <div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto">
             <p className="text-sm text-slate-700 leading-relaxed">
               This action is <strong className="text-red-700">unreversible</strong>. Your account and all
               associated data will be permanently deleted. Are you sure you want to do this?
@@ -79,7 +79,7 @@ export default function DeleteAccountModal({ role, onClose, onDeleted }) {
 
         {/* ── Step 2 (builders only): projects will be delisted ────────── */}
         {step === 'projects' && (
-          <div className="px-6 py-5">
+          <div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto">
             <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
               <Building2 size={18} className="text-amber-600 shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800 leading-relaxed">
@@ -106,7 +106,7 @@ export default function DeleteAccountModal({ role, onClose, onDeleted }) {
 
         {/* ── Step 3: re-authenticate, then delete ─────────────────────── */}
         {step === 'verify' && (
-          <form onSubmit={handleDelete} className="px-6 py-5">
+          <form onSubmit={handleDelete} className="px-6 py-5 flex-1 min-h-0 overflow-y-auto">
             <p className="text-sm text-slate-600 mb-4">
               For your security, re-enter your email and password to confirm you own this account.
             </p>

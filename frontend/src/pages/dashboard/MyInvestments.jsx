@@ -7,10 +7,13 @@
  * timeline, and response. Summary chips show total / pending / responded counts.
  * Accessible at /investor-dashboard/investments.
  */
-import { ArrowLeft, FileText, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, FileText, Clock, CheckCircle2, ArrowRight, Trash2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../lib/useApi';
+import { apiFetch, invalidate } from '../../lib/api';
 
 const STATUS = {
   pending:   { label: 'Awaiting Response', color: 'bg-amber-100 text-amber-700', Icon: Clock },
@@ -21,8 +24,22 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function QuoteCard({ quote }) {
+function QuoteCard({ quote, onDelete }) {
   const st = STATUS[quote.status] || STATUS.pending;
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function handleDelete() {
+    setBusy(true);
+    try {
+      await onDelete(quote.id);
+    } catch (err) {
+      toast.error(err.message || 'Could not delete the request.');
+      setBusy(false);
+      setConfirming(false);
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-card p-5 hover:shadow-card-hover transition-shadow duration-300">
       <div className="flex items-start justify-between gap-2">
@@ -67,13 +84,43 @@ function QuoteCard({ quote }) {
       )}
 
       {/* CTA */}
-      <div className="mt-3 flex justify-end">
-        <Link
-          to={`/quote/${quote.id}`}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors border border-brand-200 px-3 py-1.5 rounded-full hover:bg-brand-50"
-        >
-          View Quote <ArrowRight size={12} />
-        </Link>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        {confirming ? (
+          <>
+            <span className="text-xs text-slate-500 mr-auto">Delete this request?</span>
+            <button
+              onClick={() => setConfirming(false)}
+              disabled={busy}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={busy}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-full disabled:opacity-50"
+            >
+              {busy ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />} Delete
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setConfirming(true)}
+              aria-label="Delete quote request"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50"
+            >
+              <Trash2 size={12} /> Delete
+            </button>
+            <Link
+              to={`/quote/${quote.id}`}
+              state={{ from: '/investor-dashboard/investments', fromLabel: 'Back to My Quotes' }}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800 transition-colors border border-brand-200 px-3 py-1.5 rounded-full hover:bg-brand-50"
+            >
+              View Quote <ArrowRight size={12} />
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );
@@ -82,11 +129,18 @@ function QuoteCard({ quote }) {
 export default function MyInvestments() {
   const { user } = useAuth();
   const email = user?.email || '';
-  const { data, loading, error } = useApi(
+  const { data, loading, error, refetch } = useApi(
     email ? `/api/v1/quotes?email=${encodeURIComponent(email)}` : null,
     { ttl: 10000 },
   );
   const quotes = data?.data || [];
+
+  async function handleDelete(id) {
+    await apiFetch(`/api/v1/quotes/${id}?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+    invalidate('/api/v1/quotes'); // also clears the builder-side list
+    refetch();
+    toast.success('Quote request deleted.');
+  }
 
   const pending   = quotes.filter((q) => q.status === 'pending').length;
   const responded = quotes.filter((q) => q.status === 'responded').length;
@@ -130,7 +184,7 @@ export default function MyInvestments() {
             <p className="text-slate-400 text-sm">{error}</p>
           </div>
         ) : quotes.length > 0 ? (
-          quotes.map((q) => <QuoteCard key={q.id} quote={q} />)
+          quotes.map((q) => <QuoteCard key={q.id} quote={q} onDelete={handleDelete} />)
         ) : (
           <div className="text-center py-16 bg-white rounded-2xl shadow-card">
             <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">

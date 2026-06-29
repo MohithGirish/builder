@@ -12,7 +12,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Building2, Send } from 'lucide-react';
+import { Sparkles, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
 
@@ -44,6 +44,16 @@ const LOADING_MSG = {
   investor: 'Analysing builder portfolios…',
 };
 
+/* Render **bold** spans (the AI marks the choices it offers this way) as a
+   brand-steel highlight; everything else stays plain text. No markdown lib. */
+function renderRich(text) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i} className="font-semibold text-brand-700">{part.slice(2, -2)}</strong>
+      : part
+  );
+}
+
 /* ── Component ────────────────────────────────────────────────────────────── */
 export default function OnboardingChat() {
   const { role, user, completeOnboarding, savePreferences, getAccessToken } = useAuth();
@@ -71,7 +81,9 @@ export default function OnboardingChat() {
 
   // Scroll to bottom on new messages, the typing indicator, and the loading bar.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // block:'nearest' keeps the scroll inside the messages container — the
+    // default 'start' would scroll the whole window, dragging the card off-screen.
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages, isTyping, isLoading]);
 
   // Re-focus the input whenever it becomes enabled again, so the user can type
@@ -250,20 +262,19 @@ export default function OnboardingChat() {
     :                       8;
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(135deg,#fff8f0 0%,#fffdf8 50%,#f8fff8 100%)' }}
-    >
+    <div className="relative aurora bg-ink min-h-[calc(100dvh-56px)] flex items-center justify-center overflow-hidden p-4">
+      {/* Blueprint dot texture */}
+      <div className="absolute inset-0 hero-dot-grid opacity-40 pointer-events-none" />
       <div
-        className="w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col"
-        style={{ height: '560px' }}
+        className="relative z-10 w-full max-w-xl bg-white rounded-2xl shadow-lifted overflow-hidden flex flex-col"
+        style={{ height: '560px', maxHeight: 'calc(100dvh - 96px)' }}
       >
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="shrink-0 bg-cta-gradient">
+        <div className="shrink-0 bg-brand-gradient">
           <div className="flex items-center gap-3 px-5 pt-4 pb-3">
             {/* Icon */}
-            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <Building2 size={18} className="text-white" />
+            <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+              <Sparkles size={18} className="text-white" />
             </div>
 
             {/* Title */}
@@ -271,18 +282,15 @@ export default function OnboardingChat() {
               <p className="text-white font-bold text-sm leading-tight">
                 {isRetake ? 'Update Your Preferences' : 'AI Onboarding Assistant'}
               </p>
-              <p className="text-white/80 text-[11px] mt-0.5">{subtitle}</p>
+              <p className="font-mono text-[11px] text-white/70 mt-0.5 tracking-wide">{subtitle}</p>
             </div>
           </div>
 
           {/* Progress bar */}
           <div className="h-1 bg-white/20">
             <div
-              className="h-full transition-all duration-500"
-              style={{
-                width: `${headerProgress}%`,
-                background: 'linear-gradient(to right,#14c38e,#0d9488)',
-              }}
+              className="h-full bg-azure transition-all duration-500"
+              style={{ width: `${headerProgress}%` }}
             />
           </div>
         </div>
@@ -294,21 +302,21 @@ export default function OnboardingChat() {
             msg.from === 'ai' ? (
               /* AI bubble */
               <div key={i} className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-cta-gradient">
-                  <Building2 size={13} className="text-white" />
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-brand-gradient">
+                  <Sparkles size={13} className="text-white" />
                 </div>
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[82%]">
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{renderRich(msg.text)}</p>
                 </div>
               </div>
             ) : (
               /* User bubble */
               <div key={i} className="flex items-start gap-2.5 flex-row-reverse">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5 bg-cta-gradient">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5 bg-slate-700">
                   {userInitial}
                 </div>
-                <div className="bg-slate-100 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[82%]">
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                <div className="bg-brand-600 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[82%]">
+                  <p className="text-sm text-white leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 </div>
               </div>
             )
@@ -317,8 +325,8 @@ export default function OnboardingChat() {
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-cta-gradient">
-                <Building2 size={13} className="text-white" />
+              <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-brand-gradient">
+                <Sparkles size={13} className="text-white" />
               </div>
               <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3.5">
                 <div className="flex items-center gap-1.5">
@@ -336,13 +344,10 @@ export default function OnboardingChat() {
 
           {/* Loading / analysing state */}
           {isLoading && (
-            <div className="mx-2 bg-blue-50 border border-blue-100 rounded-xl px-5 py-4">
+            <div className="mx-2 bg-brand-50 border border-brand-100 rounded-xl px-5 py-4">
               <div className="flex items-center gap-2 mb-2.5">
-                <div
-                  className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin shrink-0"
-                  style={{ borderColor: '#0d9488', borderTopColor: 'transparent' }}
-                />
-                <span className="text-sm text-slate-600 font-medium">{LOADING_MSG[role]}</span>
+                <div className="w-4 h-4 rounded-full border-2 border-brand-600 border-t-transparent animate-spin shrink-0" />
+                <span className="text-sm text-slate-700 font-medium">{LOADING_MSG[role]}</span>
               </div>
               <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
@@ -350,7 +355,7 @@ export default function OnboardingChat() {
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1.5">{progress}% complete</p>
+              <p className="font-mono text-xs text-slate-400 mt-1.5">{progress}% complete</p>
             </div>
           )}
 
@@ -366,13 +371,15 @@ export default function OnboardingChat() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type your answer here…"
+              aria-label="Your message"
               disabled={isTyping || isComplete}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none transition-all focus:border-orange-400 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50 disabled:text-slate-400"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-50 disabled:text-slate-400"
             />
             <button
               onClick={handleSend}
+              aria-label="Send message"
               disabled={!input.trim() || isTyping || isComplete}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 bg-cta-gradient"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-white transition-all hover:-translate-y-0.5 hover:shadow-glow active:translate-y-0 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 shrink-0 bg-brand-gradient"
             >
               <Send size={16} />
             </button>

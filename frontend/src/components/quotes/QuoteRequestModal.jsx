@@ -85,6 +85,7 @@ export default function QuoteRequestModal({ project, onClose }) {
           projectEmail:      project.email || 'sales@e-infra.in',
           userName:          name.trim(),
           userEmail:         email.trim(),
+          accountEmail:      user?.email || null, // ties the quote to the signed-in account for My Quotes, even if reply email differs
           userPhone:         phone.trim(),
           whatsappConsent,
           layoutPreferences: selected,
@@ -102,12 +103,12 @@ export default function QuoteRequestModal({ project, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-scale-in overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-scale-in overflow-hidden flex flex-col max-h-[90dvh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="px-6 pt-6 pb-5 flex items-start justify-between"
+          className="px-6 pt-6 pb-5 flex items-start justify-between shrink-0"
           style={{ background: project.gradient }}
         >
           <div>
@@ -128,7 +129,7 @@ export default function QuoteRequestModal({ project, onClose }) {
 
         {/* Step indicator */}
         {!success && (
-          <div className="px-6 pt-5 pb-2">
+          <div className="px-6 pt-5 pb-2 shrink-0">
             <div className="flex items-center gap-2">
               {STEPS.map((label, i) => (
                 <div key={i} className="flex items-center gap-2 flex-1">
@@ -157,7 +158,7 @@ export default function QuoteRequestModal({ project, onClose }) {
         )}
 
         {/* Body */}
-        <div className="px-6 pb-6 pt-4">
+        <div className="px-6 pb-6 pt-4 flex-1 min-h-0 overflow-y-auto">
 
           {/* ── Success state ── */}
           {success && (

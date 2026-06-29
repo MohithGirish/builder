@@ -16,6 +16,7 @@ const projectRoutes  = require('./project.routes');
 const quoteRoutes    = require('./quote.routes');
 const fxRoutes       = require('./fx.routes');
 const onboardingRoutes = require('./onboarding.routes');
+const brochureRoutes = require('./brochure.routes');
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.use('/projects',  projectRoutes);
 router.use('/quotes',    quoteRoutes);
 router.use('/fx',        fxRoutes);
 router.use('/onboarding', onboardingRoutes);
+router.use('/brochure',  brochureRoutes);
 
 router.get('/health', (req, res) => {
   res.json({

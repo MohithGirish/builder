@@ -20,7 +20,7 @@ export const BUILDERS = [
     totalValue: '₹3,500 Cr+',
     sectors: ['Commercial', 'Mixed-use', 'Tech Parks'],
     verified: true,
-    image: '/images/one-downtown/gallery-02.png',
+    image: '/images/one-downtown/gallery-02.thumb.webp',
   },
   {
     id: 'b-elegant-nivasa',
@@ -34,7 +34,7 @@ export const BUILDERS = [
     totalValue: '₹2,800 Cr+',
     sectors: ['Residential', 'Green Buildings'],
     verified: true,
-    image: '/images/elegant-nivasa/gallery-01.png',
+    image: '/images/elegant-nivasa/gallery-01.thumb.webp',
   },
   {
     id: 'b-la-casa',
@@ -48,7 +48,7 @@ export const BUILDERS = [
     totalValue: '₹600 Cr+',
     sectors: ['Residential', 'Green Buildings'],
     verified: true,
-    image: '/images/la-casa/gallery-06.png',
+    image: '/images/la-casa/gallery-06.thumb.webp',
   },
   {
     id: 'b-skyven',
@@ -62,7 +62,7 @@ export const BUILDERS = [
     totalValue: '₹4,200 Cr+',
     sectors: ['Residential', 'Mixed-use'],
     verified: true,
-    image: '/images/skyven-kokapet/gallery-01.png',
+    image: '/images/skyven-kokapet/gallery-01.thumb.webp',
   },
   {
     id: 'b-moonglade',
@@ -76,7 +76,7 @@ export const BUILDERS = [
     totalValue: '₹5,000 Cr+',
     sectors: ['Residential', 'Smart Cities'],
     verified: true,
-    image: '/images/moonglade/gallery-14.png',
+    image: '/images/moonglade/gallery-14.thumb.webp',
   },
 ];
 

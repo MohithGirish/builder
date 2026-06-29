@@ -15,6 +15,24 @@ const EMAIL_USER  = process.env.EMAIL_USER;
 const EMAIL_PASS  = process.env.EMAIL_PASS;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+// Blueprint Index palette (design-system/MASTER.md) — steel + ink navy + brass.
+const C = {
+  ink:    '#0e1b2e', // dark surface
+  steel:  '#2b5e93', // brand-600
+  deep:   '#234c78', // brand-700
+  tint:   '#eef3f9', // brand-50
+  tintBd: '#d8e3f1', // brand-100
+  brass:  '#c2954a', // accent
+  ink2:   '#1e293b', // body text (slate-800)
+  body:   '#475569', // secondary text (slate-600)
+  muted:  '#94a3b8',
+  surf:   '#f5f7f9', // slate-50
+};
+const MONO = "'JetBrains Mono','SF Mono',Menlo,Consolas,monospace";
+
+// Escape user-supplied values before they land in the HTML email body.
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
 function createTransporter() {
   if (!EMAIL_USER || !EMAIL_PASS || EMAIL_PASS === 'your_gmail_app_password_here') return null;
   return nodemailer.createTransport({
@@ -85,35 +103,95 @@ async function sendQuoteRequestToBuilder({ quote, responseLink }) {
   return sendEmail(quote.projectEmail, `New Quote Request: ${quote.projectName}`, html);
 }
 
+// Shared "what was requested" block — layout prefs, requirements, reference ID —
+// so the deletion notice can echo the exact body of the original confirmation.
+function quoteDetailsHtml(quote) {
+  const prefs = quote.layoutPreferences?.length
+    ? quote.layoutPreferences.map((p) =>
+        `<span style="display:inline-block;background:${C.tint};color:${C.deep};border:1px solid ${C.tintBd};border-radius:999px;padding:6px 13px;font-size:12px;font-weight:600;margin:0 6px 8px 0;">${esc(p)}</span>`,
+      ).join('')
+    : `<span style="color:${C.muted};font-size:13px;">No specific layout was selected.</span>`;
+
+  const req = quote.requirements?.trim()
+    ? `<h3 style="color:${C.deep};font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin:22px 0 8px;">Requirements</h3>
+       <div style="background:${C.surf};border:1px solid ${C.tintBd};border-radius:10px;padding:14px 16px;color:${C.ink2};font-size:14px;line-height:1.7;white-space:pre-wrap;">${esc(quote.requirements)}</div>`
+    : '';
+
+  return `
+    <h3 style="color:${C.deep};font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin:24px 0 10px;">Layout Preferences Selected</h3>
+    <div>${prefs}</div>
+    ${req}
+    <div style="background:${C.tint};border:1px solid ${C.tintBd};border-left:3px solid ${C.steel};border-radius:10px;padding:14px 16px;margin:24px 0;">
+      <p style="color:${C.body};font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin:0 0 4px;">Reference ID</p>
+      <p style="color:${C.deep};font-size:14px;font-weight:600;font-family:${MONO};margin:0;word-break:break-all;">${esc(quote.id)}</p>
+    </div>`;
+}
+
 async function sendQuoteConfirmationToUser({ quote }) {
   const html = `
-  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="background:linear-gradient(135deg,#0f766e,#14b8a6);padding:28px 24px;border-radius:12px 12px 0 0;">
-      <h1 style="color:white;margin:0;font-size:22px;">Quote Request Submitted</h1>
-      <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;">BuilderAI Platform</p>
+  <div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${C.tintBd};border-radius:14px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,${C.ink},${C.steel});padding:26px 28px;border-radius:14px 14px 0 0;">
+      <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em;">Quote Request Submitted</h1>
+      <div style="width:34px;height:3px;background:${C.brass};border-radius:2px;margin:10px 0 8px;"></div>
+      <p style="color:rgba(255,255,255,0.72);margin:0;font-size:12px;letter-spacing:0.04em;">BUILDERAI PLATFORM</p>
     </div>
-    <div style="background:#fff;padding:28px 24px;border:1px solid #e2e8f0;border-top:none;">
-      <p style="color:#1e293b;font-size:15px;font-weight:600;">Dear ${quote.userName},</p>
-      <p style="color:#475569;font-size:14px;line-height:1.7;">
-        Your quote request for <strong>${quote.projectName}</strong> has been submitted successfully.
-        The developer has been notified and will review your requirements shortly.
+
+    <div style="padding:26px 28px;">
+      <p style="color:${C.ink2};font-size:15px;font-weight:600;margin:0 0 10px;">Dear ${esc(quote.userName)},</p>
+      <p style="color:${C.body};font-size:14px;line-height:1.7;margin:0 0 4px;">
+        Your quote request for <strong style="color:${C.ink2};">${esc(quote.projectName)}</strong> has been submitted
+        successfully. The developer has been notified and will review your requirements shortly.
       </p>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;margin:20px 0;">
-        <p style="color:#166534;font-size:13px;margin:0;">
-          <strong>Reference ID:</strong> ${quote.id}
-        </p>
-      </div>
-      <p style="color:#475569;font-size:14px;line-height:1.7;">
-        You will receive an email notification as soon as the developer submits your quote.
-        You can use the reference ID above to track your request.
+
+      ${quoteDetailsHtml(quote)}
+
+      <p style="color:${C.body};font-size:14px;line-height:1.7;margin:0;">
+        You'll receive another email the moment the developer submits your quote.
+        Keep the reference ID above to track this request.
       </p>
     </div>
-    <div style="background:#f8fafc;padding:14px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-      <p style="color:#94a3b8;font-size:11px;margin:0;">BuilderAI Platform · Connecting Builders &amp; Investors</p>
+
+    <div style="background:${C.surf};padding:16px 28px;border-top:1px solid ${C.tintBd};text-align:center;">
+      <p style="color:${C.muted};font-size:11px;margin:0;letter-spacing:0.02em;">BuilderAI Platform · Connecting Builders &amp; Investors</p>
     </div>
   </div>`;
 
   return sendEmail(quote.userEmail, `Quote Request Confirmed – ${quote.projectName}`, html);
+}
+
+async function sendQuoteDeletedToUser({ quote }) {
+  const html = `
+  <div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${C.tintBd};border-radius:14px;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,${C.ink},${C.steel});padding:26px 28px;border-radius:14px 14px 0 0;">
+      <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em;">Quote Request Deleted</h1>
+      <div style="width:34px;height:3px;background:${C.brass};border-radius:2px;margin:10px 0 8px;"></div>
+      <p style="color:rgba(255,255,255,0.72);margin:0;font-size:12px;letter-spacing:0.04em;">BUILDERAI PLATFORM</p>
+    </div>
+
+    <div style="padding:26px 28px;">
+      <p style="color:${C.ink2};font-size:15px;font-weight:600;margin:0 0 10px;">Dear ${esc(quote.userName)},</p>
+      <p style="color:${C.body};font-size:14px;line-height:1.7;margin:0 0 4px;">
+        Your quote request for <strong style="color:${C.ink2};">${esc(quote.projectName)}</strong> has been deleted at
+        your request and is no longer active. The developer will not respond to it.
+      </p>
+
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-left:3px solid #dc2626;border-radius:10px;padding:12px 16px;margin:18px 0 0;">
+        <p style="color:#b91c1c;font-size:13px;margin:0;line-height:1.6;">This request has been removed. The details below are kept for your records only.</p>
+      </div>
+
+      ${quoteDetailsHtml(quote)}
+
+      <p style="color:${C.body};font-size:14px;line-height:1.7;margin:0;">
+        Changed your mind? You can submit a fresh quote request anytime from the project page.
+      </p>
+    </div>
+
+    <div style="background:${C.surf};padding:16px 28px;border-top:1px solid ${C.tintBd};text-align:center;">
+      <p style="color:${C.muted};font-size:11px;margin:0;letter-spacing:0.02em;">BuilderAI Platform · Connecting Builders &amp; Investors</p>
+    </div>
+  </div>`;
+
+  return sendEmail(quote.userEmail, `Quote Request Deleted – ${quote.projectName}`, html);
 }
 
 async function sendQuoteReadyToUser({ quote, viewLink }) {
@@ -180,6 +258,7 @@ async function sendSiteVisitRequest({ projectName, projectEmail, visitorName, vi
 module.exports = {
   sendQuoteRequestToBuilder,
   sendQuoteConfirmationToUser,
+  sendQuoteDeletedToUser,
   sendQuoteReadyToUser,
   sendSiteVisitRequest,
 };

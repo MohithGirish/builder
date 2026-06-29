@@ -1,78 +1,98 @@
 /*
  * Onboarding.jsx — Role selection screen (post-registration, pre-dashboard).
  *
- * Full-viewport 50/50 CSS grid: Builder half (teal gradient) left, Investor
- * half (slate gradient) right. Each half has a large icon, role name, 4 perks
- * as a checkmark list, and an inner card (bg-white/10 rounded-2xl). On hover
- * the inner card scales to 1.02. On selection: white ring-4 on the selected
- * half's card, other half fades to opacity-60. "Continue →" button slides in
- * from bottom after selection. Mobile stacks vertically, each half min-h-[260px].
+ * Blueprint Index dark scene (ink-navy + aurora + dot grid) sitting below the
+ * navbar. Centered heading over two selectable glass cards (Builder / Investor)
+ * in a radiogroup: each shows an icon tile, mono role tag, name, blurb, and a
+ * perk list. The selected card lights up with a steel ring + azure glow and a
+ * check; the single brass CTA ("Continue") enables once a role is chosen.
+ * Keyboard-operable (Enter/Space) and reduced-motion safe.
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wrench, TrendingUp, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { Wrench, TrendingUp, CheckCircle2, ArrowRight, Loader2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const BUILDER_PERKS = [
-  'List unlimited projects',
-  'AI-powered investor matching',
-  'Secure dealroom & analytics',
-  'Verified builder badge',
+const ROLES = [
+  {
+    id: 'builder',
+    icon: Wrench,
+    tag: 'FOR BUILDERS',
+    title: "I'm a Builder",
+    description: 'List verified projects, connect with global investors, and secure funding.',
+    perks: [
+      'List unlimited projects',
+      'AI-powered investor matching',
+      'Secure dealroom & analytics',
+      'Verified builder badge',
+    ],
+  },
+  {
+    id: 'investor',
+    icon: TrendingUp,
+    tag: 'FOR INVESTORS',
+    title: "I'm an Investor",
+    description: 'Discover verified builders and high-potential projects across India.',
+    perks: [
+      'Access 10,000+ verified projects',
+      'AI-powered builder recommendations',
+      'Portfolio analytics & ROI tracking',
+      'Direct builder communication',
+    ],
+  },
 ];
 
-const INVESTOR_PERKS = [
-  'Access 10,000+ verified projects',
-  'AI-powered builder recommendations',
-  'Portfolio analytics & ROI tracking',
-  'Direct builder communication',
-];
+function RoleCard({ role, selected, onSelect }) {
+  const { icon: Icon } = role;
 
-function RoleHalf({ role, icon: Icon, title, description, perks, gradient, selected, dimmed, onSelect }) {
   function handleKey(e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); }
   }
 
   return (
     <div
-      role="button"
+      role="radio"
       tabIndex={0}
-      aria-pressed={selected}
-      aria-label={`Select ${title} role`}
-      className={`relative flex items-center justify-center p-8 min-h-[260px] transition-opacity duration-200 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 ${
-        dimmed ? 'opacity-60' : 'opacity-100'
-      }`}
-      style={{ background: gradient }}
+      aria-checked={selected}
+      aria-label={`Select ${role.title} role`}
       onClick={onSelect}
       onKeyDown={handleKey}
+      className={`group relative rounded-2xl p-7 cursor-pointer backdrop-blur transition-all duration-200 ${
+        selected
+          ? 'bg-white/[0.07] ring-2 ring-brand-400 shadow-glow -translate-y-1'
+          : 'bg-white/[0.04] ring-1 ring-white/10 hover:ring-white/25 hover:-translate-y-1'
+      }`}
     >
-      {/* Inner card */}
-      <div
-        className={`w-full max-w-sm rounded-2xl p-7 transition-all duration-200 ${
-          selected
-            ? 'ring-4 ring-white ring-offset-4 ring-offset-transparent scale-[1.02]'
-            : 'scale-100 hover:scale-[1.02]'
+      {/* Selected check */}
+      <span
+        className={`absolute top-5 right-5 w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center transition-all duration-200 ${
+          selected ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
         }`}
-        style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}
       >
-        {/* Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mb-5">
-          <Icon size={28} className="text-white" />
-        </div>
+        <Check size={14} className="text-white" strokeWidth={3} />
+      </span>
 
-        {/* Title */}
-        <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
-        <p className="text-sm text-white/75 mb-5 leading-relaxed">{description}</p>
-
-        {/* Perks */}
-        <ul className="space-y-2.5">
-          {perks.map((p) => (
-            <li key={p} className="flex items-start gap-2.5 text-sm text-white/90">
-              <CheckCircle2 size={15} className="text-white/70 shrink-0 mt-0.5" />
-              {p}
-            </li>
-          ))}
-        </ul>
+      {/* Icon tile */}
+      <div
+        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-colors ${
+          selected ? 'bg-brand-gradient' : 'bg-white/10 group-hover:bg-white/[0.15]'
+        }`}
+      >
+        <Icon size={22} className="text-white" />
       </div>
+
+      <p className="font-mono text-[11px] tracking-[0.18em] text-brand-300 mb-2">{role.tag}</p>
+      <h2 className="text-xl font-bold text-white mb-2">{role.title}</h2>
+      <p className="text-sm text-white/60 leading-relaxed mb-5">{role.description}</p>
+
+      <ul className="space-y-2.5">
+        {role.perks.map((p) => (
+          <li key={p} className="flex items-start gap-2.5 text-sm text-white/80">
+            <CheckCircle2 size={15} className="text-brand-300 shrink-0 mt-0.5" />
+            {p}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -83,7 +103,7 @@ export default function Onboarding() {
   const [selected, setSelected] = useState(null);
   const [loading,  setLoading]  = useState(false);
 
-  async function handleContinue() {
+  function handleContinue() {
     if (!selected) return;
     setLoading(true);
     setOnboardingRole(selected);
@@ -91,53 +111,45 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* 50/50 grid: stacks on mobile */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2">
-        <RoleHalf
-          role="builder"
-          icon={Wrench}
-          title="I'm a Builder"
-          description="List verified projects, connect with global investors, and secure funding."
-          perks={BUILDER_PERKS}
-          gradient="linear-gradient(135deg, #0d9488 0%, #0f766e 100%)"
-          selected={selected === 'builder'}
-          dimmed={selected === 'investor'}
-          onSelect={() => setSelected('builder')}
-        />
-        <RoleHalf
-          role="investor"
-          icon={TrendingUp}
-          title="I'm an Investor"
-          description="Discover verified builders and high-potential projects across India."
-          perks={INVESTOR_PERKS}
-          gradient="linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
-          selected={selected === 'investor'}
-          dimmed={selected === 'builder'}
-          onSelect={() => setSelected('investor')}
-        />
-      </div>
+    <div className="relative aurora bg-ink min-h-[calc(100dvh-56px)] flex items-center justify-center overflow-hidden px-4 py-12">
+      {/* Blueprint dot texture */}
+      <div className="absolute inset-0 hero-dot-grid opacity-40 pointer-events-none" />
 
-      {/* Continue button — slides in after role is selected */}
-      <div
-        className={`border-t border-slate-100 bg-white px-6 py-5 transition-all duration-300 ${
-          selected ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}
-      >
-        <div className="max-w-sm mx-auto">
+      <div className="relative z-10 w-full max-w-3xl animate-fade-up">
+        {/* Heading */}
+        <div className="text-center mb-9">
+          <p className="font-mono text-[11px] tracking-[0.22em] text-brand-300 mb-3">01 — GET STARTED</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">How will you use Builder.AI?</h1>
+          <p className="text-sm text-white/60 max-w-md mx-auto">
+            Pick the experience that fits you — we'll tailor your matches and dashboard around it.
+          </p>
+        </div>
+
+        {/* Role cards */}
+        <div role="radiogroup" aria-label="Choose your role" className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {ROLES.map((role) => (
+            <RoleCard
+              key={role.id}
+              role={role}
+              selected={selected === role.id}
+              onSelect={() => setSelected(role.id)}
+            />
+          ))}
+        </div>
+
+        {/* Continue — single brass CTA, enables on selection */}
+        <div className="mt-8 flex flex-col items-center gap-3">
           <button
             onClick={handleContinue}
             disabled={!selected || loading}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 text-white hover:bg-slate-800 transition-colors disabled:opacity-60"
+            className="btn-cta w-full max-w-xs py-3.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {loading
               ? <><Loader2 size={16} className="animate-spin" /> Loading…</>
-              : <>Continue as {selected === 'builder' ? 'Builder' : 'Investor'} <ArrowRight size={16} /></>
+              : <>Continue{selected ? ` as ${selected === 'builder' ? 'Builder' : 'Investor'}` : ''} <ArrowRight size={16} /></>
             }
           </button>
-          <p className="text-center text-xs text-slate-400 mt-3">
-            You can change your role later in Settings
-          </p>
+          <p className="text-xs text-white/40">You can change your role later in your profile.</p>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ const bcrypt      = require('bcryptjs');
 const AppError    = require('../utils/AppError');
 const { sendSuccess } = require('../utils/response');
 const { User }    = require('../models');
+const { purgeQuotesByEmail } = require('./quote.controller');
 
 /**
  * GET /users/me
@@ -65,6 +66,7 @@ async function deleteMe(req, res, next) {
       return next(new AppError('Email or password is incorrect.', 401, 'AUTH_002'));
     }
 
+    purgeQuotesByEmail(user.email); // drop the flat-file quote requests this user submitted
     await user.destroy();
     return sendSuccess(res, 200, null, 'Your account has been deleted.');
   } catch (err) {

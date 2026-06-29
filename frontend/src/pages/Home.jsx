@@ -24,11 +24,25 @@ import RealProjectCard   from '../components/cards/RealProjectCard';
 import SectionPill       from '../components/ui/SectionPill';
 import Reveal            from '../components/ui/Reveal';
 import Counter           from '../components/ui/Counter';
+import CompatibilityInstrument, { BrandMark } from '../components/CompatibilityInstrument';
 import { UNIQUE_BUILDERS } from '../data/builders';
 import { PROJECTS }      from '../data/projects';
 import { REAL_PROJECTS } from '../data/realProjects';
 
+import WhenVisible from '../components/WhenVisible';
+
 const ProjectsMap = lazy(() => import('../components/map/ProjectsMap'));
+
+// Shared placeholder reused for the map's "not yet in view" and "chunk loading"
+// states — keeps the same reserved height so there's no layout shift.
+const MAP_PLACEHOLDER = (
+  <div className="w-full h-[420px] rounded-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
+    <div className="text-center">
+      <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+      <p className="text-slate-500 text-sm">Loading map…</p>
+    </div>
+  </div>
+);
 
 /* ── Trust items ──────────────────────────────────────────────────────────── */
 const TRUST = [
@@ -44,21 +58,19 @@ const TRUST = [
 const STEPS = [
   {
     icon: ClipboardList,
-    color: 'from-brand-500 to-brand-600',
     title: 'Create Your Profile',
     desc: 'Builders and investors sign up with verified credentials, showcasing expertise and investment goals.',
   },
   {
     icon: Bot,
-    color: 'from-brand-600 to-brand-700',
     title: 'AI Matchmaking',
     desc: 'Our intelligent model pairs ideal partners based on ROI, risk assessment, and strategic goals.',
   },
   {
     icon: Handshake,
-    color: 'from-amber-500 to-orange-500',
     title: 'Collaborate & Grow',
     desc: 'Dealroom chat, real-time analytics, and transparent communication tools for seamless partnerships.',
+    peak: true,   // the outcome — carries the brass peak accent
   },
 ];
 
@@ -71,14 +83,33 @@ const AI_FEATURES = [
 
 /* ── Impact stats ─────────────────────────────────────────────────────────── */
 const STATS = [
-  { icon: Building2,   value: 1200,  suffix: '+',     label: 'Verified Builders', sub: 'Across India',      accent: '#f97316' },
-  { icon: TrendingUp,  value: 2300,  suffix: '+',     label: 'Active Investors',  sub: 'Global Network',    accent: '#0d9488' },
-  { icon: IndianRupee, value: 12000, prefix: '₹', suffix: '+ Cr', label: 'Projects Funded', sub: 'Total Investment', accent: '#f59e0b' },
-  { icon: BadgeCheck,  value: 98,    suffix: '%',     label: 'Success Rate',      sub: 'Verified Matches',  accent: '#16a34a' },
+  { icon: Building2,   value: 1200,  suffix: '+',                  label: 'Verified Builders', sub: 'Across India' },
+  { icon: TrendingUp,  value: 2300,  suffix: '+',                  label: 'Active Investors',  sub: 'Global Network' },
+  { icon: IndianRupee, value: 12000, prefix: '₹', suffix: '+ Cr',  label: 'Projects Funded',   sub: 'Total Investment', peak: true },
+  { icon: BadgeCheck,  value: 98,    suffix: '%',                  label: 'Success Rate',      sub: 'Verified Matches' },
 ];
 
 /* ── Discover section tabs ─────────────────────────────────────────────────── */
 const TABS = ['Builders', 'Projects'];
+
+/* Demo readout for the "Powered by Advanced AI" panel — sums to 77/90. */
+const AI_DEMO_BREAKDOWN = [
+  { key: 'sector',   label: 'Sector',   max: 25, value: 23 },
+  { key: 'location', label: 'Location', max: 20, value: 17 },
+  { key: 'fit',      label: 'Fit',      max: 25, value: 21 },
+  { key: 'roi',      label: 'ROI',      max: 20, value: 16 },
+];
+
+/* Mono coordinate eyebrow — the Blueprint Index data voice replaces pill labels. */
+function Eyebrow({ children, index, onDark = false }) {
+  return (
+    <span className={`inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] ${onDark ? 'text-azure' : 'text-brand-600'}`}>
+      <span aria-hidden="true" className={onDark ? 'text-white/30' : 'text-slate-300'}>//</span>
+      {index != null && <span className={onDark ? 'text-white/45' : 'text-slate-400'}>{index}</span>}
+      {children}
+    </span>
+  );
+}
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('Builders');
@@ -102,10 +133,14 @@ export default function Home() {
           HERO
       ════════════════════════════════════════════════════════════ */}
       <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden aurora bg-slate-950">
-        {/* Background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1524813686514-a57563d77965?w=1600&q=80')" }}
+        {/* Background image — local + optimized; high fetch priority as the LCP element */}
+        <img
+          src="/images/hero/aerial.webp"
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/72 via-slate-950/58 to-slate-950/85" />
         {/* Dot grid overlay */}
@@ -221,18 +256,13 @@ export default function Home() {
             </div>
           </Reveal>
 
-          {/* Real Leaflet map */}
+          {/* Real Leaflet map — chunk + OSM tiles only load once scrolled near it */}
           <Reveal delay={80}>
-            <Suspense fallback={
-              <div className="w-full h-[420px] rounded-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#0d9488', borderTopColor: 'transparent' }} />
-                  <p className="text-slate-500 text-sm">Loading map…</p>
-                </div>
-              </div>
-            }>
-              <ProjectsMap />
-            </Suspense>
+            <WhenVisible placeholder={MAP_PLACEHOLDER} rootMargin="100px">
+              <Suspense fallback={MAP_PLACEHOLDER}>
+                <ProjectsMap />
+              </Suspense>
+            </WhenVisible>
           </Reveal>
 
           <p className="text-slate-400 text-xs mt-3 text-center">
@@ -265,40 +295,44 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           HOW IT WORKS
       ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <Reveal className="text-center mb-12">
+      <section className="relative py-20 bg-white overflow-hidden">
+        {/* Blueprint sheet texture */}
+        <div className="absolute inset-0 coord-grid opacity-60 pointer-events-none" aria-hidden="true" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <Reveal className="text-center mb-14">
             <div className="flex justify-center mb-4">
-              <SectionPill>Simple. Intelligent. Effective.</SectionPill>
+              <Eyebrow>How it works</Eyebrow>
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-3">
-              How AI Brings Builders & Investors Together
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-3 font-display">
+              How AI Brings Builders &amp; Investors Together
             </h2>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm">
+            <p className="text-slate-600 max-w-xl mx-auto text-sm">
               From profile creation to project completion, our AI guides every step of your journey.
             </p>
           </Reveal>
 
           <div className="relative grid sm:grid-cols-3 gap-6">
-            {/* Connector line (desktop) with traveling dot */}
-            <div className="hidden sm:block absolute top-6 left-[16%] right-[16%] h-px bg-gradient-to-r from-brand-200 via-brand-300 to-amber-300 overflow-hidden">
-              <div className="absolute top-0 bottom-0 w-16 animate-scan-line"
-                   style={{ background: 'linear-gradient(to right, transparent, rgba(13,148,136,0.8), rgba(45,212,191,0.9), rgba(13,148,136,0.8), transparent)' }} />
+            {/* Dimension baseline (desktop) — engineering measurement line, end ticks */}
+            <div className="hidden sm:block absolute top-8 left-[16%] right-[16%] h-px bg-slate-200" aria-hidden="true">
+              <span className="absolute -left-px -top-1 h-2 w-px bg-slate-300" />
+              <span className="absolute -right-px -top-1 h-2 w-px bg-slate-300" />
             </div>
 
-            {STEPS.map(({ icon: Icon, color, title, desc }, i) => (
+            {STEPS.map(({ icon: Icon, title, desc, peak }, i) => (
               <Reveal key={title} delay={i * 120} className="relative">
-                <div className="card p-6 flex flex-col gap-4 h-full">
+                <div className={`relative h-full flex flex-col gap-4 rounded-2xl border bg-white p-6 shadow-soft hover:shadow-card transition-shadow duration-300 ${peak ? 'border-brass/40' : 'border-slate-200'}`}>
+                  {/* Top hairline accent — brass on the outcome step */}
+                  <span className={`absolute top-0 left-6 right-6 h-px ${peak ? 'bg-brass' : 'bg-brand-200'}`} aria-hidden="true" />
                   <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-md`}>
-                      <Icon size={20} className="text-white" />
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${peak ? 'bg-brass/10 text-brass-700' : 'bg-brand-50 text-brand-600'}`}>
+                      <Icon size={20} />
                     </div>
-                    <span className="w-7 h-7 rounded-full bg-white border-2 border-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold shadow-sm">
-                      {i + 1}
+                    <span className={`font-mono text-[11px] font-semibold uppercase tracking-[0.18em] ${peak ? 'text-brass-700' : 'text-slate-400'}`}>
+                      Step {String(i + 1).padStart(2, '0')}
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-base">{title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+                  <h3 className="font-bold text-slate-900 text-base font-display">{title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -309,52 +343,42 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           STATS
       ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #020b18 0%, #040e1a 50%, #020c14 100%)' }}>
-        {/* Background texture */}
-        <div className="absolute inset-0 hero-dot-grid opacity-[0.035] pointer-events-none" />
-        {/* Ambient glow blobs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none"
-             style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.09), transparent 65%)', filter: 'blur(60px)' }} />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
-             style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.07), transparent 65%)', filter: 'blur(60px)' }} />
+      <section className="py-20 relative overflow-hidden bg-ink">
+        {/* Background texture + restrained ambient glow (azure data, brass accent) */}
+        <div className="absolute inset-0 hero-dot-grid opacity-[0.04] pointer-events-none" aria-hidden="true" />
+        <div className="absolute top-0 left-1/4 w-[460px] h-[460px] rounded-full pointer-events-none" aria-hidden="true"
+             style={{ background: 'radial-gradient(circle, rgba(90,160,224,0.10), transparent 65%)', filter: 'blur(70px)' }} />
+        <div className="absolute bottom-0 right-1/4 w-[360px] h-[360px] rounded-full pointer-events-none" aria-hidden="true"
+             style={{ background: 'radial-gradient(circle, rgba(194,149,74,0.06), transparent 65%)', filter: 'blur(70px)' }} />
 
-        <Reveal className="max-w-7xl mx-auto px-4 sm:px-6 text-center mb-14">
+        <Reveal className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center mb-14">
           <div className="flex justify-center mb-4">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
-                  style={{ background: 'rgba(13,148,136,0.12)', color: '#2dd4bf', border: '1px solid rgba(13,148,136,0.2)' }}>
-              <Sparkles size={11} /> Platform Impact
-            </span>
+            <Eyebrow onDark>Platform impact</Eyebrow>
           </div>
-          <h2 className="text-3xl font-extrabold text-white mb-2">Trusted by Thousands across India</h2>
+          <h2 className="text-3xl font-extrabold text-white mb-2 font-display">Trusted by Thousands across India</h2>
           <p className="text-slate-400 text-sm">Real numbers. Real impact. Real partnerships.</p>
         </Reveal>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {STATS.map(({ icon: Icon, value, prefix, suffix, label, sub, accent }, i) => (
-            <Reveal key={label} delay={i * 60}>
-              <div className="relative rounded-2xl p-6 group overflow-hidden cursor-default transition-all duration-300 hover:-translate-y-1.5"
-                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                {/* Accent top bar */}
-                <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl transition-opacity duration-300"
-                     style={{ background: `linear-gradient(to right, ${accent}, ${accent}80)` }} />
-                {/* Hover radial glow */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                     style={{ background: `radial-gradient(ellipse at 50% -10%, ${accent}18, transparent 65%)` }} />
-
-                <div className="relative">
-                  <div className="w-11 h-11 rounded-2xl mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
-                       style={{ background: accent + '1a' }}>
-                    <Icon size={20} style={{ color: accent }} />
+        {/* Hairline data grid — gap-px over a faint surface draws the dividers */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08]">
+            {STATS.map(({ icon: Icon, value, prefix, suffix, label, sub, peak }, i) => (
+              <Reveal key={label} delay={i * 60} className="h-full">
+                <div className="relative h-full bg-ink p-6 group transition-colors duration-300 hover:bg-white/[0.02]">
+                  {/* Top accent — brass on the peak figure, azure elsewhere */}
+                  <span className={`absolute top-0 left-0 right-0 h-px ${peak ? 'bg-brass' : 'bg-azure/40'}`} aria-hidden="true" />
+                  <div className={`w-11 h-11 rounded-xl mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${peak ? 'bg-brass/15 text-brass-300' : 'bg-azure/10 text-azure'}`}>
+                    <Icon size={20} />
                   </div>
-                  <div className="text-2xl font-extrabold text-white mb-1 font-display tabular-nums">
+                  <div className={`text-3xl font-extrabold mb-1 font-mono tabular-nums ${peak ? 'text-brass-300' : 'text-white'}`}>
                     <Counter value={value} prefix={prefix} suffix={suffix} />
                   </div>
-                  <div className="text-sm font-semibold text-slate-300">{label}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
+                  <div className="text-sm font-semibold text-slate-200">{label}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 font-mono uppercase tracking-wider">{sub}</div>
                 </div>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -368,12 +392,12 @@ export default function Home() {
             {/* Left — feature list (60%) */}
             <Reveal className="lg:col-span-3">
               <div className="flex justify-start mb-5">
-                <SectionPill><Bot size={11} className="mr-1" />Powered by Advanced AI</SectionPill>
+                <Eyebrow>Powered by advanced AI</Eyebrow>
               </div>
-              <h2 className="text-3xl font-extrabold text-slate-900 mb-3 leading-tight">
+              <h2 className="text-3xl font-extrabold text-slate-900 mb-3 leading-tight font-display">
                 AI that understands<br />real estate
               </h2>
-              <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-md">
+              <p className="text-slate-600 text-sm leading-relaxed mb-8 max-w-md">
                 Our five-dimension scoring engine analyses thousands of data points to surface
                 the right match — every time.
               </p>
@@ -399,64 +423,32 @@ export default function Home() {
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">{title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p>
+                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </Reveal>
 
-            {/* Right — static AI Score Card mockup (40%) */}
+            {/* Right — the signature: a live compatibility readout (40%) */}
             <Reveal delay={120} className="lg:col-span-2">
-              <div className="bg-white rounded-2xl shadow-card border border-slate-100 p-6">
-                {/* Mock builder */}
-                <div className="flex items-center gap-3 mb-5">
+              <div className="space-y-3">
+                {/* Who the readout is for */}
+                <div className="flex items-center gap-3 px-1">
                   <div className="w-10 h-10 rounded-full bg-brand-gradient flex items-center justify-center text-white font-bold text-sm shrink-0">
                     RS
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">Rajesh Sharma</p>
-                    <p className="text-xs text-slate-400">Luxury Residential · Hyderabad</p>
+                    <p className="text-xs text-slate-500 font-mono">Luxury Residential · Hyderabad</p>
                   </div>
                 </div>
-
-                {/* Circular progress ring */}
-                <div className="flex flex-col items-center mb-5">
-                  <svg width="88" height="88" viewBox="0 0 88 88" className="mb-2">
-                    <circle cx="44" cy="44" r="34" fill="none" stroke="#f1f5f9" strokeWidth="7" />
-                    <circle
-                      cx="44" cy="44" r="34" fill="none" stroke="#0d9488" strokeWidth="7"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 34}`}
-                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - 0.87)}`}
-                      transform="rotate(-90 44 44)"
-                    />
-                    <text x="44" y="49" textAnchor="middle" fontSize="16" fontWeight="700" fill="#0d9488">87%</text>
-                  </svg>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Match Score</p>
-                </div>
-
-                {/* Dimension bars */}
-                <div className="space-y-3">
-                  {[
-                    { label: 'Sector', value: 92 },
-                    { label: 'Location', value: 85 },
-                    { label: 'ROI', value: 78 },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-slate-500">{label}</span>
-                        <span className="text-xs font-semibold text-brand-700">{value}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-brand-600 rounded-full"
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <CompatibilityInstrument
+                  variant="light"
+                  label="Match readout"
+                  score={77}
+                  breakdown={AI_DEMO_BREAKDOWN}
+                />
               </div>
             </Reveal>
           </div>
@@ -471,16 +463,17 @@ export default function Home() {
 
           <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">Discover Opportunities</h2>
-              <p className="text-slate-500 text-sm mt-1">Explore verified builders, investors, and projects</p>
+              <div className="mb-3"><Eyebrow>Directory</Eyebrow></div>
+              <h2 className="text-2xl font-extrabold text-slate-900 font-display">Discover Opportunities</h2>
+              <p className="text-slate-600 text-sm mt-1">Explore verified builders, investors, and projects</p>
             </div>
             {/* Tabs */}
-            <div className="flex items-center gap-1 bg-white rounded-2xl p-1 shadow-card">
+            <div className="flex items-center gap-1 bg-white rounded-2xl p-1 shadow-card border border-slate-200">
               {TABS.map((t) => (
                 <button
                   key={t}
                   onClick={() => setActiveTab(t)}
-                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200
+                  className={`px-4 py-1.5 rounded-xl font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-200
                     ${activeTab === t
                       ? 'text-white shadow-sm bg-brand-gradient'
                       : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'}`}
@@ -538,12 +531,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <Reveal className="text-center mb-12">
             <div className="flex justify-center mb-4">
-              <SectionPill>AI-Powered Intelligence</SectionPill>
+              <Eyebrow>AI-powered intelligence</Eyebrow>
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-3">
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-3 font-display">
               Find Your Perfect Match<br />with AI Precision
             </h2>
-            <p className="text-slate-500 text-sm max-w-xl mx-auto">
+            <p className="text-slate-600 text-sm max-w-xl mx-auto">
               Our advanced AI algorithms analyse project requirements, investment preferences,
               and success patterns to create meaningful connections that drive results.
             </p>
@@ -552,12 +545,18 @@ export default function Home() {
           <div className="grid sm:grid-cols-3 gap-6 mb-12">
             {AI_FEATURES.map(({ icon: Icon, title, desc }, i) => (
               <Reveal key={title} delay={i * 100}>
-                <div className="card p-6 h-full group">
-                  <div className="w-11 h-11 rounded-2xl mb-4 flex items-center justify-center bg-brand-gradient transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                    <Icon size={19} className="text-white" />
+                <div className="relative h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-soft hover:shadow-card transition-shadow duration-300 group">
+                  <span className="absolute top-0 left-6 right-6 h-px bg-brand-200" aria-hidden="true" />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600 transition-transform duration-300 group-hover:scale-110">
+                      <Icon size={19} />
+                    </div>
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-slate-800 text-base mb-2">{title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+                  <h3 className="font-bold text-slate-900 text-base mb-2 font-display">{title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -565,35 +564,26 @@ export default function Home() {
 
           {/* CTA block */}
           <Reveal>
-            <div className="relative overflow-hidden rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6"
-                 style={{ background: 'linear-gradient(135deg, #050f1a 0%, #071520 55%, #050d18 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              {/* Mesh gradient blobs */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
+            <div className="relative overflow-hidden rounded-3xl bg-ink p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 border border-white/[0.08]">
+              {/* Restrained ambient glow — azure data + a single brass warm point */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl" aria-hidden="true">
                 <div className="absolute -top-16 -left-16 w-72 h-72 rounded-full"
-                     style={{ background: 'radial-gradient(circle, rgba(13,148,136,0.22), transparent 65%)', filter: 'blur(50px)' }} />
+                     style={{ background: 'radial-gradient(circle, rgba(90,160,224,0.18), transparent 65%)', filter: 'blur(55px)' }} />
                 <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full"
-                     style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.16), transparent 65%)', filter: 'blur(50px)' }} />
-                <div className="absolute inset-0 hero-dot-grid opacity-[0.04]" />
-                {/* Scanning light */}
-                <div className="absolute top-0 left-0 h-full w-20 opacity-[0.03] animate-scan-line"
-                     style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.8), transparent)' }} />
+                     style={{ background: 'radial-gradient(circle, rgba(194,149,74,0.14), transparent 65%)', filter: 'blur(55px)' }} />
+                <div className="absolute inset-0 hero-dot-grid opacity-[0.05]" />
               </div>
-              <div className="absolute inset-0 rounded-3xl pointer-events-none"
-                   style={{ border: '1px solid rgba(13,148,136,0.12)' }} />
 
               <div className="relative z-10">
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#2dd4bf' }}>Get Started Today</p>
-                <h3 className="text-xl font-bold text-white mb-2">Ready to find your ideal partner?</h3>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] mb-2 text-azure">Get started today</p>
+                <h3 className="text-xl font-bold text-white mb-2 font-display">Ready to find your ideal partner?</h3>
                 <p className="text-slate-400 text-sm max-w-md">
                   Join thousands of verified builders and investors who trust Builder AI Market
                   to create successful partnerships and drive growth.
                 </p>
               </div>
               <div className="relative z-10 flex items-center gap-4 shrink-0">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-brand-gradient animate-float"
-                     style={{ boxShadow: '0 8px 32px rgba(13,148,136,0.4)' }}>
-                  <Sparkles size={28} className="text-white" />
-                </div>
+                <BrandMark heights={[10, 16, 26, 20, 14]} onDark className="h-8" />
                 <button onClick={handleCTA} className="btn-cta px-7 py-3 text-sm">
                   <Sparkles size={14} /> Start AI Matching
                 </button>
@@ -606,13 +596,17 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           TRUST & TRANSPARENCY
       ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="relative py-20 bg-slate-50 overflow-hidden">
+        <div className="absolute inset-0 coord-grid opacity-60 pointer-events-none" aria-hidden="true" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
           <Reveal className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-3">
+            <div className="flex justify-center mb-4">
+              <Eyebrow>Trust &amp; compliance</Eyebrow>
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-3 font-display">
               Built on Trust &amp; Transparency
             </h2>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto">
+            <p className="text-slate-600 text-sm max-w-lg mx-auto">
               Your security is our priority. We maintain the highest standards of verification,
               compliance, and transparency to ensure safe and successful partnerships.
             </p>
@@ -621,13 +615,14 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 gap-5">
             {TRUST.map(({ icon: Icon, title, desc }, i) => (
               <Reveal key={title} delay={(i % 2) * 80}>
-                <div className="bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-100 hover:border-brand-200 transition-colors duration-200 h-full shadow-card">
+                <div className="relative bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-200 hover:border-brand-300 transition-colors duration-200 h-full shadow-soft">
+                  <span className="font-mono text-[11px] font-semibold text-slate-300 tabular-nums pt-0.5">{String(i + 1).padStart(2, '0')}</span>
                   <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
                     <Icon size={18} className="text-brand-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 text-sm mb-1">{title}</h4>
-                    <p className="text-slate-500 text-xs leading-relaxed">{desc}</p>
+                    <h4 className="font-semibold text-slate-900 text-sm mb-1 font-display">{title}</h4>
+                    <p className="text-slate-600 text-xs leading-relaxed">{desc}</p>
                   </div>
                 </div>
               </Reveal>

@@ -12,7 +12,8 @@ services:
     rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: node src/server.js
+    # No dockerCommand override: the Dockerfile's production stage runs
+    # `npm run db:migrate && node src/server.js`, so migrations apply on deploy.
     buildFilter:
       paths:
         - backend/**
@@ -43,7 +44,15 @@ services:
       - key: AUTH_RATE_LIMIT_MAX
         value: "10"
       - key: ALLOWED_ORIGINS
-        value: https://builder-475m.onrender.com
+        value: https://builder-475m.onrender.com    # ← your real FRONTEND Render URL
+      - key: FRONTEND_URL
+        value: https://builder-475m.onrender.com    # ← same frontend URL (used in quote email deep-links)
+      - key: EMAIL_USER
+        sync: false                                  # set in Render dashboard: Gmail address
+      - key: EMAIL_PASS
+        sync: false                                  # set in Render dashboard: Gmail 16-char app password
+      - key: ANTHROPIC_API_KEY
+        sync: false                                  # optional: enables the AI onboarding chat
 
   # ── AI Matchmaking Microservice (Python / FastAPI) ────────────────────────────
   - type: web
@@ -83,8 +92,7 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      # Empty ⇒ same-origin. The /api/* rewrite above proxies REST calls to the
+      # backend, so the browser never needs a cross-origin URL with a scheme.
       - key: VITE_BACKEND_URL
-        fromService:
-          name: builder-ai-backend
-          type: web
-          property: host
+        value: ""

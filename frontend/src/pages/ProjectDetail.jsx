@@ -13,10 +13,9 @@ import { useState, useLayoutEffect, useEffect } from 'react';
 import {
   MapPin, Phone, Mail, Globe, Shield, ArrowLeft, CheckCircle2,
   Building2, Layers, Clock, ChevronRight, X, ExternalLink,
-  TrendingUp, FileText,
+  FileText,
 } from 'lucide-react';
 import { REAL_PROJECTS } from '../data/realProjects';
-import { useAuth } from '../context/AuthContext';
 import { cachedFetch } from '../lib/api';
 import NearbyGoogleMap   from '../components/map/NearbyGoogleMap';
 import QuoteRequestModal from '../components/quotes/QuoteRequestModal';
@@ -56,10 +55,8 @@ const SESSION_KEY = 'builderai_currency';
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [lightbox, setLightbox] = useState(null);
-  const [investConfirm, setInvestConfirm] = useState(false);
   const [showQuote,     setShowQuote]     = useState(false);
   const [showVisit,     setShowVisit]     = useState(false);
 
@@ -469,54 +466,6 @@ export default function ProjectDetail() {
 
         {/* ── Right: Sticky sidebar ─────────────────────────────── */}
         <div className="space-y-4 min-w-0">
-
-          {/* ── Invest Now (investors only) ───────────────────── */}
-          {role === 'investor' && (
-            <>
-              <button
-                onClick={() => setInvestConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-white text-sm font-bold transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.98] shadow-md"
-                style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
-              >
-                <TrendingUp size={16} />
-                Invest in This Project
-              </button>
-
-              {/* Invest confirmation modal */}
-              {investConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-                  <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-scale-in">
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 mx-auto"
-                      style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
-                    >
-                      <TrendingUp size={22} className="text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800 text-center mb-2">Express Interest</h3>
-                    <p className="text-sm text-slate-500 text-center mb-5 leading-relaxed">
-                      You're expressing investment interest in <strong>{project.name}</strong>.
-                      The developer will be notified and reach out shortly via the Dealroom.
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setInvestConfirm(false)}
-                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => { setInvestConfirm(false); navigate('/dealroom'); }}
-                        className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:opacity-90"
-                        style={{ background: 'linear-gradient(135deg, #1e88e5, #0369a1)' }}
-                      >
-                        Confirm
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
 
           {/* Price card */}
           <div

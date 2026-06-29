@@ -9,7 +9,7 @@
  */
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider }    from './context/AuthContext';
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, lazy, Suspense } from 'react';
 import { Toaster }         from 'sonner';
 
 function ScrollToTop() {
@@ -18,43 +18,48 @@ function ScrollToTop() {
   return null;
 }
 
-// Layout
-import Navbar          from './components/layout/Navbar';
-import Footer          from './components/layout/Footer';
-import DashboardLayout from './components/dashboard/DashboardLayout';
-import ProtectedRoute  from './components/auth/ProtectedRoute';
+// Shown while a lazy route chunk loads — minimal, no extra imports.
+function PageFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Loading">
+      <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
+    </div>
+  );
+}
 
-// Auth pages
-import Login    from './pages/Login';
-import Register from './pages/Register';
+// Eager shell — navbar/footer render on (almost) every route; the guard is tiny
+// and used everywhere, so keep these in the initial bundle.
+import Navbar         from './components/layout/Navbar';
+import Footer         from './components/layout/Footer';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Onboarding flow (post-auth, pre-dashboard)
-import Onboarding     from './pages/Onboarding';
-import OnboardingChat from './pages/OnboardingChat';
-
-// Profile
-import Profile from './pages/Profile';
-
-// Public pages
-import Home                from './pages/Home';
-import Builders            from './pages/Builders';
-import BuilderDetail       from './pages/BuilderDetail';
-import Projects            from './pages/Projects';
-import Dealroom            from './pages/Dealroom';
-import ProjectDetail       from './pages/ProjectDetail';
-import QuotePage           from './pages/QuotePage';
-import QuoteResponsePage   from './pages/QuoteResponsePage';
-
-// Dashboard pages
-import BuilderDashboard   from './pages/dashboard/BuilderDashboard';
-import InvestorDashboard  from './pages/dashboard/InvestorDashboard';
-import MyProjects         from './pages/dashboard/MyProjects';
-import BuilderQuotes      from './pages/dashboard/BuilderQuotes';
-import InvestorMatches    from './pages/dashboard/InvestorMatches';
-import MyInvestments      from './pages/dashboard/MyInvestments';
-import BuilderMatches     from './pages/dashboard/BuilderMatches';
-import BuildersFeed       from './pages/dashboard/BuildersFeed';
-import DashboardAnalytics from './pages/dashboard/DashboardAnalytics';
+// Route-level code splitting: each page (and the dashboard shell) is its own
+// chunk loaded on demand, so the first paint of "/" or "/login" no longer
+// downloads the dashboards, charts (recharts), or Leaflet.
+const DashboardLayout    = lazy(() => import('./components/dashboard/DashboardLayout'));
+const Login              = lazy(() => import('./pages/Login'));
+const Register           = lazy(() => import('./pages/Register'));
+const Onboarding         = lazy(() => import('./pages/Onboarding'));
+const OnboardingChat     = lazy(() => import('./pages/OnboardingChat'));
+const Profile            = lazy(() => import('./pages/Profile'));
+const Home               = lazy(() => import('./pages/Home'));
+const Builders           = lazy(() => import('./pages/Builders'));
+const BuilderDetail      = lazy(() => import('./pages/BuilderDetail'));
+const Projects           = lazy(() => import('./pages/Projects'));
+const Dealroom           = lazy(() => import('./pages/Dealroom'));
+const ProjectDetail      = lazy(() => import('./pages/ProjectDetail'));
+const QuotePage          = lazy(() => import('./pages/QuotePage'));
+const QuoteResponsePage  = lazy(() => import('./pages/QuoteResponsePage'));
+const StyleGuide         = lazy(() => import('./pages/StyleGuide'));
+const BuilderDashboard   = lazy(() => import('./pages/dashboard/BuilderDashboard'));
+const InvestorDashboard  = lazy(() => import('./pages/dashboard/InvestorDashboard'));
+const MyProjects         = lazy(() => import('./pages/dashboard/MyProjects'));
+const BuilderQuotes      = lazy(() => import('./pages/dashboard/BuilderQuotes'));
+const InvestorMatches    = lazy(() => import('./pages/dashboard/InvestorMatches'));
+const MyInvestments      = lazy(() => import('./pages/dashboard/MyInvestments'));
+const BuilderMatches     = lazy(() => import('./pages/dashboard/BuilderMatches'));
+const BuildersFeed       = lazy(() => import('./pages/dashboard/BuildersFeed'));
+const DashboardAnalytics = lazy(() => import('./pages/dashboard/DashboardAnalytics'));
 
 export default function App() {
   return (
@@ -84,6 +89,7 @@ export default function App() {
             <Route path="*"         element={<Navbar />} />
           </Routes>
           <main className="flex-1">
+            <Suspense fallback={<PageFallback />}>
             <Routes>
               {/* ── Auth pages ─────────────────────────────────── */}
               <Route path="/login"    element={<Login />} />
@@ -129,6 +135,7 @@ export default function App() {
 
               {/* ── Public pages ───────────────────────────────── */}
               <Route path="/"            element={<Home />} />
+              <Route path="/styleguide"  element={<StyleGuide />} />
               {/* Builders & Projects require auth — redirect to login, then back */}
               <Route path="/builders"     element={<ProtectedRoute><Builders /></ProtectedRoute>} />
               <Route path="/builders/:id" element={<ProtectedRoute><BuilderDetail /></ProtectedRoute>} />
@@ -186,6 +193,7 @@ export default function App() {
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </main>
 
           {/* Footer hidden on dashboard, dealroom, auth, and onboarding pages */}

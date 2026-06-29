@@ -1,11 +1,12 @@
 /*
  * index.css — Global stylesheet for the Builder AI Market frontend.
  *
- * Imports Tailwind CSS base, component, and utility layers, then extends them
- * with custom design-system tokens: button variants (btn-brand, btn-cta,
- * btn-ghost), card shadows, tag/pill styles, avatar, match-score badge, and
- * progress-bar utilities. Also defines global scrollbar overrides and
- * Leaflet popup style overrides.
+ * Imports Tailwind base/components/utilities, then defines the Blueprint Index
+ * design-system tokens: button variants (btn-brand steel, btn-cta brass),
+ * cards, tags/pills, avatar, the Compatibility Instrument fill classes, the
+ * coordinate-grid texture, aurora, scroll-reveal, skeletons, and scrollbar /
+ * Leaflet overrides. Brand = institutional steel-blue; brass is the single
+ * conversion accent; ink navy owns dark surfaces.
  */
 @tailwind base;
 @tailwind components;
@@ -26,24 +27,25 @@
     letter-spacing: -0.02em;
   }
   /* Branded text selection */
-  ::selection { background: rgba(13,148,136,0.18); color: #0f766e; }
+  ::selection { background: rgba(43,94,147,0.18); color: #234c78; }
   /* Accessible focus ring for keyboard users on all interactive elements */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(13,148,136,0.35);
+    box-shadow: 0 0 0 3px rgba(43,94,147,0.40);
     border-radius: 0.5rem;
   }
 }
 
 @layer components {
-  /* ── Gradient buttons ─────────────────────────────────────────────────── */
+  /* ── Buttons ──────────────────────────────────────────────────────────── */
   .btn-brand {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow active:translate-y-0 active:scale-[0.98];
-    background: linear-gradient(135deg, #0d9488, #14c38e);
+    background: linear-gradient(135deg, #2b5e93, #36699f);
   }
+  /* Brass CTA — single conversion action per screen; dark text for AA contrast */
   .btn-cta {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-amber active:translate-y-0 active:scale-[0.98];
-    background: linear-gradient(to right, #f97316, #f59e0b);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm text-slate-900 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow-amber active:translate-y-0 active:scale-[0.98];
+    background: linear-gradient(135deg, #c2954a, #a87a2f);
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm border border-slate-300 text-slate-700 bg-white transition-all duration-200 hover:border-brand-500 hover:text-brand-600 hover:-translate-y-0.5 hover:shadow-soft active:translate-y-0 active:scale-[0.98];
@@ -52,12 +54,12 @@
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-semibold text-sm border-2 border-brand-600 text-brand-700 transition-all duration-200 hover:bg-brand-50 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
   }
 
-  /* ── Gradient utilities (replace repeated inline linear-gradients) ────── */
-  .bg-brand-gradient { background: linear-gradient(135deg, #0d9488, #14c38e); }
-  .bg-cta-gradient   { background: linear-gradient(to right, #f97316, #f59e0b); }
-  .bg-hero-gradient  { background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); }
+  /* ── Gradient utilities ───────────────────────────────────────────────── */
+  .bg-brand-gradient { background: linear-gradient(135deg, #2b5e93, #36699f); }
+  .bg-cta-gradient   { background: linear-gradient(135deg, #c2954a, #a87a2f); }
+  .bg-hero-gradient  { background: linear-gradient(135deg, #0e1b2e 0%, #16263c 100%); }
   .text-gradient {
-    background: linear-gradient(to right, #0d9488, #14c38e);
+    background: linear-gradient(to right, #2b5e93, #36699f);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
 
@@ -68,13 +70,13 @@
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
   }
   .card:hover {
-    border-top-color: rgba(13,148,136,0.25);
+    border-top-color: rgba(43,94,147,0.28);
   }
 
-  /* ── Dark stat card (used in stats section) ──────────────────────────── */
+  /* ── Dark stat card ───────────────────────────────────────────────────── */
   .card-dark {
     @apply rounded-2xl transition-all duration-300;
-    background: rgba(15,23,42,0.7);
+    background: rgba(14,27,46,0.7);
     border: 1px solid rgba(255,255,255,0.06);
   }
   .card-dark:hover {
@@ -99,27 +101,27 @@
   /* ── Verified badge ───────────────────────────────────────────────────── */
   .verified-badge {
     @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-white;
-    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    background: linear-gradient(135deg, #2b5e93, #36699f);
   }
 
   /* ── Avatar circle ────────────────────────────────────────────────────── */
   .avatar {
     @apply flex items-center justify-center rounded-full font-bold text-white uppercase;
-    background: linear-gradient(135deg, #0d9488, #14c38e);
+    background: linear-gradient(135deg, #2b5e93, #36699f);
   }
 
   /* ── Match score badge ────────────────────────────────────────────────── */
   .match-badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white;
-    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    background: linear-gradient(135deg, #2b5e93, #36699f);
   }
 
   /* ── Tab buttons ─────────────────────────────────────────────────────── */
   .tab-active {
-    @apply px-4 py-1.5 rounded-full text-sm font-semibold bg-teal-600 text-white border border-teal-600 transition-all;
+    @apply px-4 py-1.5 rounded-full text-sm font-semibold bg-brand-600 text-white border border-brand-600 transition-all;
   }
   .tab-inactive {
-    @apply px-4 py-1.5 rounded-full text-sm font-semibold text-slate-500 bg-white border border-slate-200 hover:border-teal-300 transition-all;
+    @apply px-4 py-1.5 rounded-full text-sm font-semibold text-slate-500 bg-white border border-slate-200 hover:border-brand-300 transition-all;
   }
 
   /* ── Progress bar ─────────────────────────────────────────────────────── */
@@ -127,8 +129,21 @@
     @apply w-full h-1.5 bg-slate-100 rounded-full overflow-hidden;
   }
   .progress-fill {
-    @apply h-full bg-teal-600 rounded-full transition-all duration-500;
+    @apply h-full bg-brand-600 rounded-full transition-all duration-500;
   }
+
+  /* ── Compatibility Instrument — the signature; fills live here so the
+       component stays token-clean (no raw hex in JSX) ─────────────────────── */
+  .ci-fill      { background: linear-gradient(90deg, #2b5e93, #5aa0e0); }
+  .ci-fill-risk { background: linear-gradient(90deg, #c2954a, #d9b061); }
+}
+
+/* ── Coordinate / graph-paper grid — blueprint texture for light sections ── */
+.coord-grid {
+  background-image:
+    linear-gradient(rgba(43,94,147,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,94,147,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
@@ -152,7 +167,7 @@
 .leaflet-popup-tip-container { margin-top: -1px; }
 
 /* ── Aurora / mesh gradient backdrop ──────────────────────────────────────
-   Three animated colour blobs. Pair with a dark base. z-10 on children. */
+   Two animated colour blobs (azure + brass). Pair with an ink-navy base. */
 .aurora { position: relative; overflow: hidden; }
 .aurora::before,
 .aurora::after {
@@ -161,20 +176,20 @@
 }
 .aurora::before {
   width: 640px; height: 640px; top: -220px; left: -180px;
-  background: radial-gradient(circle at 35% 35%, rgba(13,148,136,0.55), transparent 65%);
+  background: radial-gradient(circle at 35% 35%, rgba(90,160,224,0.32), transparent 65%);
   animation: float 11s ease-in-out infinite;
 }
 .aurora::after {
   width: 560px; height: 560px; bottom: -220px; right: -140px;
-  background: radial-gradient(circle at 65% 65%, rgba(245,158,11,0.40), transparent 65%);
+  background: radial-gradient(circle at 65% 65%, rgba(194,149,74,0.30), transparent 65%);
   animation: float 14s ease-in-out infinite reverse;
 }
 
-/* Third aurora blob — positioned centrally, slow pulse */
+/* Third aurora blob — central, slow pulse */
 .aurora-mid {
   position: absolute; border-radius: 9999px; pointer-events: none; z-index: 0;
   width: 480px; height: 480px; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(45,212,191,0.12), transparent 65%);
+  background: radial-gradient(circle, rgba(90,160,224,0.12), transparent 65%);
   filter: blur(80px);
   animation: float 18s ease-in-out infinite;
 }
@@ -203,15 +218,14 @@
 .link-underline { position: relative; }
 .link-underline::after {
   content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 0;
-  background: linear-gradient(to right, #0d9488, #14c38e);
+  background: linear-gradient(to right, #2b5e93, #36699f);
   transition: width 0.25s ease;
 }
 .link-underline:hover::after { width: 100%; }
 
 /* ── Mobile form-control font size ──────────────────────────────────────
    iOS Safari auto-zooms the page when a focused form control's font-size is
-   under 16px. On small screens, lift text-sm/text-xs controls to 16px; the
-   attribute selector outranks the Tailwind utility class. */
+   under 16px. On small screens, lift text-sm/text-xs controls to 16px. */
 @media (max-width: 639px) {
   input[class*='text-sm'], select[class*='text-sm'], textarea[class*='text-sm'],
   input[class*='text-xs'], select[class*='text-xs'], textarea[class*='text-xs'] {
@@ -220,8 +234,8 @@
 }
 
 /* ── Viewport-fitted heights ──────────────────────────────────────────────
-   100vh overshoots on mobile while the browser URL bar is visible; dvh tracks
-   the real visible viewport. Fallback first for older browsers. */
+   100vh overshoots on mobile while the URL bar is visible; dvh tracks the
+   real visible viewport. Fallback first for older browsers. */
 .h-viewport          { height: 100vh; }
 .h-viewport-minus-nav{ height: calc(100vh - 56px); }
 @supports (height: 100dvh) {

@@ -13,10 +13,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
-  Mail, MapPin, Globe, Heart,
+  Mail, MapPin, Globe,
   ArrowRightLeft, X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { BrandMark } from '../CompatibilityInstrument';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -78,20 +79,22 @@ export default function Footer() {
     { label: 'Analytics Dashboard', onClick: () => go(`${dashHome()}/analytics`) },
   ];
 
-  const linkClass = 'text-sm text-slate-400 hover:text-brand-400 transition-colors text-left';
+  const linkClass = 'text-sm text-slate-400 hover:text-azure transition-colors text-left';
+  const colHeading = 'font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300 mb-4';
 
   return (
-    <footer className="relative bg-slate-900 text-slate-300">
-      {/* Top accent line */}
-      <div className="h-1 w-full bg-gradient-to-r from-teal-600 via-teal-500 to-teal-400" />
+    <footer className="relative bg-ink text-slate-300">
+      {/* Brass hairline — the single warm accent on the dark surface */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-brass to-transparent" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-1 sm:grid-cols-3 gap-10">
 
         {/* Brand */}
         <div>
-          <Link to="/" className="flex items-center gap-1.5 mb-4 w-fit">
+          <Link to="/" className="flex items-center gap-2 mb-4 w-fit">
+            <BrandMark heights={[7, 11, 17, 14, 10]} onDark className="h-[18px]" />
             <span className="text-white font-bold text-base">Builder</span>
-            <span className="text-teal-400 font-bold text-base">.AI</span>
+            <span className="text-azure font-bold text-base">.AI</span>
             <span className="text-xs text-slate-400 font-medium ml-0.5">Market</span>
           </Link>
           <p className="text-sm text-slate-400 leading-relaxed mb-5">
@@ -99,15 +102,15 @@ export default function Footer() {
             real-estate, infrastructure, and venture projects.
           </p>
           <div className="space-y-2 text-sm text-slate-400">
-            <div className="flex items-center gap-2"><Mail size={14} /><a href="mailto:contact@layeredai.us" className="hover:text-teal-400 transition-colors">contact@layeredai.us</a></div>
-            <div className="flex items-center gap-2"><Globe size={14} /><a href="https://layeredai.us/" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">layeredai.us</a></div>
+            <div className="flex items-center gap-2"><Mail size={14} /><a href="mailto:contact@layeredai.us" className="hover:text-azure transition-colors">contact@layeredai.us</a></div>
+            <div className="flex items-center gap-2"><Globe size={14} /><a href="https://layeredai.us/" target="_blank" rel="noopener noreferrer" className="hover:text-azure transition-colors">layeredai.us</a></div>
             <div className="flex items-center gap-2"><MapPin size={14} /><span>Mumbai, India</span></div>
           </div>
         </div>
 
         {/* Builders */}
         <div>
-          <h4 className="text-white font-semibold text-sm mb-4">Builders</h4>
+          <h4 className={colHeading}>Builders</h4>
           <ul className="space-y-2">
             {BUILDER_LINKS.map((l) => (
               <li key={l.label}>
@@ -119,7 +122,7 @@ export default function Footer() {
 
         {/* Investors */}
         <div>
-          <h4 className="text-white font-semibold text-sm mb-4">Investors</h4>
+          <h4 className={colHeading}>Investors</h4>
           <ul className="space-y-2">
             {INV_LINKS.map((l) => (
               <li key={l.label}>
@@ -131,12 +134,11 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center">
-          <p className="text-xs text-slate-500 flex items-center gap-1.5">
-            © 2026 Builder AI Market · Made with
-            <Heart size={11} className="text-red-400 fill-red-400" />
-            in India
+      <div className="border-t border-white/[0.08]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-center gap-2">
+          <BrandMark heights={[5, 8, 12, 10, 7]} onDark className="h-3" />
+          <p className="font-mono text-[11px] text-slate-500 tracking-wide">
+            © 2026 BUILDER AI MARKET · MUMBAI · IN
           </p>
         </div>
       </div>
@@ -153,8 +155,8 @@ export default function Footer() {
             >
               <X size={18} />
             </button>
-            <div className="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center mb-4">
-              <ArrowRightLeft size={20} className="text-amber-500" />
+            <div className="w-11 h-11 rounded-full bg-brass/10 flex items-center justify-center mb-4">
+              <ArrowRightLeft size={20} className="text-brass-700" />
             </div>
             <h3 className="text-lg font-bold mb-1.5">
               Switch to {switchTo === 'investor' ? 'Investor' : 'Builder'}?

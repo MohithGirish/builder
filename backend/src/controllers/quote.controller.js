@@ -36,7 +36,7 @@ async function createQuote(req, res, next) {
   try {
     const {
       projectId, projectName, projectEmail,
-      userName, userEmail, userPhone,
+      userName, userEmail, accountEmail, userPhone,
       whatsappConsent,
       layoutPreferences, requirements,
     } = req.body;
@@ -57,6 +57,7 @@ async function createQuote(req, res, next) {
       projectEmail,
       userName,
       userEmail,
+      accountEmail: accountEmail || null,
       userPhone,
       layoutPreferences: Array.isArray(layoutPreferences) ? layoutPreferences : [],
       requirements:      requirements || '',
@@ -104,12 +105,12 @@ async function listQuotes(req, res, next) {
     // email → quotes this user requested (investor side);
     // projectEmail → quotes against a builder's projects (builder side).
     const match = email
-      ? (q) => (q.userEmail || '').toLowerCase() === email
+      ? (q) => (q.userEmail || '').toLowerCase() === email || (q.accountEmail || '').toLowerCase() === email
       : (q) => (q.projectEmail || '').toLowerCase() === projectEmail;
     const quotes = readQuotes()
       .filter(match)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .map(({ responseToken, ...safe }) => safe);
+      .map(({ responseToken, accountEmail, ...safe }) => safe);
     return res.json({ success: true, data: quotes });
   } catch (err) {
     next(err);
@@ -126,7 +127,7 @@ async function getQuote(req, res, next) {
       return res.status(404).json({ success: false, error: { message: 'Quote not found.' } });
     }
 
-    const { responseToken, projectEmail, ...safe } = quote;
+    const { responseToken, projectEmail, accountEmail, ...safe } = quote;
     return res.json({ success: true, data: safe });
   } catch (err) {
     next(err);
@@ -143,7 +144,7 @@ async function getQuoteByToken(req, res, next) {
       return res.status(404).json({ success: false, error: { message: 'Invalid or expired response token.' } });
     }
 
-    const { responseToken, projectEmail, ...safe } = quote;
+    const { responseToken, projectEmail, accountEmail, ...safe } = quote;
     return res.json({ success: true, data: safe });
   } catch (err) {
     next(err);
@@ -186,6 +187,55 @@ async function submitBuilderResponse(req, res, next) {
   }
 }
 
+// Remove every quote request tied to a user's email (called on account deletion
+// so the requester's PII doesn't linger in the flat-file store).
+// ponytail: matches by email since quotes aren't linked to a user id; revisit if quotes move to a DB table with an FK.
+function purgeQuotesByEmail(emailRaw) {
+  const e = String(emailRaw || '').trim().toLowerCase();
+  if (!e) return 0;
+  const quotes = readQuotes();
+  const kept = quotes.filter(
+    (q) => (q.userEmail || '').toLowerCase() !== e && (q.accountEmail || '').toLowerCase() !== e,
+  );
+  if (kept.length !== quotes.length) writeQuotes(kept);
+  return quotes.length - kept.length;
+}
+
+async function deleteQuote(req, res, next) {
+  try {
+    const { id } = req.params;
+    const email  = (req.query.email || '').trim().toLowerCase();
+
+    const quotes = readQuotes();
+    const index  = quotes.findIndex((q) => q.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: { message: 'Quote not found.' } });
+    }
+
+    // Email-gated like listQuotes: only the requester may delete their own quote.
+    // ponytail: email match, not real auth — same ceiling as the rest of the public
+    // quote API. Swap for authenticate + req.user.id if quotes move behind login.
+    const q = quotes[index];
+    const owns = email && ((q.userEmail || '').toLowerCase() === email || (q.accountEmail || '').toLowerCase() === email);
+    if (!owns) {
+      return res.status(403).json({ success: false, error: { message: 'You can only delete your own quote requests.' } });
+    }
+
+    quotes.splice(index, 1);
+    writeQuotes(quotes); // hard delete — the row and its reference ID are gone for good
+
+    // Best-effort cancellation notice — wrapped so a missing/throwing send (even a
+    // synchronous TypeError) can never turn a successful delete into a 500.
+    Promise.resolve()
+      .then(() => email.sendQuoteDeletedToUser({ quote: q }))
+      .catch((err) => console.error('[EMAIL ERROR]', err.message));
+
+    return res.json({ success: true, data: { id } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function scheduleSiteVisit(req, res, next) {
   try {
     const {
@@ -210,4 +260,4 @@ async function scheduleSiteVisit(req, res, next) {
   }
 }
 
-module.exports = { createQuote, listQuotes, getQuote, getQuoteByToken, submitBuilderResponse, scheduleSiteVisit };
+module.exports = { createQuote, listQuotes, getQuote, getQuoteByToken, submitBuilderResponse, deleteQuote, scheduleSiteVisit, purgeQuotesByEmail };
