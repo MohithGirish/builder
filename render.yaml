@@ -13,7 +13,9 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     # No dockerCommand override: the Dockerfile's production stage runs
-    # `npm run db:migrate && node src/server.js`, so migrations apply on deploy.
+    # `npm run db:migrate && npm run db:seed && node src/server.js`, so
+    # migrations and pending seeders apply on deploy (seeders are tracked in
+    # SequelizeData and only run once).
     buildFilter:
       paths:
         - backend/**
