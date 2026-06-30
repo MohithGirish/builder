@@ -41,6 +41,6 @@ module.exports = {
     dialectOptions: {
       ssl: { require: true, rejectUnauthorized: false },
     },
-    pool: { max: 20, min: 5, acquire: 30000, idle: 10000 },
+    pool: { max: 20, min: 2, acquire: 30000, idle: 10000 },
   },
 };

@@ -21,9 +21,10 @@ function sweepExpired() {
 
 function getRedisClient() {
   if (redisClient) return redisClient;
+  if (!process.env.REDIS_HOST) return null; // no Redis configured — use in-memory fallback
   try {
     const Redis = require('ioredis');
-    const host  = process.env.REDIS_HOST || 'localhost';
+    const host  = process.env.REDIS_HOST;
     const port  = parseInt(process.env.REDIS_PORT, 10) || 6379;
     redisClient = new Redis({
       host,
