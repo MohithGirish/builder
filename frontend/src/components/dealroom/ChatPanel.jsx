@@ -245,7 +245,7 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
+                  className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 />
               ))}
@@ -270,7 +270,7 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
             {/* Modal header */}
             <div
               className="px-5 py-4 flex items-center justify-between"
-              style={{ background: 'linear-gradient(to right,#0d9488,#0f766e)' }}
+              style={{ background: 'linear-gradient(to right,#2b5e93,#36699f)' }}
             >
               <div className="flex items-center gap-2">
                 <Brain size={16} className="text-white" />
@@ -315,8 +315,8 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
                           className="text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0"
                           style={
                             h.role === 'builder'
-                              ? { background: '#fff3e0', color: '#e65100' }
-                              : { background: '#e3f2fd', color: '#0d47a1' }
+                              ? { background: 'rgba(194,149,74,0.15)', color: '#9a7026' }
+                              : { background: 'rgba(43,94,147,0.12)', color: '#2b5e93' }
                           }
                         >
                           {h.role === 'builder' ? 'Builder' : 'Investor'}
@@ -349,7 +349,7 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
               <button
                 onClick={handleViewProject}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}
+                className="bg-brand-gradient"
               >
                 <FolderOpen size={14} />
                 View Full Project Details

@@ -68,7 +68,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
                     </span>
                     {dr.unread_count > 0 && (
                       <span className="shrink-0 w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
-                            style={{ background: 'linear-gradient(to right,#f97316,#f59e0b)' }}>
+                            style={{ background: '#2b5e93' }}>
                         {dr.unread_count}
                       </span>
                     )}
