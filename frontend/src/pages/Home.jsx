@@ -9,7 +9,7 @@
  * count-up stats give the page a premium, dynamic feel. Navigation to the
  * dashboard or onboarding is driven by the current auth and onboarding state.
  */
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -43,6 +43,24 @@ const MAP_PLACEHOLDER = (
     </div>
   </div>
 );
+
+const MAP_ERROR_FALLBACK = (
+  <div className="w-full h-[420px] rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-200">
+    <div className="text-center">
+      <MapPin size={28} className="text-slate-300 mx-auto mb-3" />
+      <p className="text-slate-600 text-sm font-medium">Map unavailable</p>
+      <p className="text-slate-400 text-xs mt-1">View projects in the cards below</p>
+    </div>
+  </div>
+);
+
+class MapErrorBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    return this.state.failed ? MAP_ERROR_FALLBACK : this.props.children;
+  }
+}
 
 /* ── Trust items ──────────────────────────────────────────────────────────── */
 const TRUST = [
@@ -259,9 +277,11 @@ export default function Home() {
 
           {/* Real Leaflet map — chunk + OSM tiles only load once scrolled near it */}
           <WhenVisible placeholder={MAP_PLACEHOLDER} rootMargin="100px">
-            <Suspense fallback={MAP_PLACEHOLDER}>
-              <ProjectsMap />
-            </Suspense>
+            <MapErrorBoundary>
+              <Suspense fallback={MAP_PLACEHOLDER}>
+                <ProjectsMap />
+              </Suspense>
+            </MapErrorBoundary>
           </WhenVisible>
 
           <p className="text-slate-500 text-xs mt-3 text-center">
