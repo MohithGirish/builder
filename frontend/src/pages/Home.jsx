@@ -69,7 +69,7 @@ const STEPS = [
   {
     icon: Handshake,
     title: 'Collaborate & Grow',
-    desc: 'Dealroom chat, real-time analytics, and transparent communication tools for seamless partnerships.',
+    desc: 'Private dealroom (secure deal workspace), real-time analytics, and transparent communication tools for seamless partnerships.',
     peak: true,   // the outcome — carries the brass peak accent
   },
 ];
@@ -264,7 +264,7 @@ export default function Home() {
             </Suspense>
           </WhenVisible>
 
-          <p className="text-slate-400 text-xs mt-3 text-center">
+          <p className="text-slate-500 text-xs mt-3 text-center">
             Click any map pin to preview · Click a project card to view full details
           </p>
         </div>
@@ -377,7 +377,7 @@ export default function Home() {
                     <Counter value={value} prefix={prefix} suffix={suffix} />
                   </div>
                   <div className="text-sm font-semibold text-slate-200">{label}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 font-mono uppercase tracking-wider">{sub}</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5 font-mono uppercase tracking-wider">{sub}</div>
                 </div>
               </Reveal>
             ))}
@@ -467,7 +467,7 @@ export default function Home() {
           <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
             <div>
               <h2 className="text-2xl font-extrabold text-slate-900 font-display">Discover Opportunities</h2>
-              <p className="text-slate-600 text-sm mt-1">Explore verified builders, investors, and projects</p>
+              <p className="text-slate-600 text-sm mt-1">Explore verified builders and real estate projects</p>
             </div>
             {/* Tabs */}
             <div className="flex items-center gap-1 bg-white rounded-2xl p-1 shadow-card border border-slate-200">
@@ -581,7 +581,7 @@ export default function Home() {
               <div className="relative z-10 flex items-center gap-4 shrink-0">
                 <BrandMark heights={[10, 16, 26, 20, 14]} onDark className="h-8" />
                 <button onClick={handleCTA} className="btn-brand px-7 py-3 text-sm">
-                  <Sparkles size={14} /> Start AI Matching
+                  <Sparkles size={14} /> Start Matching with AI
                 </button>
               </div>
             </div>
@@ -619,6 +619,23 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════
+          BOTTOM CTA STRIP — captures deep-scroll committed visitors
+      ════════════════════════════════════════════════════════════ */}
+      <section className="py-14 bg-ink">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl font-bold text-white mb-2 font-display">
+            Your next partnership starts here.
+          </h2>
+          <p className="text-slate-400 text-sm mb-7">
+            Join 3,500+ verified builders and investors already on the platform.
+          </p>
+          <button onClick={handleCTA} className="btn-brand px-8 py-3 text-sm">
+            <Sparkles size={15} /> Start Matching with AI
+          </button>
         </div>
       </section>
 
