@@ -24,7 +24,7 @@ import {
 } from '../../data/dashboard';
 
 const CHART_TABS = ['Trends', 'Sectors', 'Distribution'];
-const DONUT_COLORS = ['#0d9488', '#f97316', '#7c3aed', '#0891b2', '#d97706'];
+const DONUT_COLORS = ['#2b5e93', '#f97316', '#7c3aed', '#0891b2', '#d97706'];
 
 const TOOLTIP_STYLE = {
   borderRadius: '12px',
@@ -116,7 +116,7 @@ export default function DashboardAnalytics() {
           <h1 className="text-xl font-bold text-slate-800">Analytics &amp; Insights</h1>
           <p className="text-sm text-slate-500 mt-0.5">Track your performance and make data-driven decisions</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-teal-700 bg-white border border-teal-200 hover:bg-teal-50 transition-colors shadow-card shrink-0">
+        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-brand-700 bg-white border border-brand-200 hover:bg-brand-50 transition-colors shadow-card shrink-0">
           <Download size={14} /> Export Report
         </button>
       </div>
@@ -125,14 +125,14 @@ export default function DashboardAnalytics() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {kpiLoading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
-          : kpis.map((kpi) => <KPICard key={kpi.label} {...kpi} color="bg-teal-50 text-teal-600" />)
+          : kpis.map((kpi) => <KPICard key={kpi.label} {...kpi} color="bg-brand-50 text-brand-600" />)
         }
       </div>
 
       {/* AI Insight */}
       <div
         className="rounded-2xl p-5 mb-6 flex items-start gap-4"
-        style={{ background: 'linear-gradient(135deg,#0d9488,#0f766e)' }}
+        style={{ background: 'linear-gradient(135deg,#2b5e93,#1e3a5f)' }}
       >
         <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
           <Sparkles size={18} className="text-white" />

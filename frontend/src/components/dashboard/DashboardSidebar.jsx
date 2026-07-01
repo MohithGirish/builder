@@ -113,18 +113,13 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
                   'relative flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   isCollapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2',
                   isActive
-                    ? 'text-slate-900 bg-teal-50'
+                    ? 'text-slate-900 bg-brand-50 font-semibold'
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
                 ].join(' ')
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* 3px left accent border on active */}
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-teal-600" />
-                  )}
-
                   {/* Icon — with CSS tooltip in collapsed mode */}
                   <span className="relative group/tip flex items-center justify-center">
                     <Icon
@@ -178,7 +173,7 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
           <span className="relative group/tip">
             <button
               onClick={handleLogout}
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors" /* impeccable-disable gray-on-color — hover: transitions icon to red-500 simultaneously with bg-red-50 */
               aria-label="Sign out"
             >
               <LogOut size={15} />
@@ -190,7 +185,7 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
         ) : (
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 border border-slate-200 hover:border-red-200 transition-colors" /* impeccable-disable gray-on-color — hover: transitions text to red-600 simultaneously with bg-red-50 */
           >
             <LogOut size={13} />
             Sign Out

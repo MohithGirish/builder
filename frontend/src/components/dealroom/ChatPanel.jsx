@@ -129,7 +129,7 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
   const summary = buildSummary(dealroom, messages);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#f8fafc] h-full min-w-0">
+    <div className="flex-1 flex flex-col bg-slate-50 h-full min-w-0">
 
       {/* ── Chat header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-6 py-3.5 bg-white border-b border-slate-100 shrink-0">
@@ -348,8 +348,7 @@ export default function ChatPanel({ dealroomId, currentUserId }) {
               {/* View project link */}
               <button
                 onClick={handleViewProject}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                className="bg-brand-gradient"
+                className="w-full bg-brand-gradient flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
               >
                 <FolderOpen size={14} />
                 View Full Project Details

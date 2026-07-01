@@ -29,9 +29,9 @@ function LayoutInner() {
       {/* Desktop sidebar — static column, width transitions 200ms */}
       <div
         className={[
-          'hidden md:flex shrink-0 flex-col',
-          'transition-[width] duration-200 ease',
-          collapsed ? 'w-14' : 'w-56',
+          'hidden md:flex shrink-0 flex-col overflow-hidden w-56',
+          'transition-[max-width] duration-200 ease',
+          collapsed ? 'max-w-[3.5rem]' : 'max-w-56',
         ].join(' ')}
       >
         <DashboardSidebar />
@@ -56,7 +56,7 @@ function LayoutInner() {
       {/* Mobile FAB — teal, rounded-full, fixed bottom-left */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed bottom-5 left-4 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-teal-600 shadow-lg text-white active:scale-95 transition-transform"
+        className="md:hidden fixed bottom-5 left-4 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-brand-600 shadow-lg text-white active:scale-95 transition-transform"
         aria-label="Open navigation"
       >
         <PanelLeft size={20} />

@@ -58,10 +58,6 @@
   .bg-brand-gradient { background: linear-gradient(135deg, #2b5e93, #36699f); }
   .bg-cta-gradient   { background: linear-gradient(135deg, #c2954a, #a87a2f); }
   .bg-hero-gradient  { background: linear-gradient(135deg, #0e1b2e 0%, #16263c 100%); }
-  .text-gradient {
-    background: linear-gradient(to right, #2b5e93, #36699f);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
 
   /* ── Cards ────────────────────────────────────────────────────────────── */
   .card {
@@ -89,7 +85,7 @@
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
   }
   .tag-teal  { @apply tag bg-brand-50 text-brand-700; }
-  .tag-gray  { @apply tag bg-slate-100 text-slate-600; }
+  .tag-gray  { @apply tag bg-slate-100 text-slate-600; } /* impeccable-disable gray-on-color — detector artifact: slate-600 on slate-100 (5.7:1), not on orange-50 */
   .tag-orange{ @apply tag bg-orange-50 text-orange-700; }
   .tag-amber { @apply tag bg-amber-50 text-amber-700; }
 
@@ -217,11 +213,13 @@
 /* ── Underline grow for nav / inline links ────────────────────────────── */
 .link-underline { position: relative; }
 .link-underline::after {
-  content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 0;
+  content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 100%;
   background: linear-gradient(to right, #2b5e93, #36699f);
-  transition: width 0.25s ease;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
 }
-.link-underline:hover::after { width: 100%; }
+.link-underline:hover::after { transform: scaleX(1); }
 
 /* ── Mobile form-control font size ──────────────────────────────────────
    iOS Safari auto-zooms the page when a focused form control's font-size is

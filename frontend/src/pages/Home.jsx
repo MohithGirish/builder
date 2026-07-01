@@ -92,12 +92,13 @@ const STATS = [
 /* ── Discover section tabs ─────────────────────────────────────────────────── */
 const TABS = ['Builders', 'Projects'];
 
-/* Demo readout for the "Powered by Advanced AI" panel — sums to 77/90. */
+/* Demo readout for the "Powered by Advanced AI" panel — sums to 84/100. */
 const AI_DEMO_BREAKDOWN = [
   { key: 'sector',   label: 'Sector',   max: 25, value: 23 },
   { key: 'location', label: 'Location', max: 20, value: 17 },
   { key: 'fit',      label: 'Fit',      max: 25, value: 21 },
   { key: 'roi',      label: 'ROI',      max: 20, value: 16 },
+  { key: 'risk',     label: 'Risk',     max: 10, value: 7  },
 ];
 
 /* Mono coordinate eyebrow — the Blueprint Index data voice replaces pill labels. */
@@ -132,7 +133,7 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           HERO
       ════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[88vh] flex items-center justify-center overflow-hidden aurora bg-slate-950">
+      <section className="relative min-h-[88dvh] flex items-center justify-center overflow-hidden aurora bg-slate-950">
         {/* Background image — local + optimized; high fetch priority as the LCP element */}
         <img
           src="/images/hero/aerial.webp"
@@ -160,7 +161,7 @@ export default function Home() {
             {/* Headline */}
             <h1 className="text-3xl sm:text-[2.6rem] font-extrabold text-slate-900 leading-[1.1] mb-4 animate-fade-up" style={{ animationDelay: '140ms' }}>
               Connect Verified Builders with{' '}
-              <span className="text-gradient">Global Investors</span>
+              <span className="text-brand-600">Global Investors</span>
             </h1>
 
             <p className="text-slate-600 text-sm leading-relaxed mb-3 max-w-lg mx-auto animate-fade-up" style={{ animationDelay: '220ms' }}>
@@ -175,7 +176,7 @@ export default function Home() {
               <button onClick={handleCTA} className="btn-cta px-7 py-3 text-sm">
                 <Sparkles size={15} /> Start Matching with AI
               </button>
-              <Link to="/projects" className="btn-ghost px-7 py-3 text-sm">
+              <Link to="/projects" className="btn-outline-brand px-7 py-3 text-sm">
                 Browse Projects
               </Link>
             </div>
@@ -183,7 +184,7 @@ export default function Home() {
             {/* Trust signals */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-slate-100 pt-6 animate-fade-up" style={{ animationDelay: '380ms' }}>
               {[
-                '45,000+ Verified Profiles',
+                '3,500+ Verified Profiles',
                 '₹12,000 Cr+ Projects',
                 '98% Match Rate',
               ].map((signal) => (
@@ -197,15 +198,15 @@ export default function Home() {
         </div>
 
         {/* Scroll indicator — premium mouse capsule + cascading chevrons */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2.5 animate-fade-in" style={{ animationDelay: '800ms' }}>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2.5 animate-fade-in" style={{ animationDelay: '420ms' }}>
           <span className="text-white/35 text-[9px] uppercase tracking-[0.3em] font-semibold">Scroll</span>
 
           {/* Mouse capsule */}
           <div className="relative w-[22px] h-[36px] rounded-full flex justify-center overflow-hidden"
-               style={{ border: '1.5px solid rgba(255,255,255,0.2)', boxShadow: '0 0 18px rgba(45,212,191,0.12), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
+               style={{ border: '1.5px solid rgba(255,255,255,0.2)', boxShadow: '0 0 18px rgba(90,160,224,0.12), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
             <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.06), transparent 60%)' }} />
             <div className="absolute top-[6px] w-[4px] h-[7px] rounded-full animate-scroll-wheel"
-                 style={{ background: 'rgba(255,255,255,0.9)', boxShadow: '0 0 8px rgba(45,212,191,0.8)' }} />
+                 style={{ background: 'rgba(255,255,255,0.9)', boxShadow: '0 0 8px rgba(90,160,224,0.8)' }} />
           </div>
 
           {/* Cascading chevrons */}
@@ -228,7 +229,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
           {/* Section header */}
-          <Reveal className="grid md:grid-cols-2 gap-8 items-end mb-8">
+          <div className="grid md:grid-cols-2 gap-8 items-end mb-8">
             <div>
               <div className="mb-4">
                 <SectionPill><MapPin size={11} className="mr-1" />Live Project Locations</SectionPill>
@@ -254,16 +255,14 @@ export default function Home() {
                 </span>
               ))}
             </div>
-          </Reveal>
+          </div>
 
           {/* Real Leaflet map — chunk + OSM tiles only load once scrolled near it */}
-          <Reveal delay={80}>
-            <WhenVisible placeholder={MAP_PLACEHOLDER} rootMargin="100px">
-              <Suspense fallback={MAP_PLACEHOLDER}>
-                <ProjectsMap />
-              </Suspense>
-            </WhenVisible>
-          </Reveal>
+          <WhenVisible placeholder={MAP_PLACEHOLDER} rootMargin="100px">
+            <Suspense fallback={MAP_PLACEHOLDER}>
+              <ProjectsMap />
+            </Suspense>
+          </WhenVisible>
 
           <p className="text-slate-400 text-xs mt-3 text-center">
             Click any map pin to preview · Click a project card to view full details
@@ -274,20 +273,24 @@ export default function Home() {
       {/* ════════════════════════════════════════════════════════════
           PROJECT CARDS BELOW MAP
       ════════════════════════════════════════════════════════════ */}
-      <section className="pb-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <Reveal className="flex items-center justify-between mb-6">
+      <section className="pb-20 bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
+          <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-800">Browse Projects</h3>
             <span className="text-xs text-slate-400 font-medium">{REAL_PROJECTS.length} featured projects</span>
-          </Reveal>
+          </div>
 
           {/* Horizontal scroll on mobile, 3-col wrapping grid on large screens */}
-          <div className="flex gap-5 overflow-x-auto pb-3 lg:grid lg:grid-cols-3 xl:grid-cols-3 no-scrollbar">
-            {REAL_PROJECTS.map((project, i) => (
-              <Reveal key={project.id} delay={i * 70} className="shrink-0 w-[300px] lg:w-full lg:min-w-0">
-                <RealProjectCard project={project} />
-              </Reveal>
-            ))}
+          <div className="relative">
+            <div className="flex gap-5 overflow-x-auto pb-3 lg:grid lg:grid-cols-3 xl:grid-cols-3 no-scrollbar">
+              {REAL_PROJECTS.map((project) => (
+                <div key={project.id} className="shrink-0 w-[300px] lg:w-full lg:min-w-0">
+                  <RealProjectCard project={project} />
+                </div>
+              ))}
+            </div>
+            {/* Right-edge peek gradient — tells mobile users the row scrolls */}
+            <div className="absolute top-0 right-0 bottom-3 w-16 bg-gradient-to-l from-white to-transparent pointer-events-none lg:hidden" aria-hidden="true" />
           </div>
         </div>
       </section>
@@ -446,7 +449,7 @@ export default function Home() {
                 <CompatibilityInstrument
                   variant="light"
                   label="Match readout"
-                  score={77}
+                  score={84}
                   breakdown={AI_DEMO_BREAKDOWN}
                 />
               </div>
@@ -463,7 +466,6 @@ export default function Home() {
 
           <Reveal className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
             <div>
-              <div className="mb-3"><Eyebrow>Directory</Eyebrow></div>
               <h2 className="text-2xl font-extrabold text-slate-900 font-display">Discover Opportunities</h2>
               <p className="text-slate-600 text-sm mt-1">Explore verified builders, investors, and projects</p>
             </div>
@@ -529,10 +531,7 @@ export default function Home() {
       ════════════════════════════════════════════════════════════ */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <Reveal className="text-center mb-12">
-            <div className="flex justify-center mb-4">
-              <Eyebrow>AI-powered intelligence</Eyebrow>
-            </div>
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-extrabold text-slate-900 mb-3 font-display">
               Find Your Perfect Match<br />with AI Precision
             </h2>
@@ -540,25 +539,23 @@ export default function Home() {
               Our advanced AI algorithms analyse project requirements, investment preferences,
               and success patterns to create meaningful connections that drive results.
             </p>
-          </Reveal>
+          </div>
 
           <div className="grid sm:grid-cols-3 gap-6 mb-12">
             {AI_FEATURES.map(({ icon: Icon, title, desc }, i) => (
-              <Reveal key={title} delay={i * 100}>
-                <div className="relative h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-soft hover:shadow-card transition-shadow duration-300 group">
-                  <span className="absolute top-0 left-6 right-6 h-px bg-brand-200" aria-hidden="true" />
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600 transition-transform duration-300 group-hover:scale-110">
-                      <Icon size={19} />
-                    </div>
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
+              <div key={title} className="relative h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-soft hover:shadow-card transition-shadow duration-300 group">
+                <span className="absolute top-0 left-6 right-6 h-px bg-brand-200" aria-hidden="true" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-brand-50 text-brand-600 transition-transform duration-300 group-hover:scale-110">
+                    <Icon size={19} />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base mb-2 font-display">{title}</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </div>
-              </Reveal>
+                <h3 className="font-bold text-slate-900 text-base mb-2 font-display">{title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
+              </div>
             ))}
           </div>
 
@@ -575,7 +572,6 @@ export default function Home() {
               </div>
 
               <div className="relative z-10">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] mb-2 text-azure">Get started today</p>
                 <h3 className="text-xl font-bold text-white mb-2 font-display">Ready to find your ideal partner?</h3>
                 <p className="text-slate-400 text-sm max-w-md">
                   Join thousands of verified builders and investors who trust Builder AI Market
@@ -584,7 +580,7 @@ export default function Home() {
               </div>
               <div className="relative z-10 flex items-center gap-4 shrink-0">
                 <BrandMark heights={[10, 16, 26, 20, 14]} onDark className="h-8" />
-                <button onClick={handleCTA} className="btn-cta px-7 py-3 text-sm">
+                <button onClick={handleCTA} className="btn-brand px-7 py-3 text-sm">
                   <Sparkles size={14} /> Start AI Matching
                 </button>
               </div>
@@ -599,10 +595,7 @@ export default function Home() {
       <section className="relative py-20 bg-slate-50 overflow-hidden">
         <div className="absolute inset-0 coord-grid opacity-60 pointer-events-none" aria-hidden="true" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-          <Reveal className="text-center mb-12">
-            <div className="flex justify-center mb-4">
-              <Eyebrow>Trust &amp; compliance</Eyebrow>
-            </div>
+          <div className="text-center mb-12">
             <h2 className="text-3xl font-extrabold text-slate-900 mb-3 font-display">
               Built on Trust &amp; Transparency
             </h2>
@@ -610,22 +603,20 @@ export default function Home() {
               Your security is our priority. We maintain the highest standards of verification,
               compliance, and transparency to ensure safe and successful partnerships.
             </p>
-          </Reveal>
+          </div>
 
           <div className="grid sm:grid-cols-2 gap-5">
             {TRUST.map(({ icon: Icon, title, desc }, i) => (
-              <Reveal key={title} delay={(i % 2) * 80}>
-                <div className="relative bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-200 hover:border-brand-300 transition-colors duration-200 h-full shadow-soft">
-                  <span className="font-mono text-[11px] font-semibold text-slate-300 tabular-nums pt-0.5">{String(i + 1).padStart(2, '0')}</span>
-                  <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
-                    <Icon size={18} className="text-brand-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 text-sm mb-1 font-display">{title}</h4>
-                    <p className="text-slate-600 text-xs leading-relaxed">{desc}</p>
-                  </div>
+              <div key={title} className="relative bg-white rounded-2xl p-5 flex gap-4 items-start border border-slate-200 hover:border-brand-300 transition-colors duration-200 h-full shadow-soft">
+                <span className="font-mono text-[11px] font-semibold text-slate-300 tabular-nums pt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
+                  <Icon size={18} className="text-brand-600" />
                 </div>
-              </Reveal>
+                <div>
+                  <h4 className="font-semibold text-slate-900 text-sm mb-1 font-display">{title}</h4>
+                  <p className="text-slate-600 text-xs leading-relaxed">{desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>

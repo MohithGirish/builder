@@ -74,8 +74,8 @@ export default function App() {
             fontSize: '0.875rem',
           },
           classNames: {
-            success: 'border-l-4 border-l-emerald-500',
-            error:   'border-l-4 border-l-red-500',
+            success: 'border border-emerald-200 bg-emerald-50',
+            error:   'border border-red-200 bg-red-50',
           },
         }}
       />

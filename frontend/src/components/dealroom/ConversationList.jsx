@@ -48,7 +48,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
               key={dr.id}
               onClick={() => onSelect(dr.id)}
               className={`w-full text-left px-4 py-3.5 border-b border-slate-50 transition-colors duration-150 hover:bg-slate-50 ${
-                isActive ? 'bg-brand-50 border-l-[3px] border-l-brand-500' : ''
+                isActive ? 'bg-brand-50' : ''
               }`}
             >
               <div className="flex items-start gap-3">
