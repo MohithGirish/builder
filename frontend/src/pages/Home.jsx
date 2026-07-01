@@ -15,8 +15,8 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
   Sparkles, ArrowRight, Bot, Users, Shield,
-  Zap, Target, Clock, Building2, TrendingUp, Lock,
-  BadgeCheck, Scale, Star, MapPin, ClipboardList, Handshake, IndianRupee, CheckCircle2,
+  Zap, Target, Clock, Lock,
+  BadgeCheck, Scale, Star, MapPin, ClipboardList, Handshake, CheckCircle2,
 } from 'lucide-react';
 import BuilderCard       from '../components/cards/BuilderCard';
 import ProjectCard       from '../components/cards/ProjectCard';
@@ -99,13 +99,6 @@ const AI_FEATURES = [
   { icon: Clock,  title: 'Instant Results',       desc: 'Get matches with verified profiles in seconds, not weeks.' },
 ];
 
-/* ── Impact stats ─────────────────────────────────────────────────────────── */
-const STATS = [
-  { icon: Building2,   value: 1200,  suffix: '+',                  label: 'Verified Builders', sub: 'Across India' },
-  { icon: TrendingUp,  value: 2300,  suffix: '+',                  label: 'Active Investors',  sub: 'Global Network' },
-  { icon: IndianRupee, value: 12000, prefix: '₹', suffix: '+ Cr',  label: 'Projects Funded',   sub: 'Total Investment', peak: true },
-  { icon: BadgeCheck,  value: 98,    suffix: '%',                  label: 'Success Rate',      sub: 'Verified Matches' },
-];
 
 /* ── Discover section tabs ─────────────────────────────────────────────────── */
 const TABS = ['Builders', 'Projects'];
@@ -364,43 +357,50 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          STATS
+          STATS — asymmetric editorial: ₹12,000 Cr dominates left,
+          three subordinate figures stack right
       ════════════════════════════════════════════════════════════ */}
       <section className="py-20 relative overflow-hidden bg-ink">
-        {/* Background texture + restrained ambient glow (azure data, brass accent) */}
         <div className="absolute inset-0 hero-dot-grid opacity-[0.04] pointer-events-none" aria-hidden="true" />
-        <div className="absolute top-0 left-1/4 w-[460px] h-[460px] rounded-full pointer-events-none" aria-hidden="true"
-             style={{ background: 'radial-gradient(circle, rgba(90,160,224,0.10), transparent 65%)', filter: 'blur(70px)' }} />
-        <div className="absolute bottom-0 right-1/4 w-[360px] h-[360px] rounded-full pointer-events-none" aria-hidden="true"
-             style={{ background: 'radial-gradient(circle, rgba(194,149,74,0.06), transparent 65%)', filter: 'blur(70px)' }} />
 
-        <Reveal className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center mb-14">
-          <div className="flex justify-center mb-4">
-            <Eyebrow onDark>Platform impact</Eyebrow>
-          </div>
-          <h2 className="text-3xl font-extrabold text-white mb-2 font-display">Trusted by Thousands across India</h2>
-          <p className="text-slate-400 text-sm">Real numbers. Real impact. Real partnerships.</p>
-        </Reveal>
-
-        {/* Hairline data grid — gap-px over a faint surface draws the dividers */}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08]">
-            {STATS.map(({ icon: Icon, value, prefix, suffix, label, sub, peak }, i) => (
-              <Reveal key={label} delay={i * 60} className="h-full">
-                <div className="relative h-full bg-ink p-6 group transition-colors duration-300 hover:bg-white/[0.02]">
-                  {/* Top accent — brass on the peak figure, azure elsewhere */}
-                  <span className={`absolute top-0 left-0 right-0 h-px ${peak ? 'bg-brass' : 'bg-azure/40'}`} aria-hidden="true" />
-                  <div className={`w-11 h-11 rounded-xl mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${peak ? 'bg-brass/15 text-brass-300' : 'bg-azure/10 text-azure'}`}>
-                    <Icon size={20} />
+          <div className="grid lg:grid-cols-[3fr_1fr] gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08]">
+
+            {/* Dominant figure — ₹12,000 Cr+ */}
+            <Reveal className="bg-ink p-8 sm:p-12 flex flex-col justify-between gap-8 min-h-[220px]">
+              <div>
+                <Eyebrow onDark>Total investment facilitated</Eyebrow>
+                <div className="mt-5">
+                  <div className="text-[clamp(3.5rem,10vw,6rem)] font-extrabold font-mono tabular-nums leading-none text-brass-300 tracking-tight">
+                    <Counter value={12000} prefix="₹" suffix="+ Cr" />
                   </div>
-                  <div className={`text-3xl font-extrabold mb-1 font-mono tabular-nums ${peak ? 'text-brass-300' : 'text-white'}`}>
-                    <Counter value={value} prefix={prefix} suffix={suffix} />
-                  </div>
-                  <div className="text-sm font-semibold text-slate-200">{label}</div>
-                  <div className="text-[11px] text-slate-300 mt-0.5 font-mono uppercase tracking-wider">{sub}</div>
+                  <p className="text-slate-200 text-base font-semibold mt-3 font-display">Projects Funded</p>
                 </div>
-              </Reveal>
-            ))}
+              </div>
+              <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
+                India's fastest-growing verified network for real-estate and infrastructure partnerships.
+              </p>
+            </Reveal>
+
+            {/* Subordinate figures — 3-col row on mobile, stacked column on lg */}
+            <div className="grid grid-cols-3 lg:grid-cols-1 gap-px bg-white/[0.08]">
+              {[
+                { value: 1200, suffix: '+', label: 'Verified Builders', sub: 'Across India' },
+                { value: 2300, suffix: '+', label: 'Active Investors',  sub: 'Global Network' },
+                { value: 98,   suffix: '%', label: 'Success Rate',      sub: 'Verified Matches' },
+              ].map(({ value, suffix, label, sub }, i) => (
+                <Reveal key={label} delay={i * 60} className="h-full">
+                  <div className="h-full bg-ink p-5 lg:p-6 flex flex-col justify-center">
+                    <div className="text-xl sm:text-2xl font-extrabold font-mono tabular-nums text-azure">
+                      <Counter value={value} suffix={suffix} />
+                    </div>
+                    <div className="text-[11px] sm:text-xs font-semibold text-slate-200 mt-1 leading-tight">{label}</div>
+                    <div className="hidden sm:block text-[11px] text-slate-400 font-mono uppercase tracking-wider mt-0.5">{sub}</div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
           </div>
         </div>
       </section>
