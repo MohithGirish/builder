@@ -22,6 +22,7 @@ import DeleteAccountModal from '../components/profile/DeleteAccountModal';
 import MyProjectCard from '../components/cards/MyProjectCard';
 import { EINFRA_LISTINGS, isEinfraBuilder } from '../data/realProjects';
 import { MY_PROJECTS } from '../data/dashboard';
+import { deriveStatus, loadVerification } from '../lib/verification';
 
 const BUILDER_PREF_LABELS = [
   { key: 'city',               label: 'Based In',              icon: MapPin,       placeholder: 'e.g. Hyderabad' },
@@ -209,6 +210,54 @@ export default function Profile() {
             </div>
           )}
         </div>
+
+        {/* ── Builder Verification card ──────────────────────────────────── */}
+        {role === 'builder' && (() => {
+          const vStatus = deriveStatus(loadVerification(user?.id));
+          const submitted = vStatus === 'submitted';
+          const ready = vStatus === 'ready';
+          const linkLabel = submitted ? 'Update' : ready ? 'Submit' : 'Complete';
+          return (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-slate-400" />
+                    Builder Verification
+                  </h3>
+                  <div className="mt-1.5">
+                    {submitted ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200">
+                        <ShieldCheck size={11} /> Submitted for verification
+                      </span>
+                    ) : ready ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200">
+                        <ShieldCheck size={11} /> Ready to submit
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200">
+                        <AlertTriangle size={11} /> Unverified
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    {submitted
+                      ? 'Statutory registrations recorded — reviewed against RERA, GST and MCA.'
+                      : ready
+                        ? 'Credentials look valid — open the form and submit for verification.'
+                        : 'Add your RERA, PAN, GSTIN and entity registration to earn a verified badge.'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/onboarding/verification')}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <ShieldCheck size={12} /> {linkLabel}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── AI Preferences card ────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">

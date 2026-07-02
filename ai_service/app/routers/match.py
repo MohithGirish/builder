@@ -7,9 +7,11 @@ Exposes three POST endpoints: /score (single builder-investor pair score),
 in one request. All endpoints delegate to the matching engine service and
 return validated Pydantic response models.
 """
+import hmac
 import time
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 
+from ..config import get_settings
 from ..schemas import (
     ScoreRequest,
     RankBuildersRequest,
@@ -21,7 +23,24 @@ from ..schemas import (
 )
 from ..services.engine import compute_score, rank_builders, rank_investors
 
-router = APIRouter(prefix="/api/v1/match", tags=["Matchmaking"])
+
+def require_internal_key(x_internal_api_key: str = Header(default="")) -> None:
+    """Enforce the shared internal API key when one is configured.
+
+    If INTERNAL_API_KEY is set and non-empty, every request must send a matching
+    X-Internal-Api-Key header (constant-time compared). If it is unset/empty we
+    skip enforcement so local dev and the test suite work without a key.
+    """
+    expected = get_settings().internal_api_key
+    if expected and not hmac.compare_digest(x_internal_api_key, expected):
+        raise HTTPException(status_code=401, detail="Invalid or missing internal API key.")
+
+
+router = APIRouter(
+    prefix="/api/v1/match",
+    tags=["Matchmaking"],
+    dependencies=[Depends(require_internal_key)],
+)
 
 
 @router.post(

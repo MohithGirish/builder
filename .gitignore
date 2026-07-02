@@ -88,3 +88,13 @@ build_ui_doc.py
 # Misc
 *.tsbuildinfo
 .eslintcache
+
+# Runtime data — quote requests contain requester PII, never commit
+backend/data/quotes.json
+
+# Claude working artifacts — impeccable state, session-continuity and generated reference docs, never push
+.impeccable/
+DESIGN.md
+PRODUCT.md
+UI_GRADING_PROGRESS.md
+TECH_STACK.md

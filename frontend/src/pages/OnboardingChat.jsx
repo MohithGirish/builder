@@ -167,6 +167,12 @@ export default function OnboardingChat() {
     if (progress >= 88) {
       const t = setTimeout(() => {
         completeOnboarding();
+        // New builders go through the verification step next; it consumes the
+        // pending builderai_redirect on finish, so leave sessionStorage untouched.
+        if (role === 'builder' && !isRetake) {
+          navigate('/onboarding/verification', { replace: true });
+          return;
+        }
         const savedRedirect = sessionStorage.getItem('builderai_redirect');
         if (savedRedirect && !isRetake) {
           sessionStorage.removeItem('builderai_redirect');
@@ -333,7 +339,7 @@ export default function OnboardingChat() {
                   {[0, 150, 300].map(delay => (
                     <span
                       key={delay}
-                      className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+                      className="w-2 h-2 rounded-full bg-slate-400 animate-pulse"
                       style={{ animationDelay: `${delay}ms` }}
                     />
                   ))}

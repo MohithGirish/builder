@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     app_port: int = 8000
     log_level: str = "info"
     allowed_origins: str = "http://localhost:3000,http://localhost:5000"
-    internal_api_key: str = "dev_internal_secret"
+    internal_api_key: str = ""  # empty ⇒ enforcement disabled (dev mode)
 
     @property
     def cors_origins(self) -> list[str]:

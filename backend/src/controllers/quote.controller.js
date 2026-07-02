@@ -41,13 +41,6 @@ async function createQuote(req, res, next) {
       layoutPreferences, requirements,
     } = req.body;
 
-    if (!projectId || !projectName || !projectEmail || !userName || !userEmail || !userPhone) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'projectId, projectName, projectEmail, userName, userEmail, and userPhone are required.' },
-      });
-    }
-
     const id            = crypto.randomUUID();
     const responseToken = crypto.randomUUID();
     const quote = {
@@ -243,10 +236,6 @@ async function scheduleSiteVisit(req, res, next) {
       visitorName, visitorEmail, visitorPhone,
       preferredDate, preferredTime, notes,
     } = req.body;
-
-    if (!projectName || !projectEmail || !visitorName || !visitorEmail || !visitorPhone || !preferredDate || !preferredTime) {
-      return res.status(400).json({ success: false, error: { message: 'All fields are required.' } });
-    }
 
     email.sendSiteVisitRequest({
       projectName, projectEmail,

@@ -1,6 +1,12 @@
 """
 Shared pytest fixtures for the Matchmaking Engine test suite.
 """
+import os
+
+# Disable internal-key enforcement for the test suite (env var overrides .env).
+# Tests exercise the match endpoints without a key; set this to test enforcement.
+os.environ["INTERNAL_API_KEY"] = ""
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 

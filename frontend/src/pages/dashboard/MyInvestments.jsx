@@ -108,7 +108,7 @@ function QuoteCard({ quote, onDelete }) {
             <button
               onClick={() => setConfirming(true)}
               aria-label="Delete quote request"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50" /* impeccable-disable gray-on-color — hover: transitions text to red-600 simultaneously with bg-red-50; static detector sees wrong combination */
             >
               <Trash2 size={12} /> Delete
             </button>

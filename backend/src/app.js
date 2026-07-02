@@ -18,6 +18,7 @@ const morgan       = require('morgan');
 const rateLimit    = require('express-rate-limit');
 const routes       = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
+const AppError     = require('./utils/AppError');
 
 const app = express();
 
@@ -31,7 +32,7 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (Postman, server-to-server)
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS: origin ${origin} not allowed`));
+      return callback(new AppError(`CORS: origin ${origin} not allowed`, 403, 'CORS_NOT_ALLOWED'));
     },
     credentials: true,
   })

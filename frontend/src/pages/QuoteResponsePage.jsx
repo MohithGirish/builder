@@ -231,7 +231,7 @@ export default function QuoteResponsePage() {
               onClick={handleSubmit}
               disabled={submitting}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg, #0f766e, #14b8a6)' }}
+              style={{ background: 'linear-gradient(135deg, #2b5e93, #36699f)' }}
             >
               {submitting
                 ? <><Loader2 size={15} className="animate-spin" /> Submitting…</>

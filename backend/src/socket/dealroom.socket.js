@@ -23,8 +23,9 @@ async function authenticateSocket(socket, next) {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
     if (!token) throw new Error('No auth token');
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = payload;
+    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    // Access tokens carry { sub, role } only — map sub → id for the handlers.
+    socket.user = { id: payload.sub, role: payload.role };
     next();
   } catch {
     next(new Error('Authentication failed'));
@@ -93,9 +94,11 @@ function registerDealroomHandlers(io, socket) {
 
   // ── Typing indicators ─────────────────────────────────────────────────────
   socket.on('typing_start', ({ dealroom_id }) => {
+    // ponytail: the access token has no name claims; send an empty user_name.
+    // Fetch first/last from the DB here if the dealroom UI ever needs to show it.
     socket.to(`dealroom:${dealroom_id}`).emit('user_typing', {
       user_id:   userId,
-      user_name: `${socket.user.first_name || ''} ${socket.user.last_name || ''}`.trim(),
+      user_name: '',
     });
   });
 

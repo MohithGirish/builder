@@ -14,14 +14,19 @@
 
 const { Router } = require('express');
 const ctrl = require('../controllers/quote.controller');
+const {
+  validateCreateQuote,
+  validateSiteVisit,
+  validateBuilderResponse,
+} = require('../validators/quote.validators');
 
 const router = Router();
 
-router.post('/',                    ctrl.createQuote);
+router.post('/',                    validateCreateQuote, ctrl.createQuote);
 router.get('/',                     ctrl.listQuotes);
-router.post('/site-visit',          ctrl.scheduleSiteVisit);
+router.post('/site-visit',          validateSiteVisit, ctrl.scheduleSiteVisit);
 router.get('/respond/:token',       ctrl.getQuoteByToken);
-router.post('/respond/:token',      ctrl.submitBuilderResponse);
+router.post('/respond/:token',      validateBuilderResponse, ctrl.submitBuilderResponse);
 router.get('/:id',                  ctrl.getQuote);
 router.delete('/:id',               ctrl.deleteQuote);
 

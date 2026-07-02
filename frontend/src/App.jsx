@@ -41,6 +41,7 @@ const Login              = lazy(() => import('./pages/Login'));
 const Register           = lazy(() => import('./pages/Register'));
 const Onboarding         = lazy(() => import('./pages/Onboarding'));
 const OnboardingChat     = lazy(() => import('./pages/OnboardingChat'));
+const OnboardingVerification = lazy(() => import('./pages/OnboardingVerification'));
 const Profile            = lazy(() => import('./pages/Profile'));
 const Home               = lazy(() => import('./pages/Home'));
 const Builders           = lazy(() => import('./pages/Builders'));
@@ -104,10 +105,13 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* allowRetake on /onboarding/chat: completeOnboarding() flips the flag
+                  while the chat is still mounted; without it the guard's dashboard
+                  redirect races (and beats) the chat's navigate to /onboarding/verification. */}
               <Route
                 path="/onboarding/chat"
                 element={
-                  <ProtectedRoute requireOnboarding={false}>
+                  <ProtectedRoute requireOnboarding={false} allowRetake={true}>
                     <OnboardingChat />
                   </ProtectedRoute>
                 }
@@ -117,6 +121,14 @@ export default function App() {
                 element={
                   <ProtectedRoute requireOnboarding={false} allowRetake={true}>
                     <OnboardingChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/onboarding/verification"
+                element={
+                  <ProtectedRoute requireOnboarding={false} allowRetake={true}>
+                    <OnboardingVerification />
                   </ProtectedRoute>
                 }
               />
@@ -206,6 +218,7 @@ export default function App() {
             <Route path="/onboarding"           element={null} />
             <Route path="/onboarding/chat"      element={null} />
             <Route path="/onboarding/retake"    element={null} />
+            <Route path="/onboarding/verification" element={null} />
             <Route path="/profile"              element={null} />
             <Route path="/quote-response/*"     element={null} />
             <Route path="*"                     element={<Footer />} />
