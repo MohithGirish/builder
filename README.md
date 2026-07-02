@@ -66,8 +66,7 @@ builder_ai/
 │   └── db/migrations/
 ├── ai_service/        # Python FastAPI scoring microservice
 │   └── app/
-├── docker-compose.yml
-└── TECH_STACK.md
+└── docker-compose.yml
 ```
 
 ---
@@ -98,7 +97,7 @@ cp ai_service/.env.example ai_service/.env
 Key variables to set in `backend/.env`:
 
 ```env
-JWT_SECRET=your_jwt_secret
+JWT_ACCESS_SECRET=your_jwt_secret
 JWT_REFRESH_SECRET=your_refresh_secret
 DB_HOST=postgres
 DB_NAME=builder_ai_db
@@ -112,6 +111,7 @@ AI_SERVICE_URL=http://ai_service:8000
 
 - `ANTHROPIC_API_KEY` (in `backend/.env`) — enables the Claude-powered conversational onboarding chat. Leave it blank to use the scripted onboarding questions. It's a standalone toggle, not tied to any account.
 - `VITE_GOOGLE_MAPS_API_KEY` (in `frontend/.env.local`) — Google Maps Embed key for the project-detail and profile maps. Without it those maps show a deep-link fallback.
+- `INTERNAL_API_KEY` (in `ai_service/.env`) — when set, the AI service requires a matching `X-Internal-Api-Key` header on `/api/v1/match/*`; leave blank in dev to disable enforcement. Pair with `AI_SERVICE_API_KEY` in `backend/.env`.
 
 > **Docker note:** the backend runs with `node_modules` in a named volume, so after adding a backend dependency, install it in the container (`docker compose exec backend npm install <pkg>`) or rebuild (`docker compose up -d --build backend`).
 
@@ -168,13 +168,13 @@ npm test
 
 The matchmaking engine scores Builder–Investor compatibility across 5 dimensions, normalised to 100 points:
 
-| Dimension | Weight |
+| Dimension | Points |
 |---|---|
-| Sector alignment | 30% |
-| Location preference | 20% |
-| Investment range fit | 20% |
-| ROI expectation match | 15% |
-| Risk tolerance alignment | 15% |
+| Sector alignment | 25 |
+| Location preference | 20 |
+| Investment range fit | 25 |
+| ROI expectation match | 20 |
+| Risk tolerance alignment | 10 |
 
 The Node.js backend calls the AI service internally and returns a `compatibility_score` and `breakdown` object to the frontend.
 
@@ -187,6 +187,7 @@ The Node.js backend calls the AI service internally and returns a `compatibility
 - **Dealrooms** — private real-time chat rooms with file sharing and full message persistence
 - **Dashboards** — KPI cards, match lists, and SVG analytics charts for both roles
 - **AI onboarding** — Claude-powered conversational preference gathering, with a scripted-question fallback when no API key is set
+- **Builder verification** — post-onboarding step collecting India statutory credentials (state RERA registration, PAN, GSTIN, CIN/LLPIN) plus optional track-record documents and industry memberships; format-validated inline, skippable in dev, status surfaced on the profile
 - **Role-based profile maps** — Google Maps embed showing an investor's target regions or a builder's project locations
 - **Interactive map** — Leaflet-powered project location map on the landing page
 - **Account management** — role switching and account deletion guarded by email + password re-authentication
