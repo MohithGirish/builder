@@ -19,7 +19,7 @@ export default function Navbar() {
   const [scrolled,   setScrolled]   = useState(false);
   const dropdownRef = useRef(null);
   const navigate    = useNavigate();
-  const { isAuthenticated, role, user, logout } = useAuth();
+  const { isAuthenticated, isLoading, role, user, logout } = useAuth();
 
   const initials  = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
   const dashDest  = role === 'investor' ? '/investor-dashboard' : '/dashboard';
@@ -103,7 +103,10 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-2 shrink-0">
-            {isAuthenticated ? (
+            {/* ponytail: skeleton in auth slot until silent refresh resolves, else logged-out CTA flashes on reload */}
+            {isLoading ? (
+              <div className="w-24 h-7 rounded-full bg-slate-100 animate-pulse" />
+            ) : isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setUserOpen((v) => !v)}
@@ -230,7 +233,7 @@ export default function Navbar() {
 
             {/* Auth at bottom */}
             <div className="px-4 pb-6 border-t border-slate-100 pt-4">
-              {isAuthenticated ? (
+              {isLoading ? null : isAuthenticated ? (
                 <>
                   <div className="flex items-center gap-3 mb-4 px-1">
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white bg-brand-gradient shrink-0">
