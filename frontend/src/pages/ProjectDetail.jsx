@@ -1,7 +1,8 @@
 /*
  * ProjectDetail.jsx — Full detail page for a real estate project.
  *
- * Looks up a project from REAL_PROJECTS by URL param id and renders a rich
+ * Fetches a project from GET /api/v1/projects/:id (slug or UUID) — public, so it
+ * renders for logged-out visitors — and renders a rich
  * multi-tab detail view: Overview (with inline location map), Unit Types,
  * Floor Plan, Amenities, Specifications, and Location (Google Maps + nearby).
  * A sticky sidebar shows pricing with a live INR/USD/AED/GBP currency toggle,
@@ -15,7 +16,7 @@ import {
   Building2, Layers, Clock, ChevronRight, X, ExternalLink,
   FileText,
 } from 'lucide-react';
-import { REAL_PROJECTS } from '../data/realProjects';
+import { useProject } from '../lib/projects';
 import { cachedFetch } from '../lib/api';
 import NearbyGoogleMap   from '../components/map/NearbyGoogleMap';
 import QuoteRequestModal from '../components/quotes/QuoteRequestModal';
@@ -90,7 +91,23 @@ export default function ProjectDetail() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const project = REAL_PROJECTS.find(p => p.id === id);
+  const { project, loading } = useProject(id);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="h-[55vh] min-h-[380px] bg-slate-200 animate-pulse" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-[1fr_320px] gap-8">
+          <div className="space-y-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-40 rounded-2xl bg-white border border-slate-100 animate-pulse" />
+            ))}
+          </div>
+          <div className="h-64 rounded-2xl bg-white border border-slate-100 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -107,16 +124,19 @@ export default function ProjectDetail() {
     );
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'amenities', label: 'Amenities' },
-    { id: 'specs', label: 'Specifications' },
-    { id: 'location', label: 'Location' },
-  ];
+  // A project created through the plain CRUD form has no `content`, so every
+  // section below is optional — only tab into what actually exists.
+  const sections   = project.sections || {};
+  const highlights = project.highlights || [];
+  const coords     = project.coordinates;
 
-  if (project.sections.floorBreakdown) tabs.splice(1, 0, { id: 'floors', label: 'Floor Plan' });
-  if (project.sections.unitTypes) tabs.splice(1, 0, { id: 'units', label: 'Unit Types' });
-  if (project.images?.length) tabs.splice(1, 0, { id: 'gallery', label: 'Gallery' });
+  const tabs = [{ id: 'overview', label: 'Overview' }];
+  if (project.images?.length)     tabs.push({ id: 'gallery',   label: 'Gallery' });
+  if (sections.unitTypes)         tabs.push({ id: 'units',     label: 'Unit Types' });
+  if (sections.floorBreakdown)    tabs.push({ id: 'floors',    label: 'Floor Plan' });
+  if (sections.amenities)         tabs.push({ id: 'amenities', label: 'Amenities' });
+  if (sections.specifications)    tabs.push({ id: 'specs',     label: 'Specifications' });
+  if (coords && sections.nearby)  tabs.push({ id: 'location',  label: 'Location' });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -171,7 +191,7 @@ export default function ProjectDetail() {
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="relative">
             <div className="flex items-center gap-6 py-3 overflow-x-auto no-scrollbar">
-              {project.highlights.map(h => (
+              {highlights.map(h => (
                 <div key={h.label} className="flex flex-col items-center shrink-0 px-4 border-r border-slate-100 last:border-0">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">{h.label}</span>
                   <span className="text-sm font-bold text-slate-800 whitespace-nowrap">{h.value}</span>
@@ -220,10 +240,11 @@ export default function ProjectDetail() {
               </div>
 
               {/* Highlights grid */}
+              {highlights.length > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 mb-4">Project Highlights</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {project.highlights.map(h => (
+                  {highlights.map(h => (
                     <div key={h.label} className="rounded-xl p-3 border border-slate-100" style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)' }}>
                       <p className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold mb-1">{h.label}</p>
                       <p className="text-sm font-bold text-slate-800">{h.value}</p>
@@ -231,6 +252,7 @@ export default function ProjectDetail() {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Quick facts */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -258,6 +280,7 @@ export default function ProjectDetail() {
               </div>
 
               {/* ── Location map (inline on Overview) ──────────── */}
+              {coords && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 mb-2">Property Location</h2>
                 <p className="text-slate-500 text-sm mb-4">{project.fullAddress}</p>
@@ -267,12 +290,12 @@ export default function ProjectDetail() {
                     width="100%"
                     height="100%"
                     loading="lazy"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${project.coordinates[1] - 0.02},${project.coordinates[0] - 0.015},${project.coordinates[1] + 0.02},${project.coordinates[0] + 0.015}&layer=mapnik&marker=${project.coordinates[0]},${project.coordinates[1]}`}
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${coords[1] - 0.02},${coords[0] - 0.015},${coords[1] + 0.02},${coords[0] + 0.015}&layer=mapnik&marker=${coords[0]},${coords[1]}`}
                     style={{ border: 0 }}
                   />
                 </div>
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${project.coordinates[0]},${project.coordinates[1]}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${coords[0]},${coords[1]}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-sm font-semibold hover:underline"
@@ -281,6 +304,7 @@ export default function ProjectDetail() {
                   Open in Google Maps <ExternalLink size={12} />
                 </a>
               </div>
+              )}
             </div>
           )}
 
@@ -315,11 +339,11 @@ export default function ProjectDetail() {
           )}
 
           {/* ── Unit types tab ──────────────────────────────────── */}
-          {activeTab === 'units' && project.sections.unitTypes && (
+          {activeTab === 'units' && sections.unitTypes && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-lg font-bold text-slate-800 mb-5">Available Unit Types</h2>
               <div className="space-y-4">
-                {project.sections.unitTypes.map((u, i) => (
+                {sections.unitTypes.map((u, i) => (
                   <div
                     key={i}
                     className="rounded-xl border border-slate-100 p-5 hover:border-slate-200 transition-colors"
@@ -373,11 +397,11 @@ export default function ProjectDetail() {
           )}
 
           {/* ── Floor plan tab ──────────────────────────────────── */}
-          {activeTab === 'floors' && project.sections.floorBreakdown && (
+          {activeTab === 'floors' && sections.floorBreakdown && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-lg font-bold text-slate-800 mb-5">Floor Distribution</h2>
               <div className="space-y-2">
-                {[...project.sections.floorBreakdown].reverse().map((f, i) => (
+                {[...sections.floorBreakdown].reverse().map((f, i) => (
                   <div
                     key={i}
                     className="flex items-center gap-4 rounded-xl p-4 transition-all hover:shadow-sm"
@@ -408,9 +432,9 @@ export default function ProjectDetail() {
           )}
 
           {/* ── Amenities tab ───────────────────────────────────── */}
-          {activeTab === 'amenities' && (
+          {activeTab === 'amenities' && sections.amenities && (
             <div className="space-y-4">
-              {project.sections.amenities.map(group => (
+              {sections.amenities.map(group => (
                 <div key={group.category} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                   <div className="flex items-center gap-2 mb-4">
                     <div
@@ -433,11 +457,11 @@ export default function ProjectDetail() {
           )}
 
           {/* ── Specifications tab ──────────────────────────────── */}
-          {activeTab === 'specs' && (
+          {activeTab === 'specs' && sections.specifications && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <h2 className="text-lg font-bold text-slate-800 mb-5">Technical Specifications</h2>
               <div className="divide-y divide-slate-50">
-                {project.sections.specifications.map((spec, i) => (
+                {sections.specifications.map((spec, i) => (
                   <div key={i} className="flex gap-4 py-3.5 items-start">
                     <div className="w-40 shrink-0">
                       <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{spec.label}</span>
@@ -450,7 +474,7 @@ export default function ProjectDetail() {
           )}
 
           {/* ── Location tab ────────────────────────────────────── */}
-          {activeTab === 'location' && (
+          {activeTab === 'location' && coords && sections.nearby && (
             <div className="space-y-4">
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <h2 className="text-lg font-bold text-slate-800 mb-1">Nearby Places & Distances</h2>

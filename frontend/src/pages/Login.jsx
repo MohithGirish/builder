@@ -60,9 +60,12 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(form.email.trim().toLowerCase(), form.password);
+      const home = user.role === 'admin'
+        ? '/admin'
+        : user.role === 'builder' ? '/dashboard' : '/investor-dashboard';
       const dest = from && !from.startsWith('/login') && !from.startsWith('/register')
         ? from
-        : user.role === 'builder' ? '/dashboard' : '/investor-dashboard';
+        : home;
       navigate(dest, { replace: true });
     } catch (err) {
       setApiError(err.message);

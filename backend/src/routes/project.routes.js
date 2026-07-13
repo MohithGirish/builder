@@ -1,26 +1,27 @@
 /*
  * project.routes.js — Express routes for project CRUD endpoints.
  *
- * Defines: GET / (list projects, auth optional — controller limits by role),
- * GET /:id (get single project), POST / (builder-only create), PATCH /:id
- * (builder or admin update), and DELETE /:id (builder or admin delete). All
- * routes require authentication; mutations are additionally restricted by role
- * via the authorize middleware.
+ * Defines: GET / (list projects) and GET /:id (single project, by slug or UUID) —
+ * both PUBLIC with optional auth, since Home/Projects/ProjectDetail render for
+ * logged-out visitors; the controller narrows visibility by role. POST /
+ * (builder-only create), PATCH /:id (builder or admin update), and DELETE /:id
+ * (builder or admin delete) require authentication plus a role check.
  */
 'use strict';
 
 const { Router } = require('express');
-const authenticate = require('../middleware/authenticate');
-const authorize    = require('../middleware/authorize');
+const authenticate         = require('../middleware/authenticate');
+const optionalAuthenticate = require('../middleware/optionalAuthenticate');
+const authorize            = require('../middleware/authorize');
 const {
   listProjects, getProject, createProject, updateProject, deleteProject,
 } = require('../controllers/project.controller');
 
 const router = Router();
 
-// Public list (auth optional — controller narrows visibility by role)
-router.get('/',    authenticate, listProjects);
-router.get('/:id', authenticate, getProject);
+// Public reads (optional auth — controller narrows visibility by role)
+router.get('/',    optionalAuthenticate, listProjects);
+router.get('/:id', optionalAuthenticate, getProject);
 
 // Protected mutations
 router.post('/',      authenticate, authorize('builder'), createProject);

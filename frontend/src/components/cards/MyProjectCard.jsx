@@ -2,8 +2,8 @@
  * MyProjectCard.jsx — Display card for a builder's listed project (dashboard shape).
  *
  * Renders image (with placeholder fallback), status badge, funding progress bar,
- * investor/view counters, and RERA indicator for one project in the
- * EINFRA_LISTINGS / MY_PROJECTS shape. When `onEdit`/`onDelete` handlers are
+ * investor/view counters, and RERA indicator for one project in the shape
+ * returned by lib/projects.js shapeProject(). When `onEdit`/`onDelete` handlers are
  * passed it shows Manage/Delete actions (with inline delete confirmation);
  * without them it renders read-only. Used by MyProjects (manage) and the
  * builder Profile (read-only listing).

@@ -2,9 +2,12 @@
  * project.controller.js — HTTP request handlers for project CRUD operations.
  *
  * Exposes five controller functions: listProjects (public/role-filtered with
- * pagination), getProject (increments view count), createProject (builder
- * only), updateProject (owner or admin), and deleteProject (owner or admin).
- * Non-builder users are restricted to active/completed projects in list queries.
+ * pagination), getProject (resolves by slug or UUID, increments view count),
+ * createProject (builder only), updateProject (owner or admin), and
+ * deleteProject (owner or admin). Anonymous and investor callers are restricted
+ * to active/completed projects; a builder sees all statuses of their OWN
+ * projects only; admins see everything and bypass the public cache.
+ * createProject additionally requires the builder to be admin-verified.
  */
 'use strict';
 
@@ -16,12 +19,16 @@ const { cacheAside, getVersion, bumpVersion } = require('../services/redis.servi
 
 const BUILDER_ATTRS    = ['id', 'first_name', 'last_name', 'is_verified'];
 const PUBLIC_LIST_TTL  = 60; // seconds — short TTL backed by version invalidation
+const PUBLIC_STATUSES  = ['active', 'completed'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** List projects — public or filtered by builder */
 async function listProjects(req, res, next) {
   try {
     const { builder_id, status, city, type, page = 1, limit = 20 } = req.query;
-    const offset = (Math.max(1, parseInt(page, 10)) - 1) * Math.min(50, parseInt(limit, 10));
+    const lim  = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+    const pg   = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (pg - 1) * lim;
 
     const where = {};
     if (builder_id) where.builder_id  = builder_id;
@@ -29,11 +36,23 @@ async function listProjects(req, res, next) {
     if (city)       where.city        = { [Op.iLike]: `%${city}%` };
     if (type)       where.project_type = { [Op.iLike]: `%${type}%` };
 
-    // Non-builders only see active/completed projects
-    if (!req.user || req.user.role !== 'builder') {
-      where.status = { [Op.in]: ['active', 'completed'] };
-    } else if (req.user.role === 'builder' && !builder_id) {
-      where.builder_id = req.user.id;
+    // Visibility rules:
+    //   • admin              → sees everything (all statuses/builders) — no narrowing
+    //   • builder, own scope → sees all of their own statuses (default when no
+    //                          builder_id, or when explicitly their own id)
+    //   • everyone else      → active/completed only. This includes a builder
+    //                          who requests ANOTHER builder's id, so they can
+    //                          never see a peer's draft/paused/inactive projects.
+    // (Reachable for real now that GET / is optionally-authenticated: before,
+    // `authenticate` guaranteed req.user and the anonymous branch was dead code.)
+    const isAdmin   = req.user && req.user.role === 'admin';
+    const isBuilder = req.user && req.user.role === 'builder';
+    const ownScope  = isBuilder && (!builder_id || builder_id === req.user.id);
+    if (isBuilder && !builder_id) where.builder_id = req.user.id;
+    if (!isAdmin && !ownScope) {
+      // Overrides any caller-supplied ?status= — which is why the cache key
+      // below can safely omit `status` for public callers.
+      where.status = { [Op.in]: PUBLIC_STATUSES };
     }
 
     const runQuery = async () => {
@@ -41,19 +60,25 @@ async function listProjects(req, res, next) {
         where,
         include: [{ model: User, as: 'builder', attributes: BUILDER_ATTRS }],
         order:   [['created_at', 'DESC']],
-        limit:   Math.min(50, parseInt(limit, 10)),
+        limit:   lim,
         offset,
       });
       return {
         projects:   rows,
-        pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total: count },
+        pagination: {
+          total: count,
+          page:  pg,
+          limit: lim,
+          pages: Math.ceil(count / lim),
+        },
       };
     };
 
-    // Cache the public (non-builder) listing only — a builder's own view is
-    // user-scoped and changes on their edits. Keyed by query + a version
-    // counter that create/update/delete bump for O(1) invalidation.
-    const isPublic = !req.user || req.user.role !== 'builder';
+    // Cache the public (anonymous/investor) listing only — a builder's own view
+    // is user-scoped, and an admin's is unrestricted; caching either would
+    // poison the shared public cache. Keyed by query + a version counter that
+    // create/update/delete bump for O(1) invalidation.
+    const isPublic = !req.user || (req.user.role !== 'builder' && req.user.role !== 'admin');
     let payload;
     if (isPublic) {
       const ver = await getVersion('projects:list');
@@ -69,13 +94,23 @@ async function listProjects(req, res, next) {
   }
 }
 
-/** Get a single project */
+/** Get a single project by slug or UUID (public; optional auth) */
 async function getProject(req, res, next) {
   try {
-    const project = await Project.findByPk(req.params.id, {
+    const { id } = req.params;
+    const project = await Project.findOne({
+      where:   UUID_RE.test(id) ? { id } : { slug: id },
       include: [{ model: User, as: 'builder', attributes: BUILDER_ATTRS }],
     });
     if (!project) throw new AppError('Project not found.', 404, 'NOT_FOUND');
+
+    // Same visibility rules as listProjects. 404 rather than 403 so an anonymous
+    // caller cannot probe for the existence of an unlisted draft.
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isOwner = req.user && req.user.id === project.builder_id;
+    if (!isAdmin && !isOwner && !PUBLIC_STATUSES.includes(project.status)) {
+      throw new AppError('Project not found.', 404, 'NOT_FOUND');
+    }
 
     await project.increment('view_count');
     res.json(success({ project }));
@@ -84,9 +119,18 @@ async function getProject(req, res, next) {
   }
 }
 
-/** Create a new project (builder only) */
+/** Create a new project (builder only, and only once admin-verified) */
 async function createProject(req, res, next) {
   try {
+    const me = await User.findByPk(req.user.id);
+    if (!me || !me.is_verified) {
+      throw new AppError(
+        'Your builder account must be verified by an admin before you can list projects.',
+        403,
+        'BUILDER_NOT_VERIFIED'
+      );
+    }
+
     const {
       name, description, project_type, city, location,
       funding_target, roi_projected, image_url, rera_approved,

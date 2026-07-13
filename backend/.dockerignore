@@ -1,0 +1,22 @@
+# Never copy secrets, VCS history, or host build artefacts into the image.
+# Dockerfile uses `COPY . .`, so anything absent here lands in a published layer.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+.git
+.gitignore
+
+node_modules
+npm-debug.log*
+
+# Requester PII — the quote store must never be baked into an image.
+data/
+
+coverage/
+tests/
+*.log
+Dockerfile
+.dockerignore

@@ -6,10 +6,12 @@
  * login, register, logout, setOnboardingRole, completeOnboarding, and
  * savePreferences actions. Session is persisted to localStorage; on mount
  * the refresh token is exchanged for a new access token to restore the
- * session. Also exports the useAuth() convenience hook.
+ * session, then the user snapshot is refreshed from the server. Exposes the
+ * live accessToken (mirrored to state for the SocketProvider) and refreshUser().
+ * Also exports the useAuth() convenience hook.
  */
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { invalidate } from '../lib/api';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { apiFetch, invalidate } from '../lib/api';
 import { isEinfraBuilder } from '../data/realProjects';
 
 const API = import.meta.env.VITE_BACKEND_URL || '';
@@ -38,39 +40,98 @@ export function AuthProvider({ children }) {
   });
 
   const accessTokenRef = useRef(null);
+  // State mirror of the access token so consumers that need to re-render on token
+  // change (e.g. SocketProvider) can subscribe to it. Keep both in lockstep.
+  const [accessToken, setAccessTokenState] = useState(null);
   const isAuthenticated = !!user;
   const role = user?.role || 'builder';
+
+  function _setToken(t) {
+    accessTokenRef.current = t;
+    setAccessTokenState(t);
+  }
+
+  // Single in-flight refresh promise, shared by all concurrent callers so N
+  // parallel 401s trigger exactly one token refresh (not N).
+  const refreshInFlightRef = useRef(null);
+
+  // Exchange the stored refresh token for a fresh access token. Updates both the
+  // ref (for reads) and the state mirror (so SocketProvider's [token] effect
+  // re-runs and the socket reconnects with the new token). De-dupes concurrent
+  // callers via refreshInFlightRef. Returns the new access token, or null if no
+  // refresh token is stored; throws if the exchange fails.
+  const refreshAccessToken = useCallback(async () => {
+    if (refreshInFlightRef.current) return refreshInFlightRef.current;
+    const rt = localStorage.getItem('builderai_rt');
+    if (!rt) return null;
+    const p = (async () => {
+      const r = await fetch(`${API}/api/v1/auth/refresh`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ refresh_token: rt }),
+      });
+      if (!r.ok) throw new Error('Session expired');
+      const json = await r.json();
+      if (!json.success) throw new Error('Session expired');
+      _setToken(json.data.tokens.access_token);
+      localStorage.setItem('builderai_rt', json.data.tokens.refresh_token);
+      return json.data.tokens.access_token;
+    })();
+    refreshInFlightRef.current = p;
+    try { return await p; }
+    finally { refreshInFlightRef.current = null; }
+  }, []);
+
+  // GET /users/me with the current Bearer token; replace user state + snapshot.
+  const refreshUser = useCallback(async () => {
+    const at = accessTokenRef.current;
+    if (!at) return null;
+    const res = await fetch(`${API}/api/v1/users/me`, {
+      headers: { Authorization: `Bearer ${at}` },
+    });
+    if (!res.ok) throw new Error('Failed to refresh user');
+    const json = await res.json();
+    const u = json.data?.user || json.data;
+    if (!u) return u;
+    // ponytail: role switching is client-only — there is no server role endpoint
+    // yet (see PRODUCTION_AUTH_HARDENING.md, server-side persistence deferred).
+    // Re-apply any local role override (set by switchRole/setOnboardingRole) so a
+    // mount refresh or a socket-driven refreshUser() doesn't clobber the switched
+    // role back to the server's stored role.
+    // Whitelisted: localStorage is user-writable, so an unchecked override would let
+    // anyone render the /admin shell (server still 403s, but don't even show it).
+    const override = u.id ? localStorage.getItem(`builderai_role_${u.id}`) : null;
+    const merged = (override === 'builder' || override === 'investor') ? { ...u, role: override } : u;
+    setUser(merged);
+    localStorage.setItem('builderai_u', JSON.stringify(merged));
+    return merged;
+  }, []);
 
   // On mount: attempt to restore session from stored refresh token
   useEffect(() => {
     const rt = localStorage.getItem('builderai_rt');
     if (!rt) { setIsLoading(false); return; }
 
-    fetch(`${API}/api/v1/auth/refresh`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ refresh_token: rt }),
-    })
-      .then(async r => {
-        if (!r.ok) throw new Error('Session expired');
-        try { return await r.json(); } catch { throw new Error('Session expired'); }
-      })
-      .then(json => {
-        if (!json.success) throw new Error('Session expired');
-        accessTokenRef.current = json.data.tokens.access_token;
-        localStorage.setItem('builderai_rt', json.data.tokens.refresh_token);
+    refreshAccessToken()
+      .then(async (at) => {
+        if (!at) throw new Error('Session expired');
         const stored = localStorage.getItem('builderai_u');
         if (stored) {
           const u = JSON.parse(stored);
           setUser(u);
           _restoreUserState(u);
         }
+        // Replace the stored snapshot with fresh server data; keep the
+        // localStorage fallback (already applied above) if the fetch fails.
+        try { await refreshUser(); } catch {}
       })
       .catch(() => {
         localStorage.removeItem('builderai_rt');
         localStorage.removeItem('builderai_u');
       })
       .finally(() => setIsLoading(false));
+    // refreshAccessToken/refreshUser are stable (useCallback); run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function _restoreUserState(u) {
@@ -127,7 +188,7 @@ export function AuthProvider({ children }) {
     return json.data.user;
   }
 
-  async function logout() {
+  const logout = useCallback(async () => {
     const rt = localStorage.getItem('builderai_rt');
     const at = accessTokenRef.current;
     try {
@@ -142,7 +203,32 @@ export function AuthProvider({ children }) {
     } catch {}
     invalidate();      // drop the module-global GET cache so no response leaks to the next user
     _clearSession();
-  }
+  }, []);
+
+  // Shared authed fetch: attaches the current Bearer token and, on a 401, does a
+  // single token refresh + one retry. If the retry also 401s (refresh dead), the
+  // user is logged out. The one place that adds auth + mid-session recovery to a
+  // request — useAuthedApi and the admin mutation call sites route through it.
+  const authedFetch = useCallback(async (path, options = {}, fallbackError) => {
+    const withAuth = (tok) => ({
+      ...options,
+      headers: { ...(options.headers || {}), ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+    });
+    try {
+      return await apiFetch(path, withAuth(accessTokenRef.current), fallbackError);
+    } catch (err) {
+      if (err.status !== 401) throw err;
+      let fresh = null;
+      try { fresh = await refreshAccessToken(); } catch {}
+      if (!fresh) { logout(); throw err; }
+      try {
+        return await apiFetch(path, withAuth(fresh), fallbackError);
+      } catch (err2) {
+        if (err2.status === 401) logout();
+        throw err2;
+      }
+    }
+  }, [refreshAccessToken, logout]);
 
   async function deleteAccount(email, password) {
     const at = accessTokenRef.current;
@@ -168,6 +254,7 @@ export function AuthProvider({ children }) {
     if (user?.id) {
       localStorage.removeItem(`builderai_onboarded_${user.id}`);
       localStorage.removeItem(`builderai_prefs_${user.id}`);
+      localStorage.removeItem(`builderai_role_${user.id}`);
     }
     invalidate();
     _clearSession();
@@ -178,6 +265,9 @@ export function AuthProvider({ children }) {
       const updated = { ...user, role: selectedRole };
       setUser(updated);
       localStorage.setItem('builderai_u', JSON.stringify(updated));
+      // Persist the client-side role choice so refreshUser() re-applies it (see
+      // the ponytail note there — role switching is client-only for now).
+      if (user.id) localStorage.setItem(`builderai_role_${user.id}`, selectedRole);
     }
   }
 
@@ -204,6 +294,9 @@ export function AuthProvider({ children }) {
     const updated = { ...user, role: newRole };
     setUser(updated);
     localStorage.setItem('builderai_u', JSON.stringify(updated));
+    // Persist the client-side role override so refreshUser() (on reload / socket
+    // events) re-applies it instead of snapping back to the server's role.
+    if (user.id) localStorage.setItem(`builderai_role_${user.id}`, newRole);
     // Clear old preferences so the retake flow collects fresh ones for the new
     // role. onboardingComplete stays true on purpose: the caller routes to the
     // /onboarding/retake questions directly (role already set, no role picker),
@@ -213,7 +306,7 @@ export function AuthProvider({ children }) {
   }
 
   function _applySession({ user: u, tokens }) {
-    accessTokenRef.current = tokens.access_token;
+    _setToken(tokens.access_token);
     localStorage.setItem('builderai_rt', tokens.refresh_token);
     localStorage.setItem('builderai_u', JSON.stringify(u));
     setUser(u);
@@ -221,7 +314,7 @@ export function AuthProvider({ children }) {
   }
 
   function _clearSession() {
-    accessTokenRef.current = null;
+    _setToken(null);
     localStorage.removeItem('builderai_rt');
     localStorage.removeItem('builderai_u');
     localStorage.removeItem('builderai_onboarded');
@@ -239,6 +332,10 @@ export function AuthProvider({ children }) {
       isLoading,
       onboardingComplete,
       preferences,
+      accessToken,
+      refreshUser,
+      refreshAccessToken,
+      authedFetch,
       login,
       register,
       logout,

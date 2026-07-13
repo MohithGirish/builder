@@ -17,9 +17,10 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   ShieldCheck, Check, ChevronDown, FileText, Upload, X,
-  Landmark, FileBadge, Award, ArrowRight, Info,
+  Landmark, FileBadge, Award, ArrowRight, Info, Loader2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../lib/api';
 import {
   RERA_STATES, authorityFor, ENTITY_TYPES, UPPERCASE_FIELDS,
   validatePan, validateGstin, validateReraNumber, validateEntityId,
@@ -131,9 +132,10 @@ function Collapsible({ icon: Icon, tag, title, subtitle, children, defaultOpen =
 
 /* ── Page ──────────────────────────────────────────────────────────────────── */
 export default function OnboardingVerification() {
-  const { user, role } = useAuth();
+  const { user, role, getAccessToken, refreshUser } = useAuth();
   const navigate = useNavigate();
   const userId = user?.id;
+  const [submitting, setSubmitting] = useState(false);
 
   const [record, setRecord] = useState(() => ({ ...emptyRecord(), ...(loadVerification(userId) || {}) }));
   const [showErrors, setShowErrors] = useState(false);
@@ -180,17 +182,39 @@ export default function OnboardingVerification() {
     navigate(dest || '/dashboard', { replace: true });
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!tier1Done) {
       setShowErrors(true);
       toast.error('Add all four statutory credentials to submit for verification.');
       return;
     }
+    if (submitting) return;
     const submitted = { ...record, submittedAt: new Date().toISOString() };
-    setRecord(submitted);
-    saveVerification(userId, submitted); // stamp the submit action + flush
-    toast.success('Submitted for verification.');
-    finish();
+
+    setSubmitting(true);
+    try {
+      const at = getAccessToken?.();
+      await apiFetch('/api/v1/users/me/verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(at ? { Authorization: `Bearer ${at}` } : {}) },
+        body: JSON.stringify(submitted),
+      }, 'Could not submit your verification.');
+      // Only stamp the submit action locally AFTER the POST succeeds, so a failed
+      // request never leaves localStorage marked 'submitted' while the server is
+      // still 'unverified'. On failure the record stays un-stamped ('ready').
+      setRecord(submitted);
+      saveVerification(userId, submitted);
+      // Pull the new verification_status ('pending') onto the user snapshot.
+      try { await refreshUser?.(); } catch {}
+      toast.success('Submitted for review');
+      finish();
+    } catch (err) {
+      // Leave the user on the form with the record un-stamped so they can retry;
+      // the Submit button re-enables via the finally block below.
+      toast.error(err.message || 'Could not submit your verification. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -378,13 +402,15 @@ export default function OnboardingVerification() {
 
           {/* Actions */}
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-1">
-            <button type="button" onClick={finish}
-              className="sm:flex-1 py-3 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+            <button type="button" onClick={finish} disabled={submitting}
+              className="sm:flex-1 py-3 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-60">
               Skip for now
             </button>
-            <button type="button" onClick={handleSubmit}
-              className="btn-cta sm:flex-1 py-3 justify-center">
-              <ShieldCheck size={16} /> Submit for verification <ArrowRight size={15} />
+            <button type="button" onClick={handleSubmit} disabled={submitting}
+              className="btn-cta sm:flex-1 py-3 justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+              {submitting
+                ? <><Loader2 size={16} className="animate-spin" /> Submitting…</>
+                : <><ShieldCheck size={16} /> Submit for verification <ArrowRight size={15} /></>}
             </button>
           </div>
         </div>

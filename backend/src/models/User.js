@@ -3,7 +3,9 @@
  *
  * Defines the User model with fields: UUID primary key, unique email, bcrypt
  * password_hash, role enum (builder/investor/admin), first_name, last_name,
- * optional profile_image, is_verified, and is_active. Provides a toPublicJSON()
+ * optional profile_image, is_verified, is_active, and builder-verification
+ * columns (status enum + JSONB data + rejection reason + review timestamps).
+ * Provides a toPublicJSON()
  * method that strips the password hash for safe API serialisation. Associates
  * with RefreshToken via a one-to-many relationship (hasMany).
  */
@@ -31,6 +33,8 @@ class User extends Model {
       profile_image: this.profile_image,
       is_verified:   this.is_verified,
       is_active:     this.is_active,
+      verification_status: this.verification_status,
+      verification_reason: this.verification_reason,
       created_at:    this.created_at,
       updated_at:    this.updated_at,
     };
@@ -84,6 +88,27 @@ function init(sequelize) {
         type:         DataTypes.BOOLEAN,
         allowNull:    false,
         defaultValue: true,
+      },
+      verification_status: {
+        type:         DataTypes.ENUM('unverified', 'pending', 'approved', 'rejected'),
+        allowNull:    false,
+        defaultValue: 'unverified',
+      },
+      verification_data: {
+        type:      DataTypes.JSONB,
+        allowNull: true,
+      },
+      verification_reason: {
+        type:      DataTypes.TEXT,
+        allowNull: true,
+      },
+      verification_submitted_at: {
+        type:      DataTypes.DATE,
+        allowNull: true,
+      },
+      verification_reviewed_at: {
+        type:      DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

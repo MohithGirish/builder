@@ -2,10 +2,14 @@
  * dealroom.socket.js — Socket.io server initialisation and event handlers.
  *
  * Exports initSocket() which attaches Socket.io to the HTTP server with JWT
- * handshake authentication. Each connected client can join/leave dealroom
- * rooms, send messages (persisted to the database and broadcast to the room),
- * emit typing start/stop indicators, and mark messages as read. All operations
- * enforce participant membership before executing.
+ * handshake authentication and joins each client to its own `user:<id>` room
+ * for server-pushed notifications (quote requests, verification updates).
+ *
+ * registerDealroomHandlers() implements join/leave, message send + persist,
+ * typing indicators, and read receipts, all gated on participant membership.
+ * It is NOT registered while the Dealroom UI is a "Coming Soon" placeholder —
+ * no client emits these events, so wiring them up would expose unexercised
+ * message-write handlers. Call it from the connection handler when it ships.
  */
 'use strict';
 
@@ -146,7 +150,11 @@ function initSocket(httpServer, allowedOrigins) {
 
   io.on('connection', (socket) => {
     console.log(`[SOCKET] User ${socket.user.id} connected (${socket.id})`);
-    registerDealroomHandlers(io, socket);
+    // Per-user room for targeted server-pushed notifications (quote requests,
+    // verification updates) independent of any dealroom membership.
+    socket.join(`user:${socket.user.id}`);
+    // Dealroom chat handlers stay unregistered until the Dealroom UI ships:
+    // registerDealroomHandlers(io, socket);
 
     socket.on('disconnect', (reason) => {
       console.log(`[SOCKET] User ${socket.user.id} disconnected: ${reason}`);

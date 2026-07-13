@@ -5,8 +5,9 @@
  * Fields include UUID primary key, builder_id foreign key, name, description,
  * project_type, city, location, funding_target and funding_raised (decimal),
  * investor_count, view_count, status enum, rera_approved flag, optional
- * image_url, and roi_projected. Exposes a funding_pct computed getter. Associates
- * with User as builder (belongsTo).
+ * image_url, roi_projected, a `content` JSONB blob holding the detail-page
+ * display payload, and a unique `slug` for human-readable URLs. Exposes a
+ * funding_pct computed getter. Associates with User as builder (belongsTo).
  */
 'use strict';
 
@@ -94,6 +95,20 @@ function init(sequelize) {
       roi_projected: {
         type:      DataTypes.DECIMAL(5, 2),
         allowNull: true,
+      },
+      // Detail-page display payload (gallery, sections, highlights, coordinates,
+      // statutory + spec strings). Not queryable domain data — see migration
+      // 20260710000001. Null for projects created through the plain CRUD form.
+      content: {
+        type:      DataTypes.JSONB,
+        allowNull: true,
+      },
+      // Human URL id (/projects/one-downtown). Null for CRUD-created projects,
+      // which are addressed by UUID; Postgres allows many NULLs under UNIQUE.
+      slug: {
+        type:      DataTypes.STRING(120),
+        allowNull: true,
+        unique:    true,
       },
     },
     {

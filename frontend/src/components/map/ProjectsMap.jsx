@@ -2,18 +2,19 @@
  * ProjectsMap.jsx — Interactive Leaflet map displaying real Hyderabad projects.
  *
  * Renders a react-leaflet MapContainer with OpenStreetMap tiles and custom SVG
- * pin markers for each project in REAL_PROJECTS, colour-coded by project type.
- * Each pin opens a popup card with project name, type, location, price, and a
- * "View Project Details" button. Auth-aware navigation: authenticated+onboarded
- * users go directly to /projects/:id; others are redirected to login with the
- * destination stored in sessionStorage. Fixes Leaflet default icon paths for Vite.
+ * pin markers for every project returned by GET /api/v1/projects that carries
+ * `content.coordinates`, colour-coded by project type. Each pin opens a popup
+ * card with project name, type, location, price, and a "View Project Details"
+ * button. Auth-aware navigation: authenticated+onboarded users go directly to
+ * /projects/:id; others are redirected to login with the destination stored in
+ * sessionStorage. Fixes Leaflet default icon paths for Vite.
  */
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { REAL_PROJECTS } from '../../data/realProjects';
+import { useProjects } from '../../lib/projects';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -44,18 +45,20 @@ function createCustomIcon(color) {
   });
 }
 
-function FitBounds() {
+function FitBounds({ projects }) {
   const map = useMap();
   useEffect(() => {
-    const bounds = REAL_PROJECTS.map(p => p.coordinates);
-    map.fitBounds(bounds, { padding: [60, 60] });
-  }, [map]);
+    if (!projects.length) return;
+    map.fitBounds(projects.map(p => p.coordinates), { padding: [60, 60] });
+  }, [map, projects]);
   return null;
 }
 
 export default function ProjectsMap() {
   const navigate = useNavigate();
   const { isAuthenticated, onboardingComplete } = useAuth();
+  const { projects } = useProjects();
+  const pinned = (projects || []).filter(p => Array.isArray(p.coordinates));
 
   function handleViewProject(projectId) {
     if (isAuthenticated && onboardingComplete) {
@@ -79,9 +82,9 @@ export default function ProjectsMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds />
+        <FitBounds projects={pinned} />
 
-        {REAL_PROJECTS.map((project) => (
+        {pinned.map((project) => (
           <Marker
             key={project.id}
             position={project.coordinates}
@@ -114,7 +117,7 @@ export default function ProjectsMap() {
                   </p>
 
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                    {project.highlights.slice(0, 2).map(h => (
+                    {(project.highlights || []).slice(0, 2).map(h => (
                       <span key={h.label} style={{
                         fontSize: 10, background: '#f1f5f9', color: '#475569',
                         borderRadius: 6, padding: '2px 7px', fontWeight: 600,

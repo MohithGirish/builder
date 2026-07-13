@@ -1,36 +1,30 @@
 /*
  * quote.controller.js — HTTP handlers for quote requests and site visits.
  *
- * Provides createQuote (POST /quotes), getQuote (GET /quotes/:id),
- * getQuoteByToken (GET /quotes/respond/:token), submitBuilderResponse
- * (POST /quotes/respond/:token), and scheduleSiteVisit (POST /quotes/site-visit).
- * Quotes are persisted to a local JSON file so the flow works without a
- * running PostgreSQL instance during development.
+ * Provides createQuote (POST /quotes), listQuotes (GET /quotes), getQuote
+ * (GET /quotes/:id), getQuoteByToken (GET /quotes/respond/:token),
+ * submitBuilderResponse (POST /quotes/respond/:token), deleteQuote
+ * (DELETE /quotes/:id) and scheduleSiteVisit (POST /quotes/site-visit).
+ * Quotes are rows in the `quotes` table; responses never include the
+ * response_token (see Quote.toSafeJSON). Also exports countQuotes and
+ * purgeQuotesByEmail for the admin dashboard and account deletion.
  */
 'use strict';
 
-const fs     = require('fs');
-const path   = require('path');
 const crypto = require('crypto');
-const email     = require('../services/email.service');
-const whatsapp  = require('../services/whatsapp.service');
+const { Op } = require('sequelize');
+const emailService = require('../services/email.service');
+const whatsapp     = require('../services/whatsapp.service');
+const { User, Project, Quote } = require('../models');
 
-const QUOTES_FILE  = path.join(__dirname, '../../data/quotes.json');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-function readQuotes() {
-  try {
-    const raw = fs.readFileSync(QUOTES_FILE, 'utf8').trim();
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
+// Project ids are UUID primary keys. Guard the socket lookup so a slug or other
+// non-UUID projectId is skipped before findByPk (which would otherwise throw a
+// Postgres "invalid input syntax for type uuid" error on every submission).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function writeQuotes(quotes) {
-  fs.mkdirSync(path.dirname(QUOTES_FILE), { recursive: true });
-  fs.writeFileSync(QUOTES_FILE, JSON.stringify(quotes, null, 2), 'utf8');
-}
+const lower = (v) => String(v || '').trim().toLowerCase();
 
 async function createQuote(req, res, next) {
   try {
@@ -41,47 +35,70 @@ async function createQuote(req, res, next) {
       layoutPreferences, requirements,
     } = req.body;
 
-    const id            = crypto.randomUUID();
     const responseToken = crypto.randomUUID();
-    const quote = {
-      id,
-      projectId,
-      projectName,
-      projectEmail,
-      userName,
-      userEmail,
-      accountEmail: accountEmail || null,
-      userPhone,
-      layoutPreferences: Array.isArray(layoutPreferences) ? layoutPreferences : [],
-      requirements:      requirements || '',
-      whatsappConsent:   whatsappConsent === true,
-      responseToken,
-      status:            'pending',
-      builderResponse:   null,
-      builderQuotePrice: null,
-      builderTimeline:   null,
-      createdAt:         new Date().toISOString(),
-      respondedAt:       null,
-    };
 
-    const quotes = readQuotes();
-    quotes.push(quote);
-    writeQuotes(quotes);
+    const quote = await Quote.create({
+      project_id:    projectId ? String(projectId) : null,
+      project_name:  projectName,
+      project_email: projectEmail,
+      user_name:     userName,
+      user_email:    userEmail,
+      account_email: accountEmail || null,
+      user_phone:    userPhone,
+      layout_preferences: Array.isArray(layoutPreferences) ? layoutPreferences : [],
+      requirements:       requirements || '',
+      whatsapp_consent:   whatsappConsent === true,
+      response_token:     responseToken,
+      status:             'pending',
+    });
 
+    const payload      = quote.toEmailPayload();
     const responseLink = `${FRONTEND_URL}/quote-response/${responseToken}`;
 
     const notifications = [
-      email.sendQuoteRequestToBuilder({ quote, responseLink }),
-      email.sendQuoteConfirmationToUser({ quote }),
+      emailService.sendQuoteRequestToBuilder({ quote: payload, responseLink }),
+      emailService.sendQuoteConfirmationToUser({ quote: payload }),
     ];
     if (whatsappConsent === true) {
-      notifications.push(whatsapp.sendQuoteConfirmation(quote.userPhone));
+      notifications.push(whatsapp.sendQuoteConfirmation(payload.userPhone));
     }
     Promise.all(notifications).catch(err => console.error('[NOTIFICATION ERROR]', err.message));
 
+    // Best-effort real-time nudge to the builder who genuinely owns the
+    // referenced project. This endpoint is PUBLIC, so we must NOT let an
+    // anonymous caller push a toast to arbitrary users: authority on ownership
+    // is Project.builder_id (projectEmail is only a contact inbox, not an
+    // identity), so we resolve the target from the project row and emit only to
+    // its owning builder. Display text comes from the trusted DB row, never from
+    // the caller-supplied body. Fully wrapped so it can never fail or delay the
+    // HTTP response.
+    Promise.resolve()
+      .then(async () => {
+        if (!projectId || !UUID_RE.test(projectId)) return;
+        const project = await Project.findByPk(projectId);
+        if (!project || !project.builder_id) {
+          // Usually means the projects seeder never ran against this DB, so the
+          // UUID the client read from GET /projects has no row behind it.
+          console.warn('[QUOTE SOCKET] no project row for id', projectId, '— notification skipped');
+          return;
+        }
+        // builder_id linkage is the control; role check is belt-and-braces.
+        const builder = await User.findOne({
+          where: { id: project.builder_id, role: 'builder' },
+        });
+        if (!builder) return;
+        req.app.get('io')?.to(`user:${builder.id}`).emit('quote_request', {
+          quoteId:     quote.id,
+          projectName: project.name,
+          userName,
+          createdAt:   payload.createdAt,
+        });
+      })
+      .catch(err => console.error('[QUOTE SOCKET ERROR]', err.message));
+
     return res.status(201).json({
       success: true,
-      data: { id, viewLink: `${FRONTEND_URL}/quote/${id}` },
+      data: { id: quote.id, viewLink: `${FRONTEND_URL}/quote/${quote.id}` },
     });
   } catch (err) {
     next(err);
@@ -90,21 +107,24 @@ async function createQuote(req, res, next) {
 
 async function listQuotes(req, res, next) {
   try {
-    const email        = (req.query.email || '').trim().toLowerCase();
-    const projectEmail = (req.query.projectEmail || '').trim().toLowerCase();
-    if (!email && !projectEmail) {
+    const requesterEmail = lower(req.query.email);
+    const projectEmail   = lower(req.query.projectEmail);
+    if (!requesterEmail && !projectEmail) {
       return res.status(400).json({ success: false, error: { message: 'email or projectEmail query parameter is required.' } });
     }
-    // email → quotes this user requested (investor side);
+
+    // email → quotes this user requested (investor side), matching either the
+    // reply-to address they typed or the account they were signed in as;
     // projectEmail → quotes against a builder's projects (builder side).
-    const match = email
-      ? (q) => (q.userEmail || '').toLowerCase() === email || (q.accountEmail || '').toLowerCase() === email
-      : (q) => (q.projectEmail || '').toLowerCase() === projectEmail;
-    const quotes = readQuotes()
-      .filter(match)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .map(({ responseToken, accountEmail, ...safe }) => safe);
-    return res.json({ success: true, data: quotes });
+    const where = requesterEmail
+      ? { [Op.or]: [
+          Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('user_email')), requesterEmail),
+          Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('account_email')), requesterEmail),
+        ] }
+      : Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('project_email')), projectEmail);
+
+    const quotes = await Quote.findAll({ where, order: [['created_at', 'DESC']] });
+    return res.json({ success: true, data: quotes.map((q) => q.toSafeJSON()) });
   } catch (err) {
     next(err);
   }
@@ -112,16 +132,11 @@ async function listQuotes(req, res, next) {
 
 async function getQuote(req, res, next) {
   try {
-    const { id } = req.params;
-    const quotes  = readQuotes();
-    const quote   = quotes.find(q => q.id === id);
-
+    const quote = await Quote.findByPk(req.params.id);
     if (!quote) {
       return res.status(404).json({ success: false, error: { message: 'Quote not found.' } });
     }
-
-    const { responseToken, projectEmail, accountEmail, ...safe } = quote;
-    return res.json({ success: true, data: safe });
+    return res.json({ success: true, data: quote.toSafeJSON() });
   } catch (err) {
     next(err);
   }
@@ -129,16 +144,11 @@ async function getQuote(req, res, next) {
 
 async function getQuoteByToken(req, res, next) {
   try {
-    const { token } = req.params;
-    const quotes    = readQuotes();
-    const quote     = quotes.find(q => q.responseToken === token);
-
+    const quote = await Quote.findOne({ where: { response_token: req.params.token } });
     if (!quote) {
       return res.status(404).json({ success: false, error: { message: 'Invalid or expired response token.' } });
     }
-
-    const { responseToken, projectEmail, accountEmail, ...safe } = quote;
-    return res.json({ success: true, data: safe });
+    return res.json({ success: true, data: quote.toSafeJSON() });
   } catch (err) {
     next(err);
   }
@@ -153,25 +163,30 @@ async function submitBuilderResponse(req, res, next) {
       return res.status(400).json({ success: false, error: { message: 'builderResponse is required.' } });
     }
 
-    const quotes = readQuotes();
-    const index  = quotes.findIndex(q => q.responseToken === token);
+    // Conditional UPDATE: two builders racing the same link can't both win, and
+    // the previous read-then-write "already responded" check can't interleave.
+    const [updated] = await Quote.update(
+      {
+        builder_response:    builderResponse.trim(),
+        builder_quote_price: builderQuotePrice?.trim() || null,
+        builder_timeline:    builderTimeline?.trim() || null,
+        status:              'responded',
+        responded_at:        new Date(),
+      },
+      { where: { response_token: token, status: 'pending' } }
+    );
 
-    if (index === -1) {
-      return res.status(404).json({ success: false, error: { message: 'Invalid or expired response token.' } });
+    if (updated === 0) {
+      // Either the token is unknown or the quote was already answered.
+      const exists = await Quote.findOne({ where: { response_token: token } });
+      return exists
+        ? res.status(400).json({ success: false, error: { message: 'This quote has already been responded to.' } })
+        : res.status(404).json({ success: false, error: { message: 'Invalid or expired response token.' } });
     }
-    if (quotes[index].status === 'responded') {
-      return res.status(400).json({ success: false, error: { message: 'This quote has already been responded to.' } });
-    }
 
-    quotes[index].builderResponse   = builderResponse.trim();
-    quotes[index].builderQuotePrice = builderQuotePrice?.trim() || null;
-    quotes[index].builderTimeline   = builderTimeline?.trim() || null;
-    quotes[index].status            = 'responded';
-    quotes[index].respondedAt       = new Date().toISOString();
-    writeQuotes(quotes);
-
-    const viewLink = `${FRONTEND_URL}/quote/${quotes[index].id}`;
-    email.sendQuoteReadyToUser({ quote: quotes[index], viewLink })
+    const quote    = await Quote.findOne({ where: { response_token: token } });
+    const viewLink = `${FRONTEND_URL}/quote/${quote.id}`;
+    emailService.sendQuoteReadyToUser({ quote: quote.toEmailPayload(), viewLink })
       .catch(err => console.error('[EMAIL ERROR]', err.message));
 
     return res.json({ success: true, data: { viewLink } });
@@ -180,47 +195,55 @@ async function submitBuilderResponse(req, res, next) {
   }
 }
 
-// Remove every quote request tied to a user's email (called on account deletion
-// so the requester's PII doesn't linger in the flat-file store).
-// ponytail: matches by email since quotes aren't linked to a user id; revisit if quotes move to a DB table with an FK.
-function purgeQuotesByEmail(emailRaw) {
-  const e = String(emailRaw || '').trim().toLowerCase();
+/** Total quote count — admin dashboard stat. */
+async function countQuotes() {
+  return Quote.count();
+}
+
+/**
+ * Remove every quote request tied to a user's email (called on account deletion
+ * so the requester's PII doesn't linger). Matches by email since quotes have no
+ * user FK — a quote can be submitted by someone who never held an account.
+ */
+async function purgeQuotesByEmail(emailRaw) {
+  const e = lower(emailRaw);
   if (!e) return 0;
-  const quotes = readQuotes();
-  const kept = quotes.filter(
-    (q) => (q.userEmail || '').toLowerCase() !== e && (q.accountEmail || '').toLowerCase() !== e,
-  );
-  if (kept.length !== quotes.length) writeQuotes(kept);
-  return quotes.length - kept.length;
+  return Quote.destroy({
+    where: {
+      [Op.or]: [
+        Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('user_email')), e),
+        Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('account_email')), e),
+      ],
+    },
+  });
 }
 
 async function deleteQuote(req, res, next) {
   try {
     const { id } = req.params;
-    const email  = (req.query.email || '').trim().toLowerCase();
+    const requesterEmail = lower(req.query.email);
 
-    const quotes = readQuotes();
-    const index  = quotes.findIndex((q) => q.id === id);
-    if (index === -1) {
+    const quote = await Quote.findByPk(id);
+    if (!quote) {
       return res.status(404).json({ success: false, error: { message: 'Quote not found.' } });
     }
 
     // Email-gated like listQuotes: only the requester may delete their own quote.
     // ponytail: email match, not real auth — same ceiling as the rest of the public
     // quote API. Swap for authenticate + req.user.id if quotes move behind login.
-    const q = quotes[index];
-    const owns = email && ((q.userEmail || '').toLowerCase() === email || (q.accountEmail || '').toLowerCase() === email);
+    const owns = requesterEmail
+      && (lower(quote.user_email) === requesterEmail || lower(quote.account_email) === requesterEmail);
     if (!owns) {
       return res.status(403).json({ success: false, error: { message: 'You can only delete your own quote requests.' } });
     }
 
-    quotes.splice(index, 1);
-    writeQuotes(quotes); // hard delete — the row and its reference ID are gone for good
+    const payload = quote.toEmailPayload();
+    await quote.destroy(); // hard delete — the row and its reference ID are gone for good
 
-    // Best-effort cancellation notice — wrapped so a missing/throwing send (even a
-    // synchronous TypeError) can never turn a successful delete into a 500.
+    // Best-effort cancellation notice — wrapped so a failing send can never turn
+    // a successful delete into a 500.
     Promise.resolve()
-      .then(() => email.sendQuoteDeletedToUser({ quote: q }))
+      .then(() => emailService.sendQuoteDeletedToUser({ quote: payload }))
       .catch((err) => console.error('[EMAIL ERROR]', err.message));
 
     return res.json({ success: true, data: { id } });
@@ -237,7 +260,7 @@ async function scheduleSiteVisit(req, res, next) {
       preferredDate, preferredTime, notes,
     } = req.body;
 
-    email.sendSiteVisitRequest({
+    emailService.sendSiteVisitRequest({
       projectName, projectEmail,
       visitorName, visitorEmail, visitorPhone,
       preferredDate, preferredTime, notes,
@@ -249,4 +272,7 @@ async function scheduleSiteVisit(req, res, next) {
   }
 }
 
-module.exports = { createQuote, listQuotes, getQuote, getQuoteByToken, submitBuilderResponse, deleteQuote, scheduleSiteVisit, purgeQuotesByEmail };
+module.exports = {
+  createQuote, listQuotes, getQuote, getQuoteByToken, submitBuilderResponse,
+  deleteQuote, scheduleSiteVisit, purgeQuotesByEmail, countQuotes,
+};

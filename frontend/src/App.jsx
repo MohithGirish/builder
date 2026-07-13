@@ -8,7 +8,9 @@
  * auth, and onboarding pages.
  */
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider }    from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocketProvider }  from './context/SocketContext';
+import NotificationListener from './components/notifications/NotificationListener';
 import { useLayoutEffect, lazy, Suspense } from 'react';
 import { Toaster }         from 'sonner';
 
@@ -16,6 +18,14 @@ function ScrollToTop() {
   const { pathname } = useLocation();
   useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
+}
+
+// Bridges AuthContext → SocketContext: feeds the live access token to the
+// SocketProvider (always rendered; SocketContext's own effect no-ops on a null
+// token) so real-time notifications connect once the user is authenticated.
+function AuthedSocket({ children }) {
+  const { accessToken } = useAuth();
+  return <SocketProvider token={accessToken}>{children}</SocketProvider>;
 }
 
 // Shown while a lazy route chunk loads — minimal, no extra imports.
@@ -51,7 +61,6 @@ const Dealroom           = lazy(() => import('./pages/Dealroom'));
 const ProjectDetail      = lazy(() => import('./pages/ProjectDetail'));
 const QuotePage          = lazy(() => import('./pages/QuotePage'));
 const QuoteResponsePage  = lazy(() => import('./pages/QuoteResponsePage'));
-const StyleGuide         = lazy(() => import('./pages/StyleGuide'));
 const BuilderDashboard   = lazy(() => import('./pages/dashboard/BuilderDashboard'));
 const InvestorDashboard  = lazy(() => import('./pages/dashboard/InvestorDashboard'));
 const MyProjects         = lazy(() => import('./pages/dashboard/MyProjects'));
@@ -62,9 +71,18 @@ const BuilderMatches     = lazy(() => import('./pages/dashboard/BuilderMatches')
 const BuildersFeed       = lazy(() => import('./pages/dashboard/BuildersFeed'));
 const DashboardAnalytics = lazy(() => import('./pages/dashboard/DashboardAnalytics'));
 
+// Admin console (guarded by AdminRoute) — own chunks, never in the base bundle.
+const AdminRoute         = lazy(() => import('./components/auth/AdminRoute'));
+const AdminOverview      = lazy(() => import('./pages/admin/AdminOverview'));
+const AdminUsers         = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminUserDetail    = lazy(() => import('./pages/admin/AdminUserDetail'));
+const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
+const AdminProjects      = lazy(() => import('./pages/admin/AdminProjects'));
+
 export default function App() {
   return (
     <AuthProvider>
+      <AuthedSocket>
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -82,6 +100,7 @@ export default function App() {
       />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
+        <NotificationListener />
         <div className="min-h-screen flex flex-col">
           {/* Hide navbar on full-screen auth pages */}
           <Routes>
@@ -147,7 +166,6 @@ export default function App() {
 
               {/* ── Public pages ───────────────────────────────── */}
               <Route path="/"            element={<Home />} />
-              <Route path="/styleguide"  element={<StyleGuide />} />
               {/* Builders & Projects require auth — redirect to login, then back */}
               <Route path="/builders"     element={<ProtectedRoute><Builders /></ProtectedRoute>} />
               <Route path="/builders/:id" element={<ProtectedRoute><BuilderDetail /></ProtectedRoute>} />
@@ -202,6 +220,22 @@ export default function App() {
                 <Route path="dealroom"        element={<Dealroom />} />
               </Route>
 
+              {/* ── Admin console (admin role only, no onboarding) ── */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <DashboardLayout />
+                  </AdminRoute>
+                }
+              >
+                <Route index                  element={<AdminOverview />} />
+                <Route path="users"           element={<AdminUsers />} />
+                <Route path="users/:id"       element={<AdminUserDetail />} />
+                <Route path="verifications"   element={<AdminVerifications />} />
+                <Route path="projects"        element={<AdminProjects />} />
+              </Route>
+
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -212,6 +246,7 @@ export default function App() {
           <Routes>
             <Route path="/dashboard/*"          element={null} />
             <Route path="/investor-dashboard/*" element={null} />
+            <Route path="/admin/*"              element={null} />
             <Route path="/dealroom"             element={null} />
             <Route path="/login"                element={null} />
             <Route path="/register"             element={null} />
@@ -225,6 +260,7 @@ export default function App() {
           </Routes>
         </div>
       </BrowserRouter>
+      </AuthedSocket>
     </AuthProvider>
   );
 }

@@ -1,0 +1,14 @@
+# Never copy secrets, VCS history, or host build artefacts into the image.
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+
+node_modules
+dist
+npm-debug.log*
+*.log
+Dockerfile
+.dockerignore

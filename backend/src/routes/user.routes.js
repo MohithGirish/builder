@@ -10,7 +10,7 @@
 
 const { Router } = require('express');
 const userController = require('../controllers/user.controller');
-const { validateUpdateProfile, validateUpdateStatus } = require('../validators/user.validators');
+const { validateUpdateProfile, validateUpdateStatus, validateSubmitVerification } = require('../validators/user.validators');
 const authenticate = require('../middleware/authenticate');
 const authorize    = require('../middleware/authorize');
 
@@ -36,6 +36,12 @@ router.put('/me', validateUpdateProfile, userController.updateMe);
  * @access  Protected (any role) — permanently deletes own account
  */
 router.delete('/me', userController.deleteMe);
+
+/**
+ * @route   POST /users/me/verification
+ * @access  Protected (builder only) — submit statutory credentials for review
+ */
+router.post('/me/verification', authorize('builder'), validateSubmitVerification, userController.submitVerification);
 
 /**
  * @route   GET /users

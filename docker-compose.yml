@@ -1,38 +1,10 @@
 services:
 
-  # ── Frontend (React + Vite / Nginx) ──────────────────────────────────────────
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: production
-    container_name: builder_ai_frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - builder_net
-    restart: unless-stopped
+  # Frontend runs locally via `cd frontend && npm run dev` (port 3000) — not containerized.
 
-  # ── AI Matchmaking Microservice (Python / FastAPI) ────────────────────────────
-  ai_service:
-    build:
-      context: ./ai_service
-      dockerfile: Dockerfile
-    container_name: builder_ai_engine
-    ports:
-      - "8000:8000"
-    env_file:
-      - ./ai_service/.env
-    networks:
-      - builder_net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
+  # ai_service (Python/FastAPI matchmaking engine) is not deployed: the backend has
+  # no call site for it yet. Source lives in ./ai_service; run it standalone with
+  # `uvicorn app.main:app --port 8000`. Re-add a service block here once it's wired in.
 
   # ── Backend API ───────────────────────────────────────────────────────────────
   backend:
@@ -48,6 +20,10 @@ services:
     environment:
       - DB_HOST=postgres
       - REDIS_HOST=redis
+      # Required by the admin seeder (npm run db:seed). Supply via host env or
+      # backend/.env; seeding throws loudly if either is unset.
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy

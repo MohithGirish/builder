@@ -3,8 +3,9 @@
  *
  * Displays a searchable, filterable list of investment projects with support
  * for location, sector, and funding-stage filters plus grid/list view toggle
- * and infinite-load pagination. Also renders a highlighted section of real
- * Hyderabad projects (REAL_PROJECTS) above the main filterable list.
+ * and infinite-load pagination. Also renders a highlighted section of the real
+ * Hyderabad projects (fetched from GET /api/v1/projects) above the main
+ * filterable list.
  * Back-navigation destination is determined by the user's auth and role state.
  */
 import { useState, useMemo, useEffect } from 'react';
@@ -16,7 +17,7 @@ import RealProjectCard from '../components/cards/RealProjectCard';
 import FilterBar       from '../components/filters/FilterBar';
 import { SkeletonCard }from '../components/ui/SkeletonCard';
 import { PROJECTS, PROJECT_SECTORS, FUNDING_STAGES, PROJ_LOCATIONS } from '../data/projects';
-import { REAL_PROJECTS } from '../data/realProjects';
+import { useProjects } from '../lib/projects';
 
 const PAGE_SIZE = 6;
 
@@ -24,6 +25,9 @@ export default function Projects() {
   const routeLocation = useLocation();
   const navigate      = useNavigate();
   const { isAuthenticated, onboardingComplete, role } = useAuth();
+  // Public endpoint — renders for logged-out visitors.
+  const { projects: featuredData, loading: featuredLoading } = useProjects();
+  const featured = featuredData || [];
   const backDest = isAuthenticated && onboardingComplete
     ? (role === 'investor' ? '/investor-dashboard' : '/dashboard')
     : '/';
@@ -86,7 +90,7 @@ export default function Projects() {
 
         <div className="flex flex-wrap gap-3">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white">
-            <CheckCircle2 size={12} /> {REAL_PROJECTS.length} Featured Projects
+            <CheckCircle2 size={12} /> {featured.length} Featured Projects
           </span>
           {totalGoal > 0 && (
             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
@@ -108,12 +112,14 @@ export default function Projects() {
             <MapPin size={15} className="text-brand-600" />
             <h2 className="text-lg font-bold text-slate-800">Featured Hyderabad Projects</h2>
           </div>
-          <span className="text-xs text-slate-400 font-medium">{REAL_PROJECTS.length} live projects</span>
+          <span className="text-xs text-slate-400 font-medium">{featured.length} live projects</span>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {REAL_PROJECTS.map(project => (
-            <RealProjectCard key={project.id} project={project} />
-          ))}
+          {featuredLoading
+            ? Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+            : featured.map(project => (
+                <RealProjectCard key={project.id} project={project} />
+              ))}
         </div>
       </div>
 

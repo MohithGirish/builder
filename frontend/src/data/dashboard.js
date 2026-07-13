@@ -4,7 +4,7 @@
  * Exports KPI arrays (BUILDER_KPIS, INVESTOR_KPIS), recommendation lists
  * (INVESTOR_RECOMMENDATIONS, BUILDER_RECOMMENDATIONS), match lead lists
  * (INVESTOR_LEADS, BUILDER_LEADS), investment portfolio (MY_INVESTMENTS),
- * project management data (MY_PROJECTS, PROJECT_TYPES, PROJECT_CITIES),
+ * project form options (PROJECT_TYPES, PROJECT_CITIES),
  * analytics KPIs, chart series data, AI insight text, and demo user objects.
  * All data is consumed by dashboard pages and components without API calls.
  */
@@ -58,7 +58,6 @@ export const INVESTOR_LEADS = [
 export const INVESTOR_RECOMMENDATIONS = INVESTOR_LEADS.slice(0, 3);
 
 export const BUILDER_RECOMMENDATIONS  = [];
-export const MY_PROJECTS              = [];
 export const MY_INVESTMENTS           = [];
 export const BUILDER_LEADS            = [];
 

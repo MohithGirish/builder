@@ -7,8 +7,8 @@ A marketplace that connects **Builders** (founders, makers) with **Investors** t
 ## What It Does
 
 - Builders list projects and get matched with investors based on sector, location, investment range, ROI expectations, and risk tolerance
-- Investors browse a scored discovery feed and manage their portfolio pipeline
-- Both sides collaborate inside private **Dealrooms** — real-time chat with persistent message history
+- Investors browse a scored discovery feed, request quotes on projects, and manage their portfolio pipeline
+- Admins review builder verification submissions and oversee users and projects from an admin console
 - An AI microservice calculates a 100-point **compatibility score** with a full breakdown for every Builder–Investor pair
 
 ---
@@ -25,10 +25,11 @@ Nginx (port 3000)               ← React SPA (Vite build)
 Node.js / Express (port 5000)
   │  JWT · RBAC · Sequelize
   ├── PostgreSQL (port 5432)    ← persistent storage
-  ├── Redis     (port 6379)     ← WebSocket state / cache
-  ├── Socket.io                 ← real-time dealroom events
-  └── internal REST  →  FastAPI AI Service (port 8000)
-                               └── 5-dimension compatibility score
+  ├── Redis     (port 6379)     ← cache
+  └── Socket.io                 ← quote + verification notifications
+
+FastAPI AI Service (ai_service/, port 8000)   ← not deployed
+  └── 5-dimension compatibility score, no backend call site yet
 ```
 
 ---
@@ -61,10 +62,10 @@ builder_ai/
 │   │   ├── routes/
 │   │   ├── middleware/   # JWT auth, RBAC
 │   │   ├── models/       # Sequelize models
-│   │   ├── socket/       # Socket.io dealroom handlers
+│   │   ├── socket/       # Socket.io — quote + verification notifications
 │   │   └── services/
 │   └── db/migrations/
-├── ai_service/        # Python FastAPI scoring microservice
+├── ai_service/        # Python FastAPI scoring microservice (standalone, not deployed)
 │   └── app/
 └── docker-compose.yml
 ```
@@ -104,14 +105,13 @@ DB_NAME=builder_ai_db
 DB_USER=builder_admin
 DB_PASSWORD=builder_secret_dev
 REDIS_HOST=redis
-AI_SERVICE_URL=http://ai_service:8000
 ```
 
 **Optional:**
 
 - `ANTHROPIC_API_KEY` (in `backend/.env`) — enables the Claude-powered conversational onboarding chat. Leave it blank to use the scripted onboarding questions. It's a standalone toggle, not tied to any account.
 - `VITE_GOOGLE_MAPS_API_KEY` (in `frontend/.env.local`) — Google Maps Embed key for the project-detail and profile maps. Without it those maps show a deep-link fallback.
-- `INTERNAL_API_KEY` (in `ai_service/.env`) — when set, the AI service requires a matching `X-Internal-Api-Key` header on `/api/v1/match/*`; leave blank in dev to disable enforcement. Pair with `AI_SERVICE_API_KEY` in `backend/.env`.
+- `INTERNAL_API_KEY` (in `ai_service/.env`) — when set, the AI service requires a matching `X-Internal-Api-Key` header on `/api/v1/match/*`; leave blank in dev to disable enforcement. Only relevant if you run the AI service standalone — the backend does not call it yet.
 
 > **Docker note:** the backend runs with `node_modules` in a named volume, so after adding a backend dependency, install it in the container (`docker compose exec backend npm install <pkg>`) or rebuild (`docker compose up -d --build backend`).
 
@@ -125,8 +125,9 @@ docker-compose up --build
 |---|---|
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:5000 |
-| AI Engine | http://localhost:8000 |
-| API Docs (FastAPI) | http://localhost:8000/docs |
+
+The AI engine is not part of the Compose stack. Run it standalone if you need it:
+`cd ai_service && uvicorn app.main:app --port 8000` (docs at `/docs`).
 
 ### 4. Run database migrations
 
@@ -158,9 +159,9 @@ npm test
 
 | Role | Capabilities |
 |---|---|
-| **Builder** | Create and manage projects, view match scores, access dealrooms |
-| **Investor** | Browse discovery feed, view scored matches, manage portfolio, access dealrooms |
-| **Admin** | Platform oversight and user management |
+| **Builder** | Create and manage projects, view match scores, respond to quote requests |
+| **Investor** | Browse discovery feed, view scored matches, manage portfolio |
+| **Admin** | Review builder verifications, oversee users and projects, view platform metrics |
 
 ---
 
@@ -176,16 +177,18 @@ The matchmaking engine scores Builder–Investor compatibility across 5 dimensio
 | ROI expectation match | 20 |
 | Risk tolerance alignment | 10 |
 
-The Node.js backend calls the AI service internally and returns a `compatibility_score` and `breakdown` object to the frontend.
+The service returns a `compatibility_score` and `breakdown` object. It is **not wired in yet** — the backend has no call site for it, and the match scores shown in the dashboards come from hard-coded mock data (`frontend/src/data/realProjects.js`).
 
 ---
 
 ## Key Features
 
 - **Discovery pages** — searchable, filterable directories for Builders, Investors, and Projects
-- **Quote requests** — investors request quotes on projects (styled email confirmation to both sides), track them live in **My Quotes**, and can delete a request (a cancellation email is sent and the record is purged)
-- **Dealrooms** — private real-time chat rooms with file sharing and full message persistence
-- **Dashboards** — KPI cards, match lists, and SVG analytics charts for both roles
+- **Projects from the database** — the project list, landing map, and detail pages read `GET /api/v1/projects` (public, optional auth), routed by slug; builders see their own drafts, anonymous visitors only see active/completed listings
+- **Quote requests** — investors request quotes on projects (styled email confirmation to both sides), track them live in **My Quotes**, and can delete a request (a cancellation email is sent and the record is purged). Persisted in the `quotes` table
+- **Admin console** — `/admin`, guarded by an env-seeded admin account: platform metrics, a builder-verification approve/reject queue, and user/project oversight
+- **Dashboards** — KPI cards, match lists, and Recharts analytics for both roles
+- **Dealroom** — Coming Soon placeholder; the Socket.io chat handlers and REST routes exist but are deliberately not registered
 - **AI onboarding** — Claude-powered conversational preference gathering, with a scripted-question fallback when no API key is set
 - **Builder verification** — post-onboarding step collecting India statutory credentials (state RERA registration, PAN, GSTIN, CIN/LLPIN) plus optional track-record documents and industry memberships; format-validated inline, skippable in dev, status surfaced on the profile
 - **Role-based profile maps** — Google Maps embed showing an investor's target regions or a builder's project locations

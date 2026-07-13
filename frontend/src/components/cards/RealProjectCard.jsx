@@ -80,11 +80,13 @@ export default function RealProjectCard({ project }) {
           </span>
         </div>
 
-        {/* Status badge — top-right, never clashes with category */}
+        {/* Construction status badge — top-right, never clashes with category.
+            Note: `status` is the DB lifecycle column (active/draft/…); the
+            human-facing "Under Construction" label lives in content. */}
         <div className="absolute top-3 right-3">
           <span className="flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-slate-700 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            {project.status}
+            {project.construction_status}
           </span>
         </div>
 
@@ -118,7 +120,7 @@ export default function RealProjectCard({ project }) {
 
         {/* Highlights — 3-column stat chips */}
         <div className="grid grid-cols-3 gap-1.5">
-          {project.highlights.slice(0, 3).map(h => (
+          {(project.highlights || []).slice(0, 3).map(h => (
             <div
               key={h.label}
               className="flex flex-col items-center justify-center bg-slate-50 rounded-xl px-1.5 py-2.5 text-center"

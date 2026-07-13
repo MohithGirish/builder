@@ -80,7 +80,7 @@ export default function QuoteRequestModal({ project, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          projectId:         project.id,
+          projectId:         project.uuid || project.id, // DB UUID resolves the builder for the socket nudge; slug is the routing id
           projectName:       project.name,
           projectEmail:      project.email || 'sales@e-infra.in',
           userName:          name.trim(),

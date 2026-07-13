@@ -1,8 +1,9 @@
 /*
  * MyProjects.jsx — Project management page for builder users.
  *
- * Renders a grid of the builder's projects (MY_PROJECTS) with image, status
- * badge, funding progress bar, investor/view counters, and RERA indicator.
+ * Renders a grid of the builder's own projects (GET /api/v1/projects?builder_id=)
+ * with image, status badge, funding progress bar, investor/view counters, and RERA
+ * indicator. Edits and deletes are local to the session (no write API yet).
  * Supports full CRUD via an inline modal form (ProjectFormModal) for creating
  * and editing projects, and window.confirm-guarded deletion. The form is a
  * sectioned listing editor mirroring the public project-detail page, with no
@@ -10,14 +11,16 @@
  * (POST /api/v1/brochure/extract) to pre-fill what it can. Accessible at
  * /dashboard/projects.
  */
-import { useState, useRef } from 'react';
-import { Plus, X, Building2, Upload, Loader2, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, X, Building2, Upload, Loader2, Sparkles, Lock, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { MY_PROJECTS, PROJECT_TYPES, PROJECT_CITIES } from '../../data/dashboard';
+import { PROJECT_TYPES, PROJECT_CITIES } from '../../data/dashboard';
 import { useAuth } from '../../context/AuthContext';
 import { apiFetch } from '../../lib/api';
-import { EINFRA_LISTINGS, isEinfraBuilder } from '../../data/realProjects';
+import { useProjects } from '../../lib/projects';
 import MyProjectCard from '../../components/cards/MyProjectCard';
+import { SkeletonCard } from '../../components/ui/SkeletonCard';
 
 const MAX_BROCHURE_BYTES = 20 * 1024 * 1024; // matches the backend / Claude limit
 const CATEGORIES = ['residential', 'commercial', 'mixed-use', 'infrastructure'];
@@ -296,9 +299,18 @@ function ProjectFormModal({ project, onSave, onClose }) {
 
 // ── My Projects Page ──────────────────────────────────────────────────────────
 export default function MyProjects() {
-  const { user } = useAuth();
-  const [projects, setProjects] = useState(() => isEinfraBuilder(user) ? EINFRA_LISTINGS : MY_PROJECTS);
+  const { user, role } = useAuth();
+  // Authed so the builder sees every status of their own projects, not just
+  // the active/completed set an anonymous caller would get.
+  const { projects: fetched, loading } = useProjects({ builderId: user?.id, authed: true });
+  const [projects, setProjects] = useState([]);
   const [modal,    setModal]    = useState(null); // null | 'create' | project obj
+
+  useEffect(() => { if (fetched) setProjects(fetched); }, [fetched]);
+
+  // Unverified builders can browse everything but can't list a new project yet.
+  const listingLocked = role === 'builder' && !user?.is_verified;
+  const pendingReview  = user?.verification_status === 'pending';
 
   function handleSave(data) {
     if (data.id && projects.find((p) => p.id === data.id)) {
@@ -321,30 +333,72 @@ export default function MyProjects() {
           <h1 className="text-xl font-bold text-slate-800">My Projects</h1>
           <p className="text-sm text-slate-500 mt-0.5">Manage all your projects in one place</p>
         </div>
-        <button
-          onClick={() => setModal('create')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-md shrink-0 bg-brand-gradient"
-        >
-          <Plus size={15} /> Add New Project
-        </button>
+        {listingLocked ? (
+          <div className="shrink-0 flex flex-col items-start sm:items-end gap-1.5">
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              title={pendingReview ? 'Verification pending review' : 'Listing unlocks after your account is verified'}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-gradient opacity-50 cursor-not-allowed"
+            >
+              <Lock size={14} /> Add New Project
+            </button>
+            <p className="text-[11px] text-slate-400 sm:text-right max-w-[240px]">
+              {pendingReview ? (
+                'Verification pending review.'
+              ) : (
+                <>
+                  Listing unlocks after your account is verified.{' '}
+                  <Link to="/onboarding/verification" className="text-brand-700 font-semibold hover:underline whitespace-nowrap">
+                    Complete verification →
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
+        ) : (
+          <button
+            onClick={() => setModal('create')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-md shrink-0 bg-brand-gradient"
+          >
+            <Plus size={15} /> Add New Project
+          </button>
+        )}
       </div>
 
       {/* Grid */}
-      {projects.length === 0 ? (
+      {loading ? (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
             <Building2 size={28} className="text-slate-300" />
           </div>
           <h3 className="font-semibold text-slate-700 mb-1">No projects yet</h3>
           <p className="text-sm text-slate-500 mb-5 max-w-xs">
-            Create your first project to get started and attract investors.
+            {listingLocked
+              ? 'Listing unlocks after your account is verified.'
+              : 'Create your first project to get started and attract investors.'}
           </p>
-          <button
-            onClick={() => setModal('create')}
-            className="btn-brand px-6 py-2.5 text-sm"
-          >
-            <Plus size={15} /> New Project
-          </button>
+          {listingLocked ? (
+            pendingReview ? (
+              <p className="text-xs text-slate-400">Verification pending review.</p>
+            ) : (
+              <Link to="/onboarding/verification" className="btn-brand px-6 py-2.5 text-sm">
+                <ShieldCheck size={15} /> Complete verification
+              </Link>
+            )
+          ) : (
+            <button
+              onClick={() => setModal('create')}
+              className="btn-brand px-6 py-2.5 text-sm"
+            >
+              <Plus size={15} /> New Project
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">

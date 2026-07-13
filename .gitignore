@@ -1,8 +1,28 @@
-# Claude Code — never commit local AI assistant state
+# ─── Claude Code / AI assistant — never commit ────────────────────────────────
+# Harness state and skill working directories.
 .claude/
+.impeccable/
+.playwright/
+.playwright-mcp/
+
+# Project instructions — must stay at repo root for Claude Code to read it.
 CLAUDE.md
 
-# Dependencies
+# Planning, prompting, and generated-reference docs. Everything Claude wrote for
+# itself lives here: DESIGN.md, PRODUCT.md, TECH_STACK.md, UI_GRADING_PROGRESS.md,
+# PRODUCTION_AUTH_HARDENING.md, meta-account-setup.md, build_ui_doc.py + its output.
+claude-workspace/
+
+# Local AI reference corpora and design-sync machinery.
+graphify-out/
+design-system/
+tech_stack/
+.ds-sync/
+ds-bundle/
+.design-sync/
+frontend/.ds-build/
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
 **/node_modules/
 __pycache__/
@@ -12,89 +32,47 @@ __pycache__/
 venv/
 env/
 
-# Build output
+# ─── Build output ─────────────────────────────────────────────────────────────
 dist/
 build/
 *.egg-info/
 .eggs/
 
-# Environment & secrets
+# ─── Environment & secrets ────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
 *.pem
 *.key
 
-# Logs
+# ─── Runtime data — quote requests contain requester PII, never commit ────────
+backend/data/quotes.json
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Docker
-docker-compose.override.yml
-
-# Coverage / test artefacts
+# ─── Coverage / test artefacts ────────────────────────────────────────────────
 coverage/
 .nyc_output/
 htmlcov/
 .pytest_cache/
 .mypy_cache/
 
-# Graphify — local knowledge graph, never push
-graphify-out/
+# ─── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Design system — local AI design reference, never push
-design-system/
-
-# Tech stack reference — local only, never push
-tech_stack/
-
-# Playwright MCP — local browser automation state, never push
-.playwright/
-.playwright-mcp/
-
-# WhatsApp / Meta setup guides — contain internal setup notes, keep local only
-whatsapp-meta-setup.md
-meta-account-setup.md
-
-# Production auth hardening — internal deferred-TODO checklist, keep local only
-PRODUCTION_AUTH_HARDENING.md
-
-# Design-sync — staged converter scripts, build output, and machine state (never commit)
-.ds-sync/
-ds-bundle/
-.design-sync/
-frontend/.ds-build/
-
-# UI documentation — local generated reference + its generator, never push
-ui-documentation.xlsx
-ui-documentation-assets/
-build_ui_doc.py
-
-# Misc
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+docker-compose.override.yml
 *.tsbuildinfo
 .eslintcache
-
-# Runtime data — quote requests contain requester PII, never commit
-backend/data/quotes.json
-
-# Claude working artifacts — impeccable state, session-continuity and generated reference docs, never push
-.impeccable/
-DESIGN.md
-PRODUCT.md
-UI_GRADING_PROGRESS.md
-TECH_STACK.md

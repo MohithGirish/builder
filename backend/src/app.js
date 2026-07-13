@@ -22,6 +22,16 @@ const AppError     = require('./utils/AppError');
 
 const app = express();
 
+// ── Proxy awareness ───────────────────────────────────────────────────────────
+// Behind a load balancer (Render/Vercel/nginx) the socket peer is the proxy, so
+// req.ip would be identical for every visitor and the rate limiters below would
+// share ONE bucket across the whole user base. Trust exactly one proxy hop so
+// req.ip is the real client. Off in dev/test, where there is no proxy and
+// trusting a spoofable X-Forwarded-For would let a caller evade rate limits.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', parseInt(process.env.TRUST_PROXY_HOPS, 10) || 1);
+}
+
 // ── Security headers ─────────────────────────────────────────────────────────
 app.use(helmet());
 
@@ -64,6 +74,8 @@ app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max:      parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 10,
+    // The suite registers/logs in well past 10 times across its serial run.
+    skip:     () => process.env.NODE_ENV === 'test',
     message:  { success: false, error: { code: 'RATE_LIMITED', message: 'Too many authentication attempts. Try again in 15 minutes.' } },
   })
 );

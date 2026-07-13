@@ -2,20 +2,22 @@
  * BuilderDetail.jsx — Public builder profile page (/builders/:id).
  *
  * Resolves a builder by slug via getBuilderById, then lists every project that
- * builder has in the catalogue as RealProjectCards (matched to REAL_PROJECTS by
- * id). Header shows the builder's name, verified badge, location, sector tags,
+ * builder has in the catalogue as RealProjectCards (matched by slug against the
+ * projects returned from GET /api/v1/projects). Header shows the builder's name,
+ * verified badge, location, sector tags,
  * and aggregate project/portfolio stats. Reached from the Builders directory and
  * the Home discover section; renders a not-found state for unknown slugs.
  */
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Briefcase, TrendingUp, MapPin, Building2 } from 'lucide-react';
 import { getBuilderById, initialsOf } from '../data/builders';
-import { REAL_PROJECTS } from '../data/realProjects';
+import { useProjects } from '../lib/projects';
 import RealProjectCard from '../components/cards/RealProjectCard';
 
 export default function BuilderDetail() {
   const { id } = useParams();
   const builder = getBuilderById(id);
+  const { projects: allProjects } = useProjects();
 
   if (!builder) {
     return (
@@ -36,9 +38,9 @@ export default function BuilderDetail() {
 
   const initials = initialsOf(builder.name);
 
-  // Match each nested project to its full REAL_PROJECTS record for the card.
+  // Match each nested project to its full DB record (by slug) for the card.
   const projects = builder.projects
-    .map((p) => REAL_PROJECTS.find((rp) => rp.id === p.projectId))
+    .map((p) => (allProjects || []).find((rp) => rp.id === p.projectId))
     .filter(Boolean);
 
   return (

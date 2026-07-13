@@ -1,12 +1,12 @@
 # ── Stage 1: dependencies ─────────────────────────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 
 # ── Stage 2: development ──────────────────────────────────────────────────────
-FROM node:20-alpine AS development
+FROM node:24-alpine AS development
 
 WORKDIR /app
 COPY package*.json ./
@@ -17,7 +17,7 @@ EXPOSE 5000
 CMD ["npm", "run", "dev"]
 
 # ── Stage 3: production ───────────────────────────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:24-alpine AS production
 
 ENV NODE_ENV=production
 WORKDIR /app
@@ -30,4 +30,10 @@ COPY --chown=nodeuser:nodejs . .
 
 USER nodeuser
 EXPOSE 5000
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && node src/server.js"]
+
+# Boot serves traffic and nothing else. Migrations are a RELEASE step, run once
+# per deploy (`npm run db:migrate`) — running them here races across replicas.
+# Seeding is never a boot step: `db:seed` inserts the E-Infra demo builder and
+# its five showcase projects, and it throws when ADMIN_EMAIL/ADMIN_PASSWORD are
+# unset, which would crash-loop the container.
+CMD ["node", "src/server.js"]

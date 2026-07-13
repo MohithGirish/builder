@@ -2,7 +2,7 @@
  * models/index.js — Sequelize instance bootstrap and model registry.
  *
  * Creates the Sequelize connection using the environment-appropriate config,
- * initialises all five models (User, RefreshToken, Dealroom, Message, Project),
+ * initialises all six models (User, RefreshToken, Dealroom, Message, Project, Quote),
  * sets up their inter-model associations (hasMany, belongsTo), and re-exports
  * the sequelize instance along with all model classes for use throughout the
  * application.
@@ -34,6 +34,7 @@ const { RefreshToken, init: initRefreshToken } = require('./RefreshToken');
 const { Dealroom,    init: initDealroom }    = require('./Dealroom');
 const { Message,     init: initMessage }     = require('./Message');
 const { Project,     init: initProject }     = require('./Project');
+const { Quote,       init: initQuote }       = require('./Quote');
 
 // Initialise models
 initUser(sequelize);
@@ -41,9 +42,10 @@ initRefreshToken(sequelize);
 initDealroom(sequelize);
 initMessage(sequelize);
 initProject(sequelize);
+initQuote(sequelize);
 
 // Set up associations
-const models = { User, RefreshToken, Dealroom, Message, Project };
+const models = { User, RefreshToken, Dealroom, Message, Project, Quote };
 Object.values(models).forEach((model) => {
   if (model.associate) model.associate(models);
 });

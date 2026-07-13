@@ -20,8 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import LocationsMap from '../components/profile/LocationsMap';
 import DeleteAccountModal from '../components/profile/DeleteAccountModal';
 import MyProjectCard from '../components/cards/MyProjectCard';
-import { EINFRA_LISTINGS, isEinfraBuilder } from '../data/realProjects';
-import { MY_PROJECTS } from '../data/dashboard';
+import { useProjects } from '../lib/projects';
 import { deriveStatus, loadVerification } from '../lib/verification';
 
 const BUILDER_PREF_LABELS = [
@@ -50,9 +49,10 @@ export default function Profile() {
   const prefLabels = role === 'investor' ? INVESTOR_PREF_LABELS : BUILDER_PREF_LABELS;
   const initials   = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || '?';
   const targetRole = role === 'investor' ? 'builder' : 'investor';
-  const listedProjects = role === 'builder'
-    ? (isEinfraBuilder(user) ? EINFRA_LISTINGS : MY_PROJECTS)
-    : [];
+  const { projects: ownProjects } = useProjects({
+    builderId: user?.id, authed: true, enabled: role === 'builder',
+  });
+  const listedProjects = ownProjects || [];
 
   // Map chips: investor → target regions; builder → listed-project locations.
   const regionItems = (preferences?.regions || '')
@@ -213,10 +213,27 @@ export default function Profile() {
 
         {/* ── Builder Verification card ──────────────────────────────────── */}
         {role === 'builder' && (() => {
-          const vStatus = deriveStatus(loadVerification(user?.id));
-          const submitted = vStatus === 'submitted';
-          const ready = vStatus === 'ready';
-          const linkLabel = submitted ? 'Update' : ready ? 'Submit' : 'Complete';
+          // Prefer the server's verification_status; fall back to the local draft
+          // state ('ready'/'unverified') only when the server says 'unverified'.
+          const serverStatus = user?.verification_status;
+          const localStatus  = deriveStatus(loadVerification(user?.id)); // unverified|ready|submitted
+          const effective = serverStatus && serverStatus !== 'unverified' ? serverStatus : localStatus;
+
+          const VARIANTS = {
+            approved: { badge: 'text-emerald-700 bg-emerald-50 border-emerald-200', Icon: ShieldCheck, label: 'Verified',
+              note: 'Your statutory registrations were verified against RERA, GST and MCA.', btn: 'View' },
+            pending:  { badge: 'text-amber-700 bg-amber-50 border-amber-200', Icon: ShieldCheck, label: 'Under review',
+              note: 'Submitted — our team is reviewing your registrations against government portals.', btn: 'View' },
+            rejected: { badge: 'text-red-700 bg-red-50 border-red-200', Icon: AlertTriangle, label: 'Rejected',
+              note: 'Your verification was rejected. Review the reason and resubmit.', btn: 'Resubmit' },
+            ready:    { badge: 'text-brand-700 bg-brand-50 border-brand-200', Icon: ShieldCheck, label: 'Ready to submit',
+              note: 'Credentials look valid — open the form and submit for verification.', btn: 'Submit' },
+            submitted:{ badge: 'text-emerald-700 bg-emerald-50 border-emerald-200', Icon: ShieldCheck, label: 'Submitted for verification',
+              note: 'Submitted — our team is reviewing your registrations against government portals.', btn: 'View' },
+            unverified:{ badge: 'text-amber-700 bg-amber-50 border-amber-200', Icon: AlertTriangle, label: 'Unverified',
+              note: 'Add your RERA, PAN, GSTIN and entity registration to earn a verified badge.', btn: 'Complete' },
+          };
+          const v = VARIANTS[effective] || VARIANTS.unverified;
           return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
               <div className="flex items-center justify-between gap-4">
@@ -226,33 +243,22 @@ export default function Profile() {
                     Builder Verification
                   </h3>
                   <div className="mt-1.5">
-                    {submitted ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200">
-                        <ShieldCheck size={11} /> Submitted for verification
-                      </span>
-                    ) : ready ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200">
-                        <ShieldCheck size={11} /> Ready to submit
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200">
-                        <AlertTriangle size={11} /> Unverified
-                      </span>
-                    )}
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${v.badge}`}>
+                      <v.Icon size={11} /> {v.label}
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1.5">
-                    {submitted
-                      ? 'Statutory registrations recorded — reviewed against RERA, GST and MCA.'
-                      : ready
-                        ? 'Credentials look valid — open the form and submit for verification.'
-                        : 'Add your RERA, PAN, GSTIN and entity registration to earn a verified badge.'}
-                  </p>
+                  <p className="text-xs text-slate-400 mt-1.5">{v.note}</p>
+                  {effective === 'rejected' && user?.verification_reason && (
+                    <p className="text-xs text-red-600 mt-1.5">
+                      <strong>Reason:</strong> {user.verification_reason}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => navigate('/onboarding/verification')}
                   className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                 >
-                  <ShieldCheck size={12} /> {linkLabel}
+                  <ShieldCheck size={12} /> {v.btn}
                 </button>
               </div>
             </div>

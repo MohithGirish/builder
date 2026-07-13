@@ -1,15 +1,17 @@
 /*
  * user.controller.js — HTTP request handlers for user profile management.
  *
- * Exposes five controller functions: getMe (fetch own profile), updateMe
- * (update own profile), getUserById (admin or self only), updateUserStatus
+ * Exposes controller functions: getMe (fetch own profile), updateMe
+ * (update own profile), deleteMe, submitVerification (builder-only submission
+ * for admin review), getUserById (admin or self only), updateUserStatus
  * (admin-only account activation/deactivation), and listUsers (admin-only
- * paginated user list). All responses use toPublicJSON() to strip password
- * hashes before sending.
+ * paginated + filterable user list). All responses use toPublicJSON() to strip
+ * password hashes before sending.
  */
 'use strict';
 
 const bcrypt      = require('bcryptjs');
+const { Op }      = require('sequelize');
 const AppError    = require('../utils/AppError');
 const { sendSuccess } = require('../utils/response');
 const { User }    = require('../models');
@@ -66,9 +68,42 @@ async function deleteMe(req, res, next) {
       return next(new AppError('Email or password is incorrect.', 401, 'AUTH_002'));
     }
 
-    purgeQuotesByEmail(user.email); // drop the flat-file quote requests this user submitted
+    // Await: an unawaited purge could lose the race with the response and leave
+    // the requester's PII behind after their account is gone.
+    await purgeQuotesByEmail(user.email);
     await user.destroy();
     return sendSuccess(res, 200, null, 'Your account has been deleted.');
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * POST /users/me/verification  (builder only)
+ * Submits India statutory credentials for admin review. Rejects if the account
+ * is already under review ('pending') or already approved.
+ */
+async function submitVerification(req, res, next) {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return next(new AppError('User not found.', 404, 'USER_001'));
+
+    if (user.verification_status === 'pending') {
+      return next(new AppError('Your verification is already under review.', 400, 'VERIFICATION_PENDING'));
+    }
+    if (user.verification_status === 'approved') {
+      return next(new AppError('Your account is already verified.', 400, 'VERIFICATION_APPROVED'));
+    }
+
+    await user.update({
+      verification_data:         req.body,
+      verification_status:       'pending',
+      verification_submitted_at: new Date(),
+      verification_reason:       null,
+      // is_verified stays false until an admin approves.
+    });
+
+    return sendSuccess(res, 200, { user: user.toPublicJSON() }, 'Verification submitted for review.');
   } catch (err) {
     return next(err);
   }
@@ -89,7 +124,14 @@ async function getUserById(req, res, next) {
     const user = await User.findByPk(id);
     if (!user) return next(new AppError('User not found.', 404, 'USER_001'));
 
-    return sendSuccess(res, 200, { user: user.toPublicJSON() });
+    const payload = user.toPublicJSON();
+    // Admins need the submitted statutory credentials to review verification;
+    // toPublicJSON() deliberately omits them so public-facing paths never leak.
+    if (req.user.role === 'admin') {
+      payload.verification_data = user.verification_data;
+    }
+
+    return sendSuccess(res, 200, { user: payload });
   } catch (err) {
     return next(err);
   }
@@ -127,7 +169,25 @@ async function listUsers(req, res, next) {
     const limit = Math.min(100, parseInt(req.query.limit, 10) || 20);
     const offset = (page - 1) * limit;
 
+    const where = {};
+
+    const { search, role, is_active } = req.query;
+    if (search) {
+      const like = { [Op.iLike]: `%${search}%` };
+      where[Op.or] = [
+        { first_name: like },
+        { last_name:  like },
+        { email:      like },
+      ];
+    }
+    if (role && ['builder', 'investor', 'admin'].includes(role)) {
+      where.role = role;
+    }
+    if (is_active === 'true')  where.is_active = true;
+    if (is_active === 'false') where.is_active = false;
+
     const { rows: users, count } = await User.findAndCountAll({
+      where,
       offset,
       limit,
       order: [['created_at', 'DESC']],
@@ -147,4 +207,4 @@ async function listUsers(req, res, next) {
   }
 }
 
-module.exports = { getMe, updateMe, deleteMe, getUserById, updateUserStatus, listUsers };
+module.exports = { getMe, updateMe, deleteMe, submitVerification, getUserById, updateUserStatus, listUsers };

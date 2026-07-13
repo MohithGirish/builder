@@ -6,10 +6,11 @@
  * item shows a 3 px left teal accent border + bg-teal-50. Collapse toggle at
  * bottom uses ChevronLeft that rotates 180° when collapsed. No window events.
  */
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FolderKanban, Users, MessageSquare,
   BarChart3, Wallet, List, Star, CheckCircle2, LogOut, ChevronLeft, FileText,
+  ShieldCheck, Clock, ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSidebar } from '../../context/SidebarContext';
@@ -35,11 +36,21 @@ const INVESTOR_NAV = [
   { label: 'Analytics',       to: '/investor-dashboard/analytics',   icon: BarChart3 },
 ];
 
+const ADMIN_NAV = [
+  { label: 'Overview',      to: '/admin',               icon: LayoutDashboard },
+  { label: 'Users',         to: '/admin/users',         icon: Users },
+  { label: 'Verifications', to: '/admin/verifications', icon: ShieldCheck },
+  { label: 'Projects',      to: '/admin/projects',      icon: FolderKanban },
+];
+
 export default function DashboardSidebar({ mobile = false, onClose }) {
   const { user, role, logout } = useAuth();
   const { collapsed, setCollapsed } = useSidebar();
   const navigate = useNavigate();
-  const nav = role === 'builder' ? BUILDER_NAV : INVESTOR_NAV;
+  const nav = role === 'admin' ? ADMIN_NAV : role === 'builder' ? BUILDER_NAV : INVESTOR_NAV;
+  const roleLabel = role === 'admin' ? 'Admin' : role === 'investor' ? 'Investor' : 'Builder';
+  // Verification status for a builder's sidebar badge (server-derived).
+  const vStatus = user?.verification_status;
 
   // In mobile mode never collapse — always show full labels
   const isCollapsed = !mobile && collapsed;
@@ -81,12 +92,26 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
                 {user?.first_name} {user?.last_name}
               </p>
               <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400 mt-0.5">
-                {role === 'investor' ? 'Investor' : 'Builder'}
+                {roleLabel}
               </p>
               {user?.is_verified && (
                 <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-white bg-brand-gradient">
                   <CheckCircle2 size={8} /> Verified
                 </span>
+              )}
+              {/* Builder verification progress — only when not yet verified */}
+              {role === 'builder' && !user?.is_verified && vStatus === 'pending' && (
+                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-amber-700 bg-amber-50 border border-amber-200">
+                  <Clock size={8} /> Verification pending
+                </span>
+              )}
+              {role === 'builder' && !user?.is_verified && vStatus === 'rejected' && (
+                <Link
+                  to="/onboarding/verification"
+                  className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
+                >
+                  <ShieldAlert size={8} /> Verification rejected
+                </Link>
               )}
             </div>
           </div>
@@ -106,7 +131,7 @@ export default function DashboardSidebar({ mobile = false, onClose }) {
             <NavLink
               key={to}
               to={to}
-              end={to === '/dashboard' || to === '/investor-dashboard'}
+              end={to === '/dashboard' || to === '/investor-dashboard' || to === '/admin'}
               onClick={onClose}
               className={({ isActive }) =>
                 [

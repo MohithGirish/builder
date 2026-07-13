@@ -28,7 +28,13 @@ export async function apiFetch(path, options = {}, fallbackError = 'Something we
   }
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || fallbackError);
+  if (!res.ok) {
+    // Attach the HTTP status so callers (e.g. AuthContext.authedFetch) can react
+    // to a 401 with a token refresh + retry instead of surfacing a raw error.
+    const err = new Error(data.error?.message || fallbackError);
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 

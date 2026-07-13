@@ -27,7 +27,7 @@ import Counter           from '../components/ui/Counter';
 import CompatibilityInstrument, { BrandMark } from '../components/CompatibilityInstrument';
 import { UNIQUE_BUILDERS } from '../data/builders';
 import { PROJECTS }      from '../data/projects';
-import { REAL_PROJECTS } from '../data/realProjects';
+import { useProjects } from '../lib/projects';
 
 import WhenVisible from '../components/WhenVisible';
 
@@ -127,6 +127,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('Builders');
   const navigate = useNavigate();
   const { isAuthenticated, onboardingComplete, role } = useAuth();
+  // Public endpoint — renders for logged-out visitors.
+  const { projects } = useProjects();
+  const featured = projects || [];
 
   function handleCTA() {
     if (isAuthenticated && onboardingComplete) {
@@ -290,13 +293,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-800">Browse Projects</h3>
-            <span className="text-xs text-slate-400 font-medium">{REAL_PROJECTS.length} featured projects</span>
+            <span className="text-xs text-slate-400 font-medium">{featured.length} featured projects</span>
           </div>
 
           {/* Horizontal scroll on mobile, 3-col wrapping grid on large screens */}
           <div className="relative">
             <div className="flex gap-5 overflow-x-auto pb-3 lg:grid lg:grid-cols-3 xl:grid-cols-3 no-scrollbar">
-              {REAL_PROJECTS.map((project) => (
+              {featured.map((project) => (
                 <div key={project.id} className="shrink-0 w-[300px] lg:w-full lg:min-w-0">
                   <RealProjectCard project={project} />
                 </div>
