@@ -151,6 +151,8 @@ export default function Home() {
         {/* Background image — local + optimized; high fetch priority as the LCP element */}
         <img
           src="/images/hero/aerial.webp"
+          srcSet="/images/hero/aerial.thumb.webp 700w, /images/hero/aerial.webp 1600w"
+          sizes="100vw"
           alt=""
           aria-hidden="true"
           fetchPriority="high"

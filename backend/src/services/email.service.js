@@ -59,7 +59,7 @@ async function sendEmail(to, subject, html) {
 
 async function sendQuoteRequestToBuilder({ quote, responseLink }) {
   const layoutList = quote.layoutPreferences?.length
-    ? `<ul style="margin:8px 0;padding-left:20px;">${quote.layoutPreferences.map(l => `<li style="margin-bottom:4px;">${l}</li>`).join('')}</ul>`
+    ? `<ul style="margin:8px 0;padding-left:20px;">${quote.layoutPreferences.map(l => `<li style="margin-bottom:4px;">${esc(l)}</li>`).join('')}</ul>`
     : '<p style="margin:4px 0;color:#64748b;">No specific layout selected.</p>';
 
   const html = `
@@ -69,14 +69,14 @@ async function sendQuoteRequestToBuilder({ quote, responseLink }) {
       <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;">Received via BuilderAI Platform</p>
     </div>
     <div style="background:#fff;padding:28px 24px;border:1px solid #e2e8f0;border-top:none;">
-      <h2 style="color:#1e293b;font-size:17px;margin:0 0 20px;">Project: ${quote.projectName}</h2>
+      <h2 style="color:#1e293b;font-size:17px;margin:0 0 20px;">Project: ${esc(quote.projectName)}</h2>
 
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">
         <h3 style="color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 12px;">Customer Details</h3>
         <table style="width:100%;border-collapse:collapse;">
-          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;width:120px;">Name</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${quote.userName}</td></tr>
-          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;">Email</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${quote.userEmail}</td></tr>
-          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;">Phone</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${quote.userPhone}</td></tr>
+          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;width:120px;">Name</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${esc(quote.userName)}</td></tr>
+          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;">Email</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${esc(quote.userEmail)}</td></tr>
+          <tr><td style="padding:5px 0;color:#94a3b8;font-size:13px;">Phone</td><td style="padding:5px 0;color:#1e293b;font-size:13px;font-weight:600;">${esc(quote.userPhone)}</td></tr>
         </table>
       </div>
 
@@ -84,7 +84,7 @@ async function sendQuoteRequestToBuilder({ quote, responseLink }) {
       <div style="color:#1e293b;font-size:14px;margin-bottom:20px;">${layoutList}</div>
 
       <h3 style="color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 8px;">Requirements &amp; Specifications</h3>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;color:#334155;font-size:14px;line-height:1.7;margin-bottom:28px;white-space:pre-wrap;">${quote.requirements || 'No additional requirements specified.'}</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;color:#334155;font-size:14px;line-height:1.7;margin-bottom:28px;white-space:pre-wrap;">${quote.requirements ? esc(quote.requirements) : 'No additional requirements specified.'}</div>
 
       <a href="${responseLink}" style="display:inline-block;background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;text-decoration:none;padding:13px 26px;border-radius:8px;font-weight:700;font-size:15px;">
         Submit Your Quote Response →
@@ -92,7 +92,7 @@ async function sendQuoteRequestToBuilder({ quote, responseLink }) {
 
       <p style="color:#94a3b8;font-size:12px;margin-top:24px;line-height:1.5;">
         The customer is awaiting your response. Click the button above to open the response form.
-        Reference ID: <strong>${quote.id}</strong>
+        Reference ID: <strong>${esc(quote.id)}</strong>
       </p>
     </div>
     <div style="background:#f8fafc;padding:14px 24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
