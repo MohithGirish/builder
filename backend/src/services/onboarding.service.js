@@ -1,9 +1,10 @@
 /*
  * onboarding.service.js — Claude-powered conversational onboarding.
  *
- * Runs one turn of the AI onboarding chat via the official Anthropic SDK
- * (model claude-haiku-4-5). A warm, role-specific system prompt drives a
- * natural conversation; a `complete_onboarding` tool lets Claude emit the same
+ * Streams one turn of the AI onboarding chat via the official Anthropic SDK
+ * (model claude-haiku-4-5), emitting text deltas as they generate for a
+ * responsive UI. A warm, role-specific system prompt drives a natural
+ * conversation; a `complete_onboarding` tool lets Claude emit the same
  * structured preference fields the scripted flow collected once it has gathered
  * them. Returns { available:false } when ANTHROPIC_API_KEY is unset so callers
  * can fall back to the scripted questionnaire. Stateless — the caller passes the
@@ -109,11 +110,14 @@ const INVESTOR_TOOL = {
 };
 
 /**
- * Run one conversational onboarding turn.
+ * Stream one conversational onboarding turn, invoking onText(delta) as the
+ * model generates. The full result (with any complete_onboarding tool call) is
+ * assembled from the final message and returned once the stream ends.
  * @param {{ role: 'builder'|'investor', userName: string, messages: Array<{role:'user'|'assistant', content:string}> }} args
+ * @param {(text:string)=>void} onText  Called with each text delta as it arrives.
  * @returns {Promise<{available:boolean, done?:boolean, message?:string|null, preferences?:object|null}>}
  */
-async function runOnboardingTurn({ role, userName, messages }) {
+async function streamOnboardingTurn({ role, userName, messages }, onText) {
   const client = getClient();
   if (!client) return { available: false };
 
@@ -121,17 +125,23 @@ async function runOnboardingTurn({ role, userName, messages }) {
   const system = isInvestor ? investorSystem(userName) : builderSystem(userName);
   const tool   = isInvestor ? INVESTOR_TOOL : BUILDER_TOOL;
 
-  const resp = await client.messages.create({
+  const stream = client.messages.stream({
     model:      MODEL,
-    max_tokens: 1024,
-    system,
-    tools:      [tool],
-    messages:   [{ role: 'user', content: SEED }, ...messages],
+    max_tokens: 512, // replies are 1–3 sentences; caps worst-case output cost
+    // ponytail: cache_control is inert here — Haiku 4.5's cacheable-prefix
+    // minimum is 4096 tokens and this system+tool+history prefix stays well
+    // under that. Kept so it activates automatically if the prompt ever grows.
+    system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+    tools:  [{ ...tool, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: SEED }, ...messages],
   });
 
+  stream.on('text', (t) => onText(t));
+
+  const final = await stream.finalMessage();
   let text = '';
   let preferences = null;
-  for (const block of resp.content) {
+  for (const block of final.content) {
     if (block.type === 'text') text += block.text;
     else if (block.type === 'tool_use' && block.name === 'complete_onboarding') preferences = block.input;
   }
@@ -139,4 +149,4 @@ async function runOnboardingTurn({ role, userName, messages }) {
   return { available: true, done: !!preferences, message: text.trim() || null, preferences };
 }
 
-module.exports = { runOnboardingTurn };
+module.exports = { streamOnboardingTurn };

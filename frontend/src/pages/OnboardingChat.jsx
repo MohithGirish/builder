@@ -14,7 +14,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../lib/api';
+import { API } from '../lib/api';
 
 const BUILDER_PREF_KEYS  = ['city', 'project_type', 'projects_completed', 'funding_range'];
 const INVESTOR_PREF_KEYS = ['investor_type', 'sectors', 'investment_range', 'regions'];
@@ -95,36 +95,86 @@ export default function OnboardingChat() {
     }
   }, [isTyping, isComplete, mode]);
 
-  /* POST one conversational turn to the backend AI proxy. */
-  async function postTurn(apiMessages) {
+  /* Stream one conversational turn from the backend AI proxy over SSE.
+     onDelta(text) fires per token as the reply generates; resolves with the
+     final { available, done, message, preferences } from the `done` event. */
+  async function streamTurn(apiMessages, onDelta) {
     const at = getAccessToken?.();
-    const json = await apiFetch('/api/v1/onboarding/chat', {
+    const res = await fetch(`${API}/api/v1/onboarding/chat`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', ...(at ? { Authorization: `Bearer ${at}` } : {}) },
       body:    JSON.stringify({ role, userName: firstName, messages: apiMessages }),
     });
-    return json.data; // { available, done, message, preferences }
+    if (!res.ok || !res.body) throw new Error('stream failed');
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = null;
+
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE records are separated by a blank line.
+      let sep;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const record = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        const evLine   = record.match(/^event: (.*)$/m);
+        const dataLine = record.match(/^data: (.*)$/m);
+        if (!evLine || !dataLine) continue;
+        const payload = JSON.parse(dataLine[1]);
+        if (evLine[1] === 'delta') onDelta(payload.text);
+        else if (evLine[1] === 'done') result = payload;
+      }
+    }
+    return result; // { available, done, message, preferences }
   }
 
   /* UI messages → Anthropic message shape. */
   const toApi = (uiMsgs) =>
     uiMsgs.map((m) => ({ role: m.from === 'ai' ? 'assistant' : 'user', content: m.text }));
 
+  /* Append a streamed text delta onto the in-progress AI bubble, or start one
+     if the last message isn't an AI bubble. Pure updater — no external mutation
+     — so it's safe under React StrictMode's double-invocation of state setters. */
+  const appendAiDelta = (t) =>
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.from === 'ai') {
+        const copy = prev.slice();
+        copy[copy.length - 1] = { ...last, text: last.text + t };
+        return copy;
+      }
+      return [...prev, { from: 'ai', text: t }];
+    });
+
   // Decide the mode on mount: try the AI greeting, else fall back to scripted.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      let sawText = false;
+      const onDelta = (t) => {
+        if (cancelled) return;
+        sawText = true;
+        setMode('ai');
+        setIsTyping(false);
+        appendAiDelta(t);
+      };
       try {
-        const res = await postTurn([]);
+        const res = await streamTurn([], onDelta);
         if (cancelled) return;
         // Key present (available) → LLM drives the whole conversation. The scripted
         // questions are only ever used when the AI is unavailable.
         if (res?.available) {
           setMode('ai');
           setIsTyping(false);
-          const greeting = res.message
-            || `Hi ${firstName}! I'd love to get to know you a little before we set things up. Tell me a bit about what you do?`;
-          setMessages([{ from: 'ai', text: greeting }]);
+          if (!sawText) {
+            const greeting = res.message
+              || `Hi ${firstName}! I'd love to get to know you a little before we set things up. Tell me a bit about what you do?`;
+            setMessages([{ from: 'ai', text: greeting }]);
+          }
           if (res.done && res.preferences) finishWith(res.preferences);
           inputRef.current?.focus();
         } else {
@@ -207,14 +257,23 @@ export default function OnboardingChat() {
     setMessages(next);
     setInput('');
     setIsTyping(true);
+
+    let sawText = false;
+    const onDelta = (t) => {
+      sawText = true;
+      setIsTyping(false);
+      appendAiDelta(t);
+    };
+
     try {
-      const res = await postTurn(toApi(next));
+      const res = await streamTurn(toApi(next), onDelta);
       if (!res?.available) {
         setMessages((prev) => [...prev, { from: 'ai', text: "Sorry, I lost my train of thought there — could you say that again?" }]);
         setIsTyping(false);
         return;
       }
-      if (res.message) setMessages((prev) => [...prev, { from: 'ai', text: res.message }]);
+      // Tool-only turns emit no text deltas — surface the closing line if any.
+      if (!sawText && res.message) setMessages((prev) => [...prev, { from: 'ai', text: res.message }]);
       setIsTyping(false);
       if (res.done && res.preferences) finishWith(res.preferences);
     } catch {
