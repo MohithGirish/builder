@@ -35,6 +35,55 @@ FastAPI AI Service (ai_service/, port 8000)   ← not deployed
 Docker Compose runs the backend, PostgreSQL, and Redis. The frontend and the AI
 service are run directly on the host.
 
+The diagram above is the **local development** shape. Production differs — see
+Deployment below.
+
+---
+
+## Deployment
+
+Live on AWS in `ap-south-1` (Mumbai) since 2026-07-21.
+
+| Surface | Where |
+|---|---|
+| Frontend | AWS Amplify Hosting — auto-deploys on every push to `main` |
+| API | CloudFront → EC2 (`t3.micro`, Docker) |
+| Database | PostgreSQL 16 container on the same instance, **no public port** |
+| Cache | Redis 7 container, **no public port** |
+| Secrets | SSM Parameter Store, injected at deploy time — never committed |
+
+```
+Browser
+  ├─► Amplify Hosting            static SPA
+  └─► CloudFront                 TLS termination for the API (no caching)
+        │  http :80  — security group admits CloudFront edges only
+        ▼
+      EC2  ── Express ── PostgreSQL + Redis (private bridge network)
+```
+
+CloudFront fronts the API purely to terminate TLS: browsers block `fetch()` from
+an HTTPS page to an HTTP origin, and Let's Encrypt will not issue certificates
+for `*.amazonaws.com`, so with no custom domain this is the only zero-cost path.
+It also carries the Socket.io WebSocket upgrade and the SSE onboarding stream —
+hence its raised 60s origin read timeout.
+
+**Deploying the backend.** There is no SSH access and no key pair; the instance
+is driven entirely through SSM Send-Command:
+
+```bash
+aws ssm send-command --region ap-south-1 --instance-ids <instance-id> \
+  --document-name AWS-RunShellScript \
+  --parameters 'commands=["bash /opt/builderai/scripts/deploy-ec2.sh"]'
+```
+
+`scripts/deploy-ec2.sh` rebuilds `.env` from SSM, fast-forwards to `origin/main`,
+rebuilds the containers, then runs migrations as an explicit release step.
+`scripts/ec2-bootstrap.sh` is the instance user-data, and `scripts/backup-db.sh`
+runs nightly via a systemd timer, shipping a verified `pg_dump` to S3.
+
+Resource IDs, costs, and teardown order live in `claude-workspace/`, which is
+gitignored — this repository is public.
+
 ---
 
 ## Tech Stack
@@ -118,13 +167,16 @@ has a working fallback — the app boots without it.
 |---|---|
 | `DATABASE_URL` | Alternative to the discrete `DB_*` vars; **takes precedence** over them. Managed hosts (RDS, Neon, Render) hand you this. |
 | `REDIS_HOST` `REDIS_PORT` | No Redis → in-memory cache fallback. `REDIS_HOST=redis` under Compose. |
-| `ADMIN_EMAIL` `ADMIN_PASSWORD` | **Required for `npm run db:seed`** — seeding throws if unset. Without an admin, `/admin` is unreachable and builder verifications can't be approved. Never used in production. |
+| `ADMIN_EMAIL` `ADMIN_PASSWORD` | **Required for `npm run db:seed`** — seeding throws if unset. Without an admin, `/admin` is unreachable and builder verifications can't be approved. The seeder refuses to escalate a pre-existing non-admin account under that email, and treats a *changed* `ADMIN_EMAIL` as a rename of the existing admin. |
+| `EINFRA_PASSWORD` | Password for the seeded `builder@e-infra.in` showcase builder. **Mandatory when `NODE_ENV=production`.** Outside production the seeder falls back to a literal that is in public git history — that fallback must never reach a deployed environment, because the account is a verified builder that can read every quote request raised against its projects. |
+| `DB_SSL` | Set to `false` only when PostgreSQL is co-located and unreachable from outside (e.g. the compose container, which does not speak SSL and fails with *"The server does not support SSL connections"*). Defaults to SSL **on** in production, which is what a managed database needs. |
 | `ANTHROPIC_API_KEY` | AI onboarding chat is disabled; onboarding falls back to scripted questions. Standalone toggle, not tied to any account. |
 | `EMAIL_USER` `EMAIL_PASS` | Quote emails are logged to the console instead of sent. Gmail address + 16-char **App Password** (needs 2FA on the Google account). |
 | `FRONTEND_URL` | `http://localhost:3000`. Used to build email deep-links. |
 | `WHATSAPP_PHONE_NUMBER_ID` `WHATSAPP_ACCESS_TOKEN` `WHATSAPP_API_VERSION` `WHATSAPP_TEMPLATE_NAME` `WHATSAPP_DEFAULT_COUNTRY_CODE` | WhatsApp quote confirmations are logged to console instead of sent. Credentials come from Meta for Developers → WhatsApp → API Setup. |
 | `ALLOWED_ORIGINS` | `http://localhost:3000`. Comma-separated CORS allowlist. |
 | `BCRYPT_ROUNDS` `RATE_LIMIT_WINDOW_MS` `RATE_LIMIT_MAX_REQUESTS` `AUTH_RATE_LIMIT_MAX` | Sane defaults (12 rounds; 100 req / 15 min; 10 auth req / 15 min). |
+| `QUOTE_RATE_LIMIT_MAX` | `10` per 15 min. Caps the **public** `POST /quotes` and `POST /quotes/site-visit`. Both are unauthenticated and each sends mail to a *caller-supplied* address, so under the global limit alone they act as an open relay. Authenticated GETs on that router are exempt. |
 | `TRUST_PROXY_HOPS` | `1`. Reverse-proxy hops in front of the app, so rate limiting sees real client IPs. Production only. |
 | `NODE_ENV` `PORT` | `development`, `5000`. |
 
