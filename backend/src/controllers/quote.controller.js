@@ -113,15 +113,53 @@ async function listQuotes(req, res, next) {
       return res.status(400).json({ success: false, error: { message: 'email or projectEmail query parameter is required.' } });
     }
 
-    // email → quotes this user requested (investor side), matching either the
-    // reply-to address they typed or the account they were signed in as;
-    // projectEmail → quotes against a builder's projects (builder side).
-    const where = requesterEmail
-      ? { [Op.or]: [
-          Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('user_email')), requesterEmail),
-          Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('account_email')), requesterEmail),
-        ] }
-      : Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('project_email')), projectEmail);
+    // This route is authenticated, and the email in the query string is a FILTER,
+    // never a credential. Before this was enforced, anyone who knew a builder's
+    // routing address could read that builder's entire lead list — requester
+    // names, emails and phone numbers — with no login at all.
+    const isAdmin = req.user.role === 'admin';
+    const callerEmail = lower(req.user.email);
+
+    let where;
+
+    if (requesterEmail) {
+      // Investor side: you may only list your own requests. A quote is yours if
+      // either the reply-to address you typed or the account you were signed in
+      // as matches, so a different reply-to address still surfaces here.
+      if (!isAdmin && requesterEmail !== callerEmail) {
+        return res.status(403).json({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'You may only list your own quote requests.' },
+        });
+      }
+      where = { [Op.or]: [
+        Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('user_email')), requesterEmail),
+        Quote.sequelize.where(Quote.sequelize.fn('lower', Quote.sequelize.col('account_email')), requesterEmail),
+      ] };
+    } else {
+      // Builder side. The routing address on a project is deliberately NOT the
+      // builder's account address (the seeded projects route to sales@e-infra.in
+      // while the account is builder@e-infra.in), so it cannot authorise anything.
+      // Scope to the projects this user actually owns instead.
+      const emailMatch = Quote.sequelize.where(
+        Quote.sequelize.fn('lower', Quote.sequelize.col('project_email')), projectEmail,
+      );
+
+      if (isAdmin) {
+        where = emailMatch;
+      } else {
+        const owned = await Project.findAll({
+          where: { builder_id: req.user.id },
+          attributes: ['id', 'slug'],
+          raw: true,
+        });
+        // Quotes store project_id as whatever the client routed with — the slug
+        // in practice, a UUID historically — so match on both.
+        const keys = owned.flatMap((p) => [p.id, p.slug]).filter(Boolean);
+        if (!keys.length) return res.json({ success: true, data: [] });
+        where = { [Op.and]: [emailMatch, { project_id: { [Op.in]: keys } }] };
+      }
+    }
 
     const quotes = await Quote.findAll({ where, order: [['created_at', 'DESC']] });
     return res.json({ success: true, data: quotes.map((q) => q.toSafeJSON()) });

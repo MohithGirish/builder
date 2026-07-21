@@ -12,8 +12,8 @@ import { ArrowLeft, FileText, Clock, CheckCircle2, ArrowRight, Trash2, Loader2 }
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { useApi } from '../../lib/useApi';
-import { apiFetch, invalidate } from '../../lib/api';
+import { useAuthedApi } from '../../lib/useAuthedApi';
+import { apiFetch } from '../../lib/api';
 
 const STATUS = {
   pending:   { label: 'Awaiting Response', color: 'bg-amber-100 text-amber-700', Icon: Clock },
@@ -129,15 +129,15 @@ function QuoteCard({ quote, onDelete }) {
 export default function MyInvestments() {
   const { user } = useAuth();
   const email = user?.email || '';
-  const { data, loading, error, refetch } = useApi(
+  const { data, loading, error, refetch } = useAuthedApi(
     email ? `/api/v1/quotes?email=${encodeURIComponent(email)}` : null,
-    { ttl: 10000 },
   );
   const quotes = data?.data || [];
 
   async function handleDelete(id) {
     await apiFetch(`/api/v1/quotes/${id}?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
-    invalidate('/api/v1/quotes'); // also clears the builder-side list
+    // No cache to invalidate: this list and the builder-side one both go through
+    // authedFetch now, which does not cache. refetch() is the whole refresh path.
     refetch();
     toast.success('Quote request deleted.');
   }

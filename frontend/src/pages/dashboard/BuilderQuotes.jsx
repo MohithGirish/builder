@@ -10,7 +10,7 @@
 import { ArrowLeft, Mail, Phone, Clock, CheckCircle2, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useApi } from '../../lib/useApi';
+import { useAuthedApi } from '../../lib/useAuthedApi';
 import { EINFRA_PROJECT_EMAIL, isEinfraBuilder } from '../../data/realProjects';
 
 const STATUS = {
@@ -83,9 +83,8 @@ function RequestCard({ quote }) {
 export default function BuilderQuotes() {
   const { user } = useAuth();
   const projectEmail = isEinfraBuilder(user) ? EINFRA_PROJECT_EMAIL : user?.email;
-  const { data, loading, error } = useApi(
+  const { data, loading, error } = useAuthedApi(
     projectEmail ? `/api/v1/quotes?projectEmail=${encodeURIComponent(projectEmail)}` : null,
-    { ttl: 10000 },
   );
   const quotes = data?.data || [];
 
