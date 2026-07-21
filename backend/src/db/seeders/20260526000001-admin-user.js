@@ -67,6 +67,29 @@ module.exports = {
       return;
     }
 
+    // No row under this email, but the deterministic admin row may already exist
+    // under a PREVIOUS ADMIN_EMAIL. Falling through to the insert would hit a
+    // primary-key conflict that `ignoreDuplicates` swallows silently -- the
+    // seeder would report success while the admin email stayed unchanged. Treat
+    // a changed ADMIN_EMAIL as a rename of the existing admin instead.
+    const [byUuid] = await queryInterface.sequelize.query(
+      'SELECT id, email FROM users WHERE id = :id LIMIT 1;',
+      { replacements: { id: ADMIN_UUID }, type: queryInterface.sequelize.QueryTypes.SELECT }
+    );
+
+    if (byUuid) {
+      await queryInterface.bulkUpdate('users', {
+        email,
+        password_hash:       passwordHash,
+        role:                'admin',
+        is_verified:         true,
+        is_active:           true,
+        verification_status: 'approved',
+        updated_at:          now,
+      }, { id: ADMIN_UUID });
+      return;
+    }
+
     await queryInterface.bulkInsert('users', [
       {
         id:                  ADMIN_UUID,
