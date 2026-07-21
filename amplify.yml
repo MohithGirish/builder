@@ -8,7 +8,10 @@ applications:
             - npm ci
         build:
           commands:
-            - npm run build
+            # Kept as a single && command on purpose: the Amplify console's
+            # auto-detect collapses a multi-command build phase into one field
+            # and silently keeps only the last line.
+            #
             # ponytail: optimize-images.mjs reads its sources from public/images,
             # and Vite copies all of public/ into dist — so ~226 MB of PNG/JPG
             # originals ride along that nothing references (86 .webp refs in src,
@@ -16,7 +19,7 @@ applications:
             # artifact from 244 MB to 18 MB. Upgrade path: move the originals to
             # a non-served folder and point optimize-images.mjs at it, then this
             # line can go.
-            - find dist/images -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) -delete
+            - npm run build && find dist/images -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) -delete
       artifacts:
         baseDirectory: dist
         files:
