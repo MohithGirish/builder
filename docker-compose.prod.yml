@@ -1,0 +1,98 @@
+# Production stack for the single EC2 host.
+#
+# Differs from docker-compose.yml in four ways that matter on a public box:
+#   - backend builds the `production` target (node src/server.js, non-root user)
+#     instead of `development` (nodemon + bind-mounted source)
+#   - postgres and redis publish NO host ports; they are reachable only on the
+#     internal bridge network, so the only thing listening on the public
+#     interface is the API
+#   - the postgres password comes from .env, not the hardcoded dev value
+#   - host port 80 fronts the API, because CloudFront talks to origins on 80
+#
+# Expects /opt/builderai/.env (generated from SSM Parameter Store, never in git).
+# Migrations are a release step -- `npm run db:migrate` via deploy.sh, never at boot.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: builder_ai_backend
+    ports:
+      - "80:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      # One proxy hop in front of us: CloudFront. Without this, express-rate-limit
+      # keys every request to the same CloudFront IP and one client can exhaust
+      # the limit for everyone.
+      - TRUST_PROXY_HOPS=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - builder_net
+    restart: unless-stopped
+    logging:
+      # ponytail: local json-file logs with a hard cap, not CloudWatch. 20 MB
+      # total per container can't fill the 8 GB root volume, and the free
+      # CloudWatch tier is easy to blow through by accident. Upgrade path: add
+      # the awslogs driver here when you actually need logs off-box.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: builder_ai_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - builder_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  redis:
+    image: redis:7-alpine
+    container_name: builder_ai_redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - builder_net
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  builder_net:
+    driver: bridge
