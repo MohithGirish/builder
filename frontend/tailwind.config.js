@@ -32,8 +32,8 @@ export default {
         azure: '#5aa0e0',             // data / live / instrument glow
       },
       fontFamily: {
-        sans:    ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'Inter Fallback', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'Inter', 'Inter Fallback', 'system-ui', 'sans-serif'],
         mono:    ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       boxShadow: {

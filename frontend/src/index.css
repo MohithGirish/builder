@@ -12,18 +12,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Metrics-matched fallback: sizes the local system font to occupy Inter's exact
+   box so no text reflows (CLS) when the async web font swaps in. Values are the
+   standard Inter-over-Arial overrides. Inserted before system-ui in every chain. */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+  size-adjust: 107.12%;
+}
+
 @layer base {
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Inter Fallback', system-ui, sans-serif;
     @apply text-slate-800 bg-white;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
   h1,h2,h3,h4,h5,h6 {
     @apply font-semibold;
-    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    font-family: 'Space Grotesk', 'Inter', 'Inter Fallback', system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
   /* Branded text selection */

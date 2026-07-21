@@ -7,7 +7,18 @@
     <title>Builder AI Market — Connect Builders & Investors</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Load the font CSS off the critical path (media=print flips to all onload), so it
+         no longer blocks first render. The metrics-matched 'Inter Fallback' in index.css
+         means the swap-in causes no layout shift. <noscript> keeps it working sans JS. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    </noscript>
     <!-- Preload the LCP hero so the browser fetches it during HTML parse, before the JS bundle renders the <img>. Responsive: phones pick the 58KB thumb, desktop the 271KB full. -->
     <link
       rel="preload"

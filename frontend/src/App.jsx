@@ -29,9 +29,12 @@ function AuthedSocket({ children }) {
 }
 
 // Shown while a lazy route chunk loads — minimal, no extra imports.
+// min-h-screen (not 60vh) so the fallback fills the viewport and the eager Footer
+// starts below the fold; when the real page mounts, the footer's reposition happens
+// off-screen and isn't counted as a visible layout shift (CLS).
 function PageFallback() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center" role="status" aria-label="Loading">
+    <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Loading">
       <div className="w-8 h-8 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
     </div>
   );
