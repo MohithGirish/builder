@@ -5,20 +5,27 @@
 #     --custom-headers file://amplify-headers.yml
 # Takes effect immediately, no rebuild required.
 #
+# The applications/appRoot wrapper is REQUIRED because this app is a monorepo.
+# Without it every build fails at the header-save step with
+# "Monorepo spec provided without applications key" — the build itself passes,
+# then the job is marked FAILED and nothing deploys.
+#
 # Amplify defaults every file to `public, max-age=0, s-maxage=31536000`: its CDN
 # caches for a year (fine — a deploy invalidates it) but the browser revalidates
 # on every request, costing a conditional round-trip per chunk per page view.
-customHeaders:
-  # Vite content-hashes these, so the filename already busts the cache.
-  - pattern: '/assets/**'
-    headers:
-      - key: 'Cache-Control'
-        value: 'public, max-age=31536000, immutable'
-  # Stable-named (gallery-01.webp), so a day rather than a year — long enough to
-  # matter, short enough that replacing an image actually lands.
-  - pattern: '/images/**'
-    headers:
-      - key: 'Cache-Control'
-        value: 'public, max-age=86400'
+applications:
+  - appRoot: frontend
+    customHeaders:
+      # Vite content-hashes these, so the filename already busts the cache.
+      - pattern: '/assets/**'
+        headers:
+          - key: 'Cache-Control'
+            value: 'public, max-age=31536000, immutable'
+      # Stable-named (gallery-01.webp), so a day rather than a year — long
+      # enough to matter, short enough that replacing an image actually lands.
+      - pattern: '/images/**'
+        headers:
+          - key: 'Cache-Control'
+            value: 'public, max-age=86400'
 # index.html is deliberately absent: it keeps Amplify's default so deploys go
 # live immediately.
