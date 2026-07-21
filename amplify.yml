@@ -27,3 +27,19 @@ applications:
       cache:
         paths:
           - node_modules/**/*
+    customHeaders:
+      # Amplify's default for every file is `public, max-age=0, s-maxage=31536000`:
+      # its CDN caches for a year (fine — a deploy invalidates it) but the browser
+      # revalidates on every request. For Vite's content-hashed chunks that is a
+      # wasted conditional request per chunk per page view, and the hash already
+      # guarantees a new filename whenever the content changes.
+      - pattern: '/assets/**'
+        headers:
+          - key: Cache-Control
+            value: 'public, max-age=31536000, immutable'
+      # Images are stable-named (gallery-01.webp), so they get a day rather than
+      # a year — long enough to matter, short enough that replacing one lands.
+      - pattern: '/images/**'
+        headers:
+          - key: Cache-Control
+            value: 'public, max-age=86400'
