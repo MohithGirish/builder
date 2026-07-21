@@ -1,0 +1,26 @@
+version: 1
+applications:
+  - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+            # ponytail: optimize-images.mjs reads its sources from public/images,
+            # and Vite copies all of public/ into dist — so ~226 MB of PNG/JPG
+            # originals ride along that nothing references (86 .webp refs in src,
+            # 0 local png/jpg refs). Dropping them here takes the deployed
+            # artifact from 244 MB to 18 MB. Upgrade path: move the originals to
+            # a non-served folder and point optimize-images.mjs at it, then this
+            # line can go.
+            - find dist/images -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) -delete
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
