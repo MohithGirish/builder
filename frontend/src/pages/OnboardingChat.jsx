@@ -20,18 +20,22 @@ const BUILDER_PREF_KEYS  = ['city', 'project_type', 'projects_completed', 'fundi
 const INVESTOR_PREF_KEYS = ['investor_type', 'sectors', 'investment_range', 'regions'];
 
 /* ── Scripted fallback question sets (used only if the AI is unavailable) ───── */
+/* Answer options are wrapped in **double asterisks** so renderRich shows them as
+   bold brand-steel choices — the same treatment the AI path uses, so the scripted
+   fallback is visually identical. Sentence case only (first letter capitalised,
+   not Title Case), except acronyms and proper nouns which keep their real case. */
 const BUILDER_QUESTIONS = [
   (a, name) => `Welcome to Builder.AI Market, ${name}! Let's personalise your experience. Which city are you based in?`,
-  ()        => "What type of projects do you specialise in? (e.g., Luxury Residential, Commercial, Infrastructure, Smart Cities)",
+  ()        => "What type of projects do you specialise in? (e.g., **Luxury residential**, **Commercial**, **Infrastructure**, **Smart cities**)",
   ()        => "How many projects have you completed so far?",
-  ()        => "What's the typical funding range you're looking for? (e.g., ₹50-100 Cr)",
+  ()        => "What's the typical funding range you're looking for? (e.g., **₹50-100 Cr**)",
 ];
 
 const INVESTOR_QUESTIONS = [
-  (a, name) => `Welcome to Builder.AI Market, ${name}! Let's personalise your experience. Are you an individual investor, VC Firm, or PE Fund?`,
-  ()        => "Which sectors interest you most? (e.g., Residential, Commercial, Infrastructure, PropTech)",
-  ()        => "What's your typical investment range per project? (e.g., ₹10-50 Cr)",
-  ()        => "Which regions in India are you focusing on? (e.g., Mumbai, Bangalore, NCR)",
+  (a, name) => `Welcome to Builder.AI Market, ${name}! Let's personalise your experience. Are you an **Individual investor**, **VC firm**, or **PE fund**?`,
+  ()        => "Which sectors interest you most? (e.g., **Residential**, **Commercial**, **Infrastructure**, **PropTech**)",
+  ()        => "What's your typical investment range per project? (e.g., **₹10-50 Cr**)",
+  ()        => "Which regions in India are you focusing on? (e.g., **Mumbai**, **Bangalore**, **NCR**)",
 ];
 
 const COMPLETION = {
@@ -49,7 +53,7 @@ const LOADING_MSG = {
 function renderRich(text) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} className="font-semibold text-brand-700">{part.slice(2, -2)}</strong>
+      ? <strong key={i} className="font-bold text-brand-700">{part.slice(2, -2)}</strong>
       : part
   );
 }
