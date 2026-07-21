@@ -80,6 +80,23 @@ app.use(
   })
 );
 
+// ── Stricter rate limit for the public email-sending endpoints ────────────────
+// POST /quotes and POST /quotes/site-visit are unauthenticated and both send
+// mail, to a builder AND to a requester-supplied address. Under the global
+// limit alone that is 100 messages per IP per window to an address the caller
+// chooses — an open relay in practice, which gets the sending mailbox suspended
+// and the domain blacklisted. Only the two POSTs are limited; the authenticated
+// GETs on this router are untouched.
+const quoteWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max:      parseInt(process.env.QUOTE_RATE_LIMIT_MAX, 10) || 10,
+  skip:     (req) => req.method !== 'POST' || process.env.NODE_ENV === 'test',
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many quote requests. Please try again in a few minutes.' } },
+});
+app.use('/api/v1/quotes', quoteWriteLimiter);
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/v1', routes);
 
