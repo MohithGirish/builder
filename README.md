@@ -19,18 +19,21 @@ A marketplace that connects **Builders** (founders, makers) with **Investors** t
 Browser
   │  HTTP / WebSocket
   ▼
-Nginx (port 3000)               ← React SPA (Vite build)
-  │  /api/*  →  REST
+React SPA (Vite dev server, port 3000)   ← run locally, not containerized
+  │  /api/*  →  proxied to :5000
   ▼
-Node.js / Express (port 5000)
+Node.js / Express (port 5000)            ← Docker
   │  JWT · RBAC · Sequelize
-  ├── PostgreSQL (port 5432)    ← persistent storage
-  ├── Redis     (port 6379)     ← cache
+  ├── PostgreSQL (port 5432)    ← Docker · persistent storage
+  ├── Redis     (port 6379)     ← Docker · cache
   └── Socket.io                 ← quote + verification notifications
 
 FastAPI AI Service (ai_service/, port 8000)   ← not deployed
   └── 5-dimension compatibility score, no backend call site yet
 ```
+
+Docker Compose runs the backend, PostgreSQL, and Redis. The frontend and the AI
+service are run directly on the host.
 
 ---
 
@@ -91,49 +94,90 @@ cd builderai
 Copy the example env files and fill in your values:
 
 ```bash
-cp backend/.env.example backend/.env
-cp ai_service/.env.example ai_service/.env
+cp backend/.env.example  backend/.env
+cp frontend/.env.example frontend/.env.local
+cp ai_service/.env.example ai_service/.env      # only if running the AI service
 ```
 
-Key variables to set in `backend/.env`:
+Every variable the code actually reads is listed below. Anything marked *optional*
+has a working fallback — the app boots without it.
 
-```env
-JWT_ACCESS_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-DB_HOST=postgres
-DB_NAME=builder_ai_db
-DB_USER=builder_admin
-DB_PASSWORD=builder_secret_dev
-REDIS_HOST=redis
-```
+#### `backend/.env` — required
 
-**Optional:**
+| Variable | Notes |
+|---|---|
+| `JWT_ACCESS_SECRET` | Signs the 15-minute access token. Generate: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `DB_HOST` `DB_PORT` `DB_NAME` `DB_USER` `DB_PASSWORD` | PostgreSQL. Use `DB_HOST=postgres` under Docker Compose, `localhost` otherwise. |
 
-- `ANTHROPIC_API_KEY` (in `backend/.env`) — enables the Claude-powered conversational onboarding chat. Leave it blank to use the scripted onboarding questions. It's a standalone toggle, not tied to any account.
-- `VITE_GOOGLE_MAPS_API_KEY` (in `frontend/.env.local`) — Google Maps Embed key for the project-detail and profile maps. Without it those maps show a deep-link fallback.
-- `INTERNAL_API_KEY` (in `ai_service/.env`) — when set, the AI service requires a matching `X-Internal-Api-Key` header on `/api/v1/match/*`; leave blank in dev to disable enforcement. Only relevant if you run the AI service standalone — the backend does not call it yet.
+> There is **no** `JWT_REFRESH_SECRET`. Refresh tokens are opaque random hex stored
+> in the `refresh_tokens` table, not JWTs — there is nothing to sign them with.
+
+#### `backend/.env` — optional
+
+| Variable | Default behaviour if unset |
+|---|---|
+| `DATABASE_URL` | Alternative to the discrete `DB_*` vars; **takes precedence** over them. Managed hosts (RDS, Neon, Render) hand you this. |
+| `REDIS_HOST` `REDIS_PORT` | No Redis → in-memory cache fallback. `REDIS_HOST=redis` under Compose. |
+| `ADMIN_EMAIL` `ADMIN_PASSWORD` | **Required for `npm run db:seed`** — seeding throws if unset. Without an admin, `/admin` is unreachable and builder verifications can't be approved. Never used in production. |
+| `ANTHROPIC_API_KEY` | AI onboarding chat is disabled; onboarding falls back to scripted questions. Standalone toggle, not tied to any account. |
+| `EMAIL_USER` `EMAIL_PASS` | Quote emails are logged to the console instead of sent. Gmail address + 16-char **App Password** (needs 2FA on the Google account). |
+| `FRONTEND_URL` | `http://localhost:3000`. Used to build email deep-links. |
+| `WHATSAPP_PHONE_NUMBER_ID` `WHATSAPP_ACCESS_TOKEN` `WHATSAPP_API_VERSION` `WHATSAPP_TEMPLATE_NAME` `WHATSAPP_DEFAULT_COUNTRY_CODE` | WhatsApp quote confirmations are logged to console instead of sent. Credentials come from Meta for Developers → WhatsApp → API Setup. |
+| `ALLOWED_ORIGINS` | `http://localhost:3000`. Comma-separated CORS allowlist. |
+| `BCRYPT_ROUNDS` `RATE_LIMIT_WINDOW_MS` `RATE_LIMIT_MAX_REQUESTS` `AUTH_RATE_LIMIT_MAX` | Sane defaults (12 rounds; 100 req / 15 min; 10 auth req / 15 min). |
+| `TRUST_PROXY_HOPS` | `1`. Reverse-proxy hops in front of the app, so rate limiting sees real client IPs. Production only. |
+| `NODE_ENV` `PORT` | `development`, `5000`. |
+
+#### `frontend/.env.local`
+
+Vite exposes these **to the browser** — never put a secret here.
+
+| Variable | Notes |
+|---|---|
+| `VITE_BACKEND_URL` | Leave **empty** for same-origin; in dev the Vite proxy forwards `/api` to `:5000`. Set only if the API is on another origin. |
+| `VITE_GOOGLE_MAPS_API_KEY` | *Optional.* Google **Maps Embed API** key for the project-detail and profile maps; without it they fall back to a deep-link. Restrict by HTTP referrer. The landing-page map uses Leaflet/OpenStreetMap and needs no key. |
+
+#### `ai_service/.env` — only if you run the AI service
+
+Not needed for normal development: the backend has no call site for this service and it isn't in the Compose stack.
+
+| Variable | Notes |
+|---|---|
+| `INTERNAL_API_KEY` | *Optional.* When set, `/api/v1/match/*` requires a matching `X-Internal-Api-Key` header. Leave blank in dev to disable enforcement. Must equal the backend's `AI_SERVICE_API_KEY` once the two are wired together. |
+| `APP_PORT` `LOG_LEVEL` `ALLOWED_ORIGINS` | `8000`, `info`, localhost origins. |
 
 > **Docker note:** the backend runs with `node_modules` in a named volume, so after adding a backend dependency, install it in the container (`docker compose exec backend npm install <pkg>`) or rebuild (`docker compose up -d --build backend`).
 
-### 3. Start all services
+### 3. Start the backend stack
 
 ```bash
-docker-compose up --build
+docker-compose up --build        # backend + PostgreSQL + Redis
 ```
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:5000 |
-
-The AI engine is not part of the Compose stack. Run it standalone if you need it:
-`cd ai_service && uvicorn app.main:app --port 8000` (docs at `/docs`).
 
 ### 4. Run database migrations
 
 ```bash
 docker exec builder_ai_backend npx sequelize-cli db:migrate
 ```
+
+### 5. Start the frontend
+
+The frontend is **not** in the Compose stack — run the Vite dev server on the host
+(it proxies `/api` to the backend on :5000):
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+| Service | URL | Runs in |
+|---|---|---|
+| Frontend | http://localhost:3000 | host (`npm run dev`) |
+| Backend API | http://localhost:5000 | Docker |
+| PostgreSQL | localhost:5432 | Docker |
+| Redis | localhost:6379 | Docker |
+
+The AI engine is not part of the Compose stack either. Run it standalone if you need it:
+`cd ai_service && uvicorn app.main:app --port 8000` (docs at `/docs`).
 
 ---
 
