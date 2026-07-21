@@ -1,0 +1,24 @@
+# Amplify custom response headers.
+#
+# NOT read automatically from the repo — apply with:
+#   aws amplify update-app --app-id d3fvqvoifudxvg --region ap-south-1 \
+#     --custom-headers file://amplify-headers.yml
+# Takes effect immediately, no rebuild required.
+#
+# Amplify defaults every file to `public, max-age=0, s-maxage=31536000`: its CDN
+# caches for a year (fine — a deploy invalidates it) but the browser revalidates
+# on every request, costing a conditional round-trip per chunk per page view.
+customHeaders:
+  # Vite content-hashes these, so the filename already busts the cache.
+  - pattern: '/assets/**'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=31536000, immutable'
+  # Stable-named (gallery-01.webp), so a day rather than a year — long enough to
+  # matter, short enough that replacing an image actually lands.
+  - pattern: '/images/**'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=86400'
+# index.html is deliberately absent: it keeps Amplify's default so deploys go
+# live immediately.

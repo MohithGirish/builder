@@ -27,19 +27,11 @@ applications:
       cache:
         paths:
           - node_modules/**/*
-    customHeaders:
-      # Amplify's default for every file is `public, max-age=0, s-maxage=31536000`:
-      # its CDN caches for a year (fine — a deploy invalidates it) but the browser
-      # revalidates on every request. For Vite's content-hashed chunks that is a
-      # wasted conditional request per chunk per page view, and the hash already
-      # guarantees a new filename whenever the content changes.
-      - pattern: '/assets/**'
-        headers:
-          - key: Cache-Control
-            value: 'public, max-age=31536000, immutable'
-      # Images are stable-named (gallery-01.webp), so they get a day rather than
-      # a year — long enough to matter, short enough that replacing one lands.
-      - pattern: '/images/**'
-        headers:
-          - key: Cache-Control
-            value: 'public, max-age=86400'
+# Custom response headers are NOT read from this file — a customHeaders block
+# here is silently ignored in the monorepo build-spec form. They live on the app
+# itself; see amplify-headers.yml and re-apply with:
+#
+#   aws amplify update-app --app-id d3fvqvoifudxvg --region ap-south-1 \
+#     --custom-headers file://amplify-headers.yml
+#
+# That takes effect immediately, with no rebuild.
