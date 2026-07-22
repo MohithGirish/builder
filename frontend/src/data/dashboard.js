@@ -17,31 +17,31 @@ export const BUILDER_USER  = null;
 export const INVESTOR_USER = null;
 
 export const BUILDER_KPIS = [
-  { id: 'active_projects',   label: 'Active Projects',   value: '5',       change: '+2 this month', positive: true,  icon: 'Briefcase',  color: 'bg-teal-50 text-teal-600',    sparkline: [3,4,3,5,4,6,5] },
-  { id: 'total_raised',      label: 'Total Raised',      value: '₹128 Cr', change: '+18%',          positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [10,12,11,14,13,16,18] },
-  { id: 'investor_matches',  label: 'Investor Matches',  value: '24',      change: '+6 new',        positive: true,  icon: 'Users',      color: 'bg-blue-50 text-blue-600',     sparkline: [2,3,4,3,5,4,6] },
-  { id: 'profile_views',     label: 'Profile Views',     value: '1,840',   change: '-8%',           positive: false, icon: 'Eye',        color: 'bg-amber-50 text-amber-500',   sparkline: [130,120,125,115,120,110,108] },
+  { id: 'active_projects',   label: 'Active Projects',   value: '5',       change: '+2 this month', positive: true,  icon: 'Briefcase',  color: 'bg-brand-100 text-brand-700',  sparkline: [3,4,3,5,4,6,5] },
+  { id: 'total_raised',      label: 'Total Raised',      value: '₹128 Cr', change: '+18%',          positive: true,  icon: 'TrendingUp', color: 'bg-amber-100 text-amber-700',  sparkline: [10,12,11,14,13,16,18] },
+  { id: 'investor_matches',  label: 'Investor Matches',  value: '24',      change: '+6 new',        positive: true,  icon: 'Users',      color: 'bg-sky-100 text-sky-700',      sparkline: [2,3,4,3,5,4,6] },
+  { id: 'profile_views',     label: 'Profile Views',     value: '1,840',   change: '-8%',           positive: false, icon: 'Eye',        color: 'bg-violet-100 text-violet-700', sparkline: [130,120,125,115,120,110,108] },
 ];
 
 export const INVESTOR_KPIS = [
-  { id: 'total_invested',   label: 'Total Invested',   value: '₹85 Cr', change: '+12%',          positive: true,  icon: 'Wallet',     color: 'bg-teal-50 text-teal-600',    sparkline: [40,50,48,60,58,70,80] },
-  { id: 'avg_roi',          label: 'Avg ROI',          value: '21.4%',  change: '+1.2%',         positive: true,  icon: 'TrendingUp', color: 'bg-orange-50 text-orange-500', sparkline: [18,19,18,20,21,22,23] },
-  { id: 'active_projects',  label: 'Active Projects',  value: '9',      change: '+1 this month', positive: true,  icon: 'Briefcase',  color: 'bg-blue-50 text-blue-600',     sparkline: [5,6,6,7,7,8,9] },
-  { id: 'builder_matches',  label: 'Project Matches',  value: '5',      change: '+5 new',        positive: true,  icon: 'Sparkles',   color: 'bg-amber-50 text-amber-500',   sparkline: [1,2,3,3,4,5,5] },
+  { id: 'total_invested',   label: 'Total Invested',   value: '₹85 Cr', change: '+12%',          positive: true,  icon: 'Wallet',     color: 'bg-brand-100 text-brand-700',  sparkline: [40,50,48,60,58,70,80] },
+  { id: 'avg_roi',          label: 'Avg ROI',          value: '21.4%',  change: '+1.2%',         positive: true,  icon: 'TrendingUp', color: 'bg-amber-100 text-amber-700',  sparkline: [18,19,18,20,21,22,23] },
+  { id: 'active_projects',  label: 'Active Projects',  value: '9',      change: '+1 this month', positive: true,  icon: 'Briefcase',  color: 'bg-sky-100 text-sky-700',      sparkline: [5,6,6,7,7,8,9] },
+  { id: 'builder_matches',  label: 'Project Matches',  value: '5',      change: '+5 new',        positive: true,  icon: 'Sparkles',   color: 'bg-violet-100 text-violet-700', sparkline: [1,2,3,3,4,5,5] },
 ];
 
 export const BUILDER_ANALYTICS_KPIS = [
-  { label: 'Total Projects',        value: '12',      change: '+3 this year', positive: true, icon: 'Briefcase',  sparkline: [6,7,8,9,10,11,12] },
-  { label: 'Total Funding Secured', value: '₹775 Cr', change: '+22%',         positive: true, icon: 'TrendingUp', sparkline: [380,440,510,590,680,730,775] },
-  { label: 'Active Investors',      value: '38',      change: '+9',           positive: true, icon: 'Users',      sparkline: [18,22,25,29,33,36,38] },
-  { label: 'Avg Match Rate',        value: '82%',     change: '+4%',          positive: true, icon: 'Star',       sparkline: [70,72,74,76,78,80,82] },
+  { label: 'Total Projects',        value: '12',      change: '+3 this year', positive: true, icon: 'Briefcase',  color: 'bg-brand-100 text-brand-700',  sparkline: [6,7,8,9,10,11,12] },
+  { label: 'Total Funding Secured', value: '₹775 Cr', change: '+22%',         positive: true, icon: 'TrendingUp', color: 'bg-amber-100 text-amber-700',  sparkline: [380,440,510,590,680,730,775] },
+  { label: 'Active Investors',      value: '38',      change: '+9',           positive: true, icon: 'Users',      color: 'bg-sky-100 text-sky-700',      sparkline: [18,22,25,29,33,36,38] },
+  { label: 'Avg Match Rate',        value: '82%',     change: '+4%',          positive: true, icon: 'Star',       color: 'bg-violet-100 text-violet-700', sparkline: [70,72,74,76,78,80,82] },
 ];
 
 export const INVESTOR_ANALYTICS_KPIS = [
-  { label: 'Total Invested',     value: '₹85 Cr', change: '+12%',   positive: true, icon: 'Wallet',     sparkline: [40,50,55,62,70,78,85] },
-  { label: 'Active Investments', value: '9',      change: '+1',     positive: true, icon: 'Briefcase',  sparkline: [4,5,6,6,7,8,9] },
-  { label: 'Portfolio ROI',      value: '21.4%',  change: '+1.2%',  positive: true, icon: 'TrendingUp', sparkline: [17,18,18,19,20,21,21] },
-  { label: 'Builder Matches',    value: '5',      change: '+5 new', positive: true, icon: 'Sparkles',   sparkline: [1,2,3,4,4,5,5] },
+  { label: 'Total Invested',     value: '₹85 Cr', change: '+12%',   positive: true, icon: 'Wallet',     color: 'bg-brand-100 text-brand-700',  sparkline: [40,50,55,62,70,78,85] },
+  { label: 'Active Investments', value: '9',      change: '+1',     positive: true, icon: 'Briefcase',  color: 'bg-amber-100 text-amber-700',  sparkline: [4,5,6,6,7,8,9] },
+  { label: 'Portfolio ROI',      value: '21.4%',  change: '+1.2%',  positive: true, icon: 'TrendingUp', color: 'bg-sky-100 text-sky-700',      sparkline: [17,18,18,19,20,21,21] },
+  { label: 'Builder Matches',    value: '5',      change: '+5 new', positive: true, icon: 'Sparkles',   color: 'bg-violet-100 text-violet-700', sparkline: [1,2,3,4,4,5,5] },
 ];
 
 // Investor leads surfaced to builders (InvestorMatches page + dashboard recommendations).
@@ -70,7 +70,7 @@ export const BUILDER_CHART_DATA = {
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     series: [
       { name: 'Raised', color: '#f97316', data: [52, 61, 68, 74, 83, 95] },
-      { name: 'Target', color: '#0d9488', data: [60, 70, 80, 90, 100, 110] },
+      { name: 'Target', color: '#2b5e93', data: [60, 70, 80, 90, 100, 110] },
     ],
   },
   sectors: ['Luxury Residential', 'Commercial', 'Infrastructure', 'Smart Cities', 'Mixed-use'],
@@ -84,7 +84,7 @@ export const INVESTOR_CHART_DATA = {
     months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     series: [
       { name: 'Invested', color: '#f97316', data: [50, 65, 80, 100, 140, 180] },
-      { name: 'Returns',  color: '#0d9488', data: [4,  7,  12, 18,  26,  38] },
+      { name: 'Returns',  color: '#2b5e93', data: [4,  7,  12, 18,  26,  38] },
     ],
   },
   sectors: ['Residential', 'Commercial', 'Infrastructure', 'PropTech'],

@@ -16,7 +16,7 @@ function LayoutInner() {
   const { collapsed, mobileOpen, setMobileOpen } = useSidebar();
 
   return (
-    <div className="flex bg-slate-50 relative h-viewport-minus-nav overflow-hidden">
+    <div className="flex dashboard-canvas relative h-viewport-minus-nav overflow-hidden">
 
       {/* Mobile backdrop — closes drawer on tap */}
       {mobileOpen && (
@@ -48,7 +48,7 @@ function LayoutInner() {
         <DashboardSidebar mobile onClose={() => setMobileOpen(false)} />
       </div>
 
-      {/* Main content */}
+      {/* Main content — transparent so the dashboard-canvas aurora shows through */}
       <main className="flex-1 overflow-y-auto min-w-0">
         <Outlet />
       </main>

@@ -154,6 +154,34 @@
   background-size: 28px 28px;
 }
 
+/* ── Dashboard canvas — light aurora backdrop: steel-tinted base wash +
+   graph-paper grid, with soft azure & brass colour blobs for depth. The
+   blobs live on ::before/::after behind the content (isolate + z-index:-1)
+   and are anchored to the fixed-height shell, so they stay put on scroll. */
+.dashboard-canvas {
+  position: relative;
+  isolation: isolate;
+  background-color: #eef2f8;
+  background-image:
+    linear-gradient(rgba(43,94,147,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,94,147,0.05) 1px, transparent 1px),
+    linear-gradient(135deg, #e4ecf6 0%, #eef2f8 48%, #ece9f4 100%);
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+}
+.dashboard-canvas::before,
+.dashboard-canvas::after {
+  content: ''; position: absolute; border-radius: 9999px;
+  z-index: -1; pointer-events: none; filter: blur(100px);
+}
+.dashboard-canvas::before {   /* azure / steel — top right */
+  width: 640px; height: 640px; top: -200px; right: -60px;
+  background: radial-gradient(circle at 50% 50%, rgba(90,160,224,0.30), transparent 68%);
+}
+.dashboard-canvas::after {    /* brass warm point — lower centre-right */
+  width: 560px; height: 560px; bottom: -220px; right: 14%;
+  background: radial-gradient(circle at 50% 50%, rgba(194,149,74,0.22), transparent 68%);
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }

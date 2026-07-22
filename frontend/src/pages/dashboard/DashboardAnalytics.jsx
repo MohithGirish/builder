@@ -63,7 +63,7 @@ function DonutChart({ data, labels, colors }) {
       <svg viewBox="0 0 160 160" className="w-32 h-32 shrink-0">
         {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
         <circle cx={CX} cy={CY} r={36} fill="white" />
-        <text x={CX} y={CY + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#0f766e">
+        <text x={CX} y={CY + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#2b5e93">
           {total}%
         </text>
       </svg>
@@ -230,7 +230,7 @@ export default function DashboardAnalytics() {
                 />
                 <Bar
                   dataKey="value"
-                  fill="#0d9488"
+                  fill="#2b5e93"
                   radius={[0, 6, 6, 0]}
                   maxBarSize={22}
                 />
