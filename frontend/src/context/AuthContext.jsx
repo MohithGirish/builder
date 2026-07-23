@@ -231,7 +231,10 @@ export function AuthProvider({ children }) {
   }, [refreshAccessToken, logout]);
 
   async function deleteAccount(email, password) {
-    const at = accessTokenRef.current;
+    // ponytail: refresh up-front instead of routing through authedFetch — a wrong
+    // password here also 401s, and authedFetch would read that as a dead token and
+    // log the user out on a typo.
+    const at = await refreshAccessToken().catch(() => null) || accessTokenRef.current;
     let res;
     try {
       res = await fetch(`${API}/api/v1/users/me`, {
