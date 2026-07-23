@@ -118,7 +118,14 @@ async function listQuotes(req, res, next) {
     // routing address could read that builder's entire lead list — requester
     // names, emails and phone numbers — with no login at all.
     const isAdmin = req.user.role === 'admin';
-    const callerEmail = lower(req.user.email);
+    // The access token carries only { sub, role } — no email claim — so the
+    // caller's address has to come from their row. Reading it off req.user
+    // silently yielded '' and 403'd every investor on their own quotes.
+    const caller = await User.findByPk(req.user.id, { attributes: ['email'] });
+    if (!caller) {
+      return res.status(401).json({ success: false, error: { code: 'AUTH_004', message: 'Account not found.' } });
+    }
+    const callerEmail = lower(caller.email);
 
     let where;
 
